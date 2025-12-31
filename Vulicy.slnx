@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Vulicy.DB/Vulicy.DB.csproj" Id="7875dde2-3857-4f46-9b81-5c8234a65417" />
+  <Project Path="Vulicy.Domain/Vulicy.Domain.csproj" />
+  <Project Path="Vulicy.Services/Vulicy.Services.csproj" Id="09d7e466-de1c-4dea-84c7-a3e309592350" />
+  <Project Path="Vulicy.Web/Vulicy.Web.csproj" />
+</Solution>

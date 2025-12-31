@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Vulicy.DB\Vulicy.DB.csproj" />
+    <ProjectReference Include="..\Vulicy.Domain\Vulicy.Domain.csproj" />
+    <ProjectReference Include="..\Vulicy.Services\Vulicy.Services.csproj" />
+  </ItemGroup>
+  
+</Project>
