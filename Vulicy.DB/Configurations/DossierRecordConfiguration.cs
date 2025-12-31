@@ -11,8 +11,8 @@ internal class DossierRecordConfiguration : IEntityTypeConfiguration<DossierReco
     public void Configure(EntityTypeBuilder<DossierRecordEntity> builder)
     {
         builder.ToTable(TableName);
-        builder.Property(f => f.NameBeTarask).HasMaxLength(128);
-        builder.Property(f => f.NameBeNark).HasMaxLength(128);
-        builder.Property(f => f.NameRu).HasMaxLength(128);
+        builder.Property(x => x.NameBeTarask).HasMaxLength(128);
+        builder.Property(x => x.NameBeNark).HasMaxLength(128);
+        builder.Property(x => x.NameRu).HasMaxLength(128);
     }
 }

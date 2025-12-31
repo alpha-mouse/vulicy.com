@@ -1,37 +1,46 @@
-﻿using Vulicy.Domain;
+﻿using Microsoft.EntityFrameworkCore;
+using Vulicy.Domain;
 
 namespace Vulicy.DB;
 
-public class RepositoryBase<T> : IRepository<T>
-    where T : Entity
+public class RepositoryBase<T, TKey>(VulicyDbContext dbContext) : IRepository<T, TKey>
+    where T : Entity<TKey>
 {
-    public Task<T?> GetById(int id)
+    protected VulicyDbContext Context { get; } = dbContext;
+    protected IQueryable<T> Entities => Context.Set<T>();
+
+    public Task<T?> GetById(TKey id)
     {
-        throw new NotImplementedException();
+        return Entities.FirstOrDefaultAsync(x => x.Id.Equals(id));
     }
 
-    public Task<T?> GetByIdTracked(int id)
+    public Task<T?> GetByIdTracked(TKey id)
     {
-        throw new NotImplementedException();
+        return Entities.AsTracking().FirstOrDefaultAsync(x => x.Id.Equals(id));
     }
 
     public Task<List<T>> GetAll()
     {
-        throw new NotImplementedException();
+        return Entities.ToListAsync();
     }
 
     public void Add(T entity)
     {
-        throw new NotImplementedException();
+        Context.Add(entity);
     }
 
-    public void Remove(T lesson)
+    public void AddRange(IEnumerable<T> entities)
     {
-        throw new NotImplementedException();
+        Context.AddRange(entities);
     }
 
     public Task SaveChanges()
     {
-        throw new NotImplementedException();
+        return Context.SaveChangesAsync();
+    }
+
+    public void ClearChangeTracker()
+    {
+        Context.ChangeTracker.Clear();
     }
 }

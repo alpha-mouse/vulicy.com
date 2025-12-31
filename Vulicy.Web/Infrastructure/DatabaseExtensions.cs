@@ -8,7 +8,7 @@ public static class DatabaseExtensions
 {
     public static void AddDatabase(this IServiceCollection serviceCollection, IConfiguration configuration)
     {
-        serviceCollection.AddConventionalServices(typeof(RepositoryBase<>).Assembly);
+        serviceCollection.AddConventionalServices(typeof(VulicyDbContext).Assembly);
         serviceCollection.AddDbContext(configuration);
     }
 
@@ -23,14 +23,18 @@ public static class DatabaseExtensions
     public static void AddDbContext(this IServiceCollection serviceCollection, IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("DefaultConnection");
-        var npgsqlDataSource = new NpgsqlDataSourceBuilder(connectionString).Build();
+        var npgsqlDataSource = new NpgsqlDataSourceBuilder(connectionString)
+            .UseNetTopologySuite()
+            .EnableDynamicJson()
+            .Build();
 
         serviceCollection.AddDbContext<VulicyDbContext>(options =>
         {
             options.UseNpgsql(npgsqlDataSource, action =>
             {
-                action.CommandTimeout(60);
+                action.CommandTimeout(0);
                 action.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+                action.UseNetTopologySuite();
             });
 
             options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);

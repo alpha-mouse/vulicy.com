@@ -11,6 +11,6 @@ internal class NamingCategoryConfiguration : IEntityTypeConfiguration<NamingCate
     public void Configure(EntityTypeBuilder<NamingCategoryEntity> builder)
     {
         builder.ToTable(TableName);
-        builder.Property(f => f.Name).HasMaxLength(256);
+        builder.Property(x => x.Name).HasMaxLength(256);
     }
 }

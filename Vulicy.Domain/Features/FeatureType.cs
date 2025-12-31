@@ -33,6 +33,4 @@ public enum FeatureType
     Park = 34,
     /// <summary> сквэр </summary>
     PublicGarden = 39,
-    /// <summary> станцыя </summary>
-    Station = 35,
 }

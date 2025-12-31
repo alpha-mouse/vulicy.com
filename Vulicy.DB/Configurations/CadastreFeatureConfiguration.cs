@@ -7,70 +7,88 @@ namespace Vulicy.DB.Configurations;
 internal abstract class CadastreFeatureBaseConfiguration<T> : IEntityTypeConfiguration<T>
     where T : CadastreFeatureEntity
 {
-    protected abstract string TableName { get; }
-
     public virtual void Configure(EntityTypeBuilder<T> builder)
     {
-        builder.ToTable(TableName);
-        builder.HasKey(x => x.CadastreId);
-        builder.Property(f => f.CadastreId).HasMaxLength(128);
-        builder.Property(f => f.ParentAte).HasMaxLength(256);
-        builder.Property(f => f.RegionName).HasMaxLength(128);
-        builder.Property(f => f.DistrictName).HasMaxLength(128);
-        builder.Property(f => f.VillageCouncilName).HasMaxLength(128);
-        builder.Property(f => f.AteName).HasMaxLength(128);
-        builder.Property(f => f.RegionNameBel).HasMaxLength(128);
-        builder.Property(f => f.DistrictNameBel).HasMaxLength(128);
-        builder.Property(f => f.VillageCouncilNameBel).HasMaxLength(128);
-        builder.Property(f => f.AteNameBel).HasMaxLength(128);
-        builder.Property(f => f.CategoryName).HasMaxLength(128);
-        builder.Property(f => f.CategoryNameShort).HasMaxLength(16);
-        builder.Property(f => f.CategoryNameBel).HasMaxLength(128);
-        builder.Property(f => f.CategoryNameShortBel).HasMaxLength(16);
-        builder.Property(f => f.ElementTypeName).HasMaxLength(128);
-        builder.Property(f => f.ElementTypeNameBel).HasMaxLength(128);
-        builder.Property(f => f.ElementTypeShortName).HasMaxLength(16);
-        builder.Property(f => f.ElementTypeShortNameBel).HasMaxLength(16);
-        builder.Property(f => f.ElementName).HasMaxLength(512);
-        builder.Property(f => f.ElementNameBel).HasMaxLength(512);
-        builder.Property(f => f.ShortInfo).HasMaxLength(1024);
+        builder.Property(x => x.Id).HasMaxLength(128);
+        builder.Property(x => x.ParentAte).HasMaxLength(256);
+        builder.Property(x => x.RegionName).HasMaxLength(128);
+        builder.Property(x => x.DistrictName).HasMaxLength(128);
+        builder.Property(x => x.VillageCouncilName).HasMaxLength(128);
+        builder.Property(x => x.AteName).HasMaxLength(128);
+        builder.Property(x => x.RegionNameBel).HasMaxLength(128);
+        builder.Property(x => x.DistrictNameBel).HasMaxLength(128);
+        builder.Property(x => x.VillageCouncilNameBel).HasMaxLength(128);
+        builder.Property(x => x.AteNameBel).HasMaxLength(128);
+        builder.Property(x => x.CategoryName).HasMaxLength(128);
+        builder.Property(x => x.CategoryNameShort).HasMaxLength(16);
+        builder.Property(x => x.CategoryNameBel).HasMaxLength(128);
+        builder.Property(x => x.CategoryNameShortBel).HasMaxLength(16);
+        builder.Property(x => x.ElementTypeName).HasMaxLength(128);
+        builder.Property(x => x.ElementTypeNameBel).HasMaxLength(128);
+        builder.Property(x => x.ElementTypeShortName).HasMaxLength(16);
+        builder.Property(x => x.ElementTypeShortNameBel).HasMaxLength(16);
+        builder.Property(x => x.ElementName).HasMaxLength(512);
+        builder.Property(x => x.ElementNameBel).HasMaxLength(512);
+        builder.Property(x => x.ShortInfo).HasMaxLength(1024);
+        builder.Property(x => x.IsDeleted);
+
+        builder.Property(x => x.Geometry).HasGeometryColumnType();
+        builder.HasIndex(x => x.Geometry).HasMethod("gist");
     }
 }
 
 internal class CadastreFeatureConfiguration : CadastreFeatureBaseConfiguration<CadastreFeatureEntity>
 {
-    protected override string TableName => "CadastreFeature";
+    public const string TableName = "CadastreFeature";
+
+    public override void Configure(EntityTypeBuilder<CadastreFeatureEntity> builder)
+    {
+        builder.ToTable(TableName);
+        builder.UseTpcMappingStrategy();
+        builder.HasKey(x => x.Id);
+        base.Configure(builder);
+    }
 }
 
 internal class CadastreFeatureImportConfiguration : CadastreFeatureBaseConfiguration<CadastreFeatureImportEntity>
 {
-    protected override string TableName => "CadastreFeatureImport";
+    public const string TableName = "CadastreFeatureImport";
+
+    public override void Configure(EntityTypeBuilder<CadastreFeatureImportEntity> builder)
+    {
+        builder.ToTable(TableName);
+        builder.HasBaseType((Type?)null);
+        builder.HasKey(x => new { x.ImportId, x.Id });
+        base.Configure(builder);
+    }
 }
 
 internal class CadastreFeatureHistoricConfiguration : CadastreFeatureBaseConfiguration<CadastreFeatureHistoricEntity>
 {
-    protected override string TableName => "CadastreFeatureHistoric";
+    public const string TableName = "CadastreFeatureHistoric";
 
     public override void Configure(EntityTypeBuilder<CadastreFeatureHistoricEntity> builder)
     {
+        builder.ToTable(TableName);
+        builder.HasBaseType((Type?)null);
+        builder.HasKey(x => new { x.Id, x.ChangeDateTime });
         base.Configure(builder);
-
-        builder.HasKey(x => new { x.CadastreId, x.ChangeDateTime });
     }
 }
 
-internal class InitialCadastreFeatureConfiguration : CadastreFeatureBaseConfiguration<InitialCadastreFeatureImportEntity>
+internal class InitialCadastreFeatureImportConfiguration : IEntityTypeConfiguration<InitialCadastreFeatureImportEntity>
 {
-    protected override string TableName => "InitialCadastreFeatureImport";
+    public const string TableName = "InitialCadastreFeatureImport";
 
-    public override void Configure(EntityTypeBuilder<InitialCadastreFeatureImportEntity> builder)
+    public void Configure(EntityTypeBuilder<InitialCadastreFeatureImportEntity> builder)
     {
-        base.Configure(builder);
+        builder.ToTable(TableName);
 
-        builder.Property(f => f.Reason).HasMaxLength(1024);
-        builder.Property(f => f.HistoricName).HasMaxLength(256);
-        builder.Property(f => f.Comment).HasMaxLength(512);
-        builder.Property(f => f.YearNamed).HasMaxLength(64);
-        builder.Property(f => f.NameCategory).HasMaxLength(256);
+        builder.Property(x => x.Id).HasMaxLength(128);
+        builder.Property(x => x.Reason).HasMaxLength(1024);
+        builder.Property(x => x.HistoricName).HasMaxLength(256);
+        builder.Property(x => x.Comment).HasMaxLength(512);
+        builder.Property(x => x.YearNamed).HasMaxLength(64);
+        builder.Property(x => x.NameCategory).HasMaxLength(256);
     }
 }

@@ -1,13 +1,13 @@
-﻿namespace Vulicy.Domain;
+﻿using NetTopologySuite.Geometries;
 
-public class CadastreFeatureEntity
+namespace Vulicy.Domain;
+
+public class CadastreFeatureEntity : Entity<string>
 {
     public int? FeatureId { get; set; }
     public FeatureEntity? Feature { get; set; }
 
-    public string CadastreId { get; set; }
-    public string? Geometry { get; set; }
-    public string? BoundingBox { get; set; }
+    public Geometry? Geometry { get; set; }
 
     public int IdIae { get; set; }
     public string? ParentAte { get; set; }
@@ -42,21 +42,11 @@ public class CadastreFeatureEntity
 
 public class CadastreFeatureImportEntity : CadastreFeatureEntity
 {
-    public Guid ImportId { get; set; }
+    public int ImportId { get; set; }
+    public bool DoUpdate { get; set; }
 }
 
-public class CadastreFeatureHistoricEntity : CadastreFeatureEntity
+public class CadastreFeatureHistoricEntity : CadastreFeatureEntity, IHistoricEntity<string>
 {
     public DateTime ChangeDateTime { get; set; }
-}
-
-public class InitialCadastreFeatureImportEntity : CadastreFeatureImportEntity
-{
-    public int? Classification { get; set; }
-    public string? Reason { get; set; }
-    public string? HistoricName { get; set; }
-    public string? NameCategory { get; set; }
-    public string? Comment { get; set; }
-    public bool HistoricPossible { get; set; }
-    public string? YearNamed { get; set; }
 }

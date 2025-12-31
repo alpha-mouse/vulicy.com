@@ -11,7 +11,7 @@ public static class RegistrationExtensions
         {
             foreach (var type in assembly.ExportedTypes.Where(t => !t.IsGenericType && !t.IsAbstract))
             foreach (var typeInterface in type.GetInterfaces().Where(i => i.Name == $"I{type.Name}"))
-                serviceCollection.TryAddTransient(typeInterface, type);
+                serviceCollection.TryAddScoped(typeInterface, type);
         }
     }
 }

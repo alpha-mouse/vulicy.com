@@ -1,0 +1,160 @@
+﻿using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using Vulicy.DB.Configurations;
+using Vulicy.Domain;
+
+namespace Vulicy.DB;
+
+public class FeatureRepository(VulicyDbContext dbContext)
+    : RepositoryBase<FeatureEntity, int>(dbContext)
+        , IFeatureRepository
+{
+    public Task MirrorIsDeletedFromCadastre(DateTime now)
+    {
+        const string query =
+            $"""
+             with "UpdatingFeatures" as (
+                select f."{nameof(FeatureEntity.Id)}"
+                from "{FeatureConfiguration.TableName}" as f
+                join "{CadastreFeatureConfiguration.TableName}" as cf on f."{nameof(FeatureEntity.Id)}" = cf."{nameof(CadastreFeatureEntity.FeatureId)}"
+                where f."{nameof(FeatureEntity.IsDeleted)}" != cf."{nameof(CadastreFeatureEntity.IsDeleted)}"
+             )
+             insert into "{FeatureHistoricConfiguration.TableName}" (
+                 "{nameof(FeatureHistoricEntity.Id)}",
+                 "{nameof(FeatureHistoricEntity.CreatedDateTime)}",
+                 "{nameof(FeatureHistoricEntity.ModifiedDateTime)}",
+                 "{nameof(FeatureHistoricEntity.NameBeTarask)}",
+                 "{nameof(FeatureHistoricEntity.NameBeNark)}",
+                 "{nameof(FeatureHistoricEntity.NameRu)}",
+                 "{nameof(FeatureHistoricEntity.Classification)}",
+                 "{nameof(FeatureHistoricEntity.Type)}",
+                 "{nameof(FeatureHistoricEntity.RenamingReason)}",
+                 "{nameof(FeatureHistoricEntity.HistoricNames)}",
+                 "{nameof(FeatureHistoricEntity.Comment)}",
+                 "{nameof(FeatureHistoricEntity.HistoricPossible)}",
+                 "{nameof(FeatureHistoricEntity.YearNamed)}",
+                 "{nameof(FeatureHistoricEntity.IsDeleted)}",
+                 "{nameof(FeatureHistoricEntity.ForumRelativeLink)}",
+                 "{nameof(FeatureHistoricEntity.Geometry)}",
+                 "{nameof(FeatureHistoricEntity.NamingCategoryId)}",
+                 "{nameof(FeatureHistoricEntity.DossierRecordId)}",
+                 "{nameof(FeatureHistoricEntity.ChangeDateTime)}"
+             )
+             select
+                 f."{nameof(FeatureEntity.Id)}",
+                 f."{nameof(FeatureEntity.CreatedDateTime)}",
+                 f."{nameof(FeatureEntity.ModifiedDateTime)}",
+                 f."{nameof(FeatureEntity.NameBeTarask)}",
+                 f."{nameof(FeatureEntity.NameBeNark)}",
+                 f."{nameof(FeatureEntity.NameRu)}",
+                 f."{nameof(FeatureEntity.Classification)}",
+                 f."{nameof(FeatureEntity.Type)}",
+                 f."{nameof(FeatureEntity.RenamingReason)}",
+                 f."{nameof(FeatureEntity.HistoricNames)}",
+                 f."{nameof(FeatureEntity.Comment)}",
+                 f."{nameof(FeatureEntity.HistoricPossible)}",
+                 f."{nameof(FeatureEntity.YearNamed)}",
+                 f."{nameof(FeatureEntity.IsDeleted)}",
+                 f."{nameof(FeatureEntity.ForumRelativeLink)}",
+                 f."{nameof(FeatureEntity.Geometry)}",
+                 f."{nameof(FeatureEntity.NamingCategoryId)}",
+                 f."{nameof(FeatureEntity.DossierRecordId)}",
+                 @now
+             from "{FeatureConfiguration.TableName}" f
+             join "UpdatingFeatures" uf on f."{nameof(FeatureEntity.Id)}" = uf."{nameof(FeatureEntity.Id)}"
+             ;
+             
+             merge into "{FeatureConfiguration.TableName}" as target
+                 using "{CadastreFeatureConfiguration.TableName}" as source
+             on target."{nameof(FeatureEntity.Id)}" = source."{nameof(CadastreFeatureEntity.FeatureId)}"
+                 and target."{nameof(FeatureEntity.IsDeleted)}" != source."{nameof(CadastreFeatureEntity.IsDeleted)}"
+             when matched then
+             update set
+                 "{nameof(FeatureEntity.IsDeleted)}" = source."{nameof(CadastreFeatureEntity.IsDeleted)}"
+             ;
+             """;
+        return Context.Database.ExecuteSqlRawAsync(query, new NpgsqlParameter("now", now));
+    }
+
+    public Task<List<FeatureEntity>> GetByAteWithCadastreTracking(int ate)
+    {
+        return Entities
+            .AsTracking()
+            .Include(x => x.CadastreFeature)
+            .Where(x => !x.IsDeleted && x.CadastreFeature != null && x.CadastreFeature.Ate == ate)
+            .ToListAsync();
+    }
+
+    public Task<List<FeatureEntity>> GetByAteWithImportsTracking(int ate)
+    {
+        return Entities
+            .AsTracking()
+            .Include(x => x.CadastreFeature)
+            .Include(x => x.OsmFeatures)
+            .Where(x => !x.IsDeleted && x.CadastreFeature != null && x.CadastreFeature.Ate == ate)
+            .ToListAsync();
+    }
+
+    public Task<List<FeatureEntity>> GetNextForGeometryUpdateTracking(int batchSize)
+    {
+        return Entities
+            .Include(x => x.OsmFeatures)
+            .Where(x => x.OsmFeatures.Any(x => x.GeometryUpdatePending))
+            // unstable ordering doesn't matter here, anyway everything will be processed eventually
+            .Take(batchSize)
+            .ToListAsync();
+    }
+
+    public Task MirrorFromInitialCadastre()
+    {
+        const string query =
+            $"""
+             with "UpdatingFeatures" as (
+                select cf."{nameof(CadastreFeatureEntity.FeatureId)}",
+                    icfi."{nameof(InitialCadastreFeatureImportEntity.HistoricName)}",
+                    icfi."{nameof(InitialCadastreFeatureImportEntity.Comment)}",
+                    icfi."{nameof(InitialCadastreFeatureImportEntity.HistoricPossible)}",
+                    icfi."{nameof(InitialCadastreFeatureImportEntity.YearNamed)}"
+                from "{CadastreFeatureConfiguration.TableName}" as cf
+                join "{InitialCadastreFeatureImportConfiguration.TableName}" as icfi on cf."{nameof(CadastreFeatureEntity.Id)}" = icfi."{nameof(InitialCadastreFeatureImportEntity.Id)}"
+                where cf."{nameof(CadastreFeatureEntity.FeatureId)}" is not null
+             )
+             update "{FeatureConfiguration.TableName}" as f
+             set
+                 "{nameof(FeatureEntity.HistoricNames)}" = uf."{nameof(InitialCadastreFeatureImportEntity.HistoricName)}",
+                 "{nameof(FeatureEntity.Comment)}" = uf."{nameof(InitialCadastreFeatureImportEntity.Comment)}",
+                 "{nameof(FeatureEntity.HistoricPossible)}" = uf."{nameof(InitialCadastreFeatureImportEntity.HistoricPossible)}",
+                 "{nameof(FeatureEntity.YearNamed)}" = uf."{nameof(InitialCadastreFeatureImportEntity.YearNamed)}"
+             from "UpdatingFeatures" as uf
+             where f."{nameof(FeatureEntity.Id)}" = uf."{nameof(CadastreFeatureEntity.FeatureId)}"
+             ;
+             """;
+        return Context.Database.ExecuteSqlRawAsync(query);
+    }
+
+    public Task AssignClassificationsFromInitialCadastre()
+    {
+        const string query =
+            $"""
+             with "UpdatingFeatures" as (
+                select cf."{nameof(CadastreFeatureEntity.FeatureId)}",
+                    icfi."{nameof(InitialCadastreFeatureImportEntity.Classification)}",
+                    f."{nameof(FeatureEntity.DossierRecordId)}"
+                from "{CadastreFeatureConfiguration.TableName}" as cf
+                join "{InitialCadastreFeatureImportConfiguration.TableName}" as icfi on cf."{nameof(CadastreFeatureEntity.Id)}" = icfi."{nameof(InitialCadastreFeatureImportEntity.Id)}"
+                join "{FeatureConfiguration.TableName}" as f on cf."{nameof(CadastreFeatureEntity.FeatureId)}" = f."{nameof(FeatureEntity.Id)}"
+                where cf."{nameof(CadastreFeatureEntity.FeatureId)}" is not null
+             )
+             update "{FeatureConfiguration.TableName}" as f
+             set
+                 "{nameof(FeatureEntity.Classification)}" = uf."{nameof(InitialCadastreFeatureImportEntity.Classification)}"
+             from "UpdatingFeatures" as uf
+             left outer join "{DossierRecordConfiguration.TableName}" dr
+                on uf."{nameof(FeatureEntity.DossierRecordId)}" = dr."{nameof(DossierRecordEntity.Id)}"
+             where f."{nameof(FeatureEntity.Id)}" = uf."{nameof(CadastreFeatureEntity.FeatureId)}"
+                and (dr."{nameof(DossierRecordEntity.Id)}" is null or dr."{nameof(DossierRecordEntity.Classification)}" != uf."{nameof(InitialCadastreFeatureImportEntity.Classification)}")
+             ;
+             """;
+        return Context.Database.ExecuteSqlRawAsync(query);
+    }
+}
