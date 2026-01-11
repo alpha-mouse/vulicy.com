@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Нашыя Вуліцы</title>
+  <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+  <style>
+    .info-panel {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      max-width: 360px;
+      background: rgba(255,255,255,0.96);
+      backdrop-filter: blur(4px);
+      border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      padding: 12px 14px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      font-size: 14px;
+      color: #111;
+      z-index: 5;
+    }
+    .info-panel .section { margin-bottom: 10px; }
+    .info-panel .label { font-weight: 600; margin-bottom: 4px; color: #333; }
+    .info-panel .value { white-space: pre-wrap; color: #111; }
+    .info-panel .muted { color: #666; }
+  </style>
+</head>
+<body style="margin:0;">
+  <div id="map" style="height: 100vh;"></div>
+  <div id="info-panel" class="info-panel"></div>
+
+  <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/pmtiles@3.0.6/dist/pmtiles.js"></script>
+  <script>
+    (function() {
+      // Initialize MapLibre with an OSM raster basemap
+      var map = new maplibregl.Map({
+        container: 'map',
+        style: {
+          version: 8,
+          sources: {
+            osm: {
+              type: 'raster',
+              tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+              tileSize: 256,
+              attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }
+          },
+          layers: [
+            { id: 'osm', type: 'raster', source: 'osm' }
+          ]
+        },
+        center: [27.5615, 53.9045],
+        zoom: 13
+      });
+
+      // Register PMTiles protocol for partial loading
+      var protocol = new pmtiles.Protocol();
+      maplibregl.addProtocol('pmtiles', protocol.tile);
+
+      // URL to the pmtiles file served by your web server
+      var pmtilesHttpUrl = window.location.origin + '/data/file2.pmtiles';
+
+      // Info panel helpers
+      var infoPanel = document.getElementById('info-panel');
+      function escapeHtml(input) {
+        if (input === null || input === undefined) return '';
+        return String(input)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+      function decisionMapping(decision) {
+        var str = decision === undefined || decision === null ? null : String(decision);
+        var text = null;
+        switch (str) {
+          case '1': text = 'Перайменаваньне неабходнае ў прыярытэтным парадку'; break;
+          case '2': text = 'Перайменаваньне неабходнае'; break;
+          case '3': text = 'Перайменаваньне пажаданае'; break;
+          case '4': text = 'Перайменаваньне магчымае'; break;
+          case '5': text = 'Перайменаваньне не патрэбнае'; break;
+          default: text = null;
+        }
+        if (text === null) {
+          return { number: null, text: 'Статус невядомы' };
+        }
+        return { number: str, text: text };
+      }
+      function renderInfoPanel(props) {
+        if (!props) {
+          infoPanel.innerHTML = '<div class="muted">Клікніце на вуліцу, каб убачыць падрабязнасьці.</div>';
+          return;
+        }
+        var dec = decisionMapping(props.decision);
+        var html = '';
+        
+        // Street name at the top
+        var streetName = '';
+        if (props.element_name_bel) streetName += props.element_name_bel;
+        if (props.element_type_short_name_bel) {
+          if (streetName) streetName += ' ';
+          streetName += props.element_type_short_name_bel;
+        }
+        if (streetName) {
+          html += '<div class="section">';
+          html += '<div class="value" style="font-size:16px; font-weight:700; color:#000;">' + escapeHtml(streetName) + '</div>';
+          html += '</div>';
+        }
+        
+        html += '<div class="section">';
+        html += '<div class="label">Статус</div>';
+        if (dec.number) {
+          html += '<div class="value"><strong>' + escapeHtml(dec.number) + '</strong> — ' + escapeHtml(dec.text) + '</div>';
+        } else {
+          html += '<div class="value">' + escapeHtml(dec.text) + '</div>';
+        }
+        html += '</div>';
+
+        if (props.reason) {
+          html += '<div class="section">';
+          html += '<div class="label">Абгрунтаваньне патрэбы перайменаваньня</div>';
+          html += '<div class="value">' + escapeHtml(props.reason) + '</div>';
+          html += '</div>';
+        }
+        if (props.short_info) {
+          html += '<div class="section">';
+          html += '<div class="label">Афіцыйнае апісаньне</div>';
+          html += '<div class="value">' + escapeHtml(props.short_info) + '</div>';
+          html += '</div>';
+        }
+        if (props.historical) {
+          html += '<div class="section">';
+          html += '<div class="label">гістарычная назва</div>';
+          html += '<div class="value">' + escapeHtml(props.historical) + '</div>';
+          html += '</div>';
+        }
+        infoPanel.innerHTML = html;
+      }
+      // Initial hint
+      renderInfoPanel(null);
+
+      // Add the PMTiles vector source
+      map.on('load', function() {
+        map.addSource('streets', {
+          type: 'vector',
+          url: 'pmtiles://' + pmtilesHttpUrl
+        });
+
+        // Detect appropriate vector layer id from metadata (preferring one with element_type/short_info)
+        var pm = new pmtiles.PMTiles(pmtilesHttpUrl);
+        pm.getMetadata().then(function(metadata) {
+          var layerId = null;
+          if (metadata && Array.isArray(metadata.vector_layers)) {
+            // Prefer a layer that has element_type or short_info fields
+            for (var i = 0; i < metadata.vector_layers.length; i++) {
+              var l = metadata.vector_layers[i];
+              var fields = l && l.fields ? l.fields : {};
+              if (fields.element_type !== undefined || fields.short_info !== undefined) {
+                layerId = l.id;
+                break;
+              }
+            }
+            if (!layerId && metadata.vector_layers.length > 0) {
+              layerId = metadata.vector_layers[0].id;
+            }
+          }
+
+          // Fallback layer id if metadata missing
+          if (!layerId) layerId = 'streets';
+
+          // Base streets layer (filtered to element_type < 30)
+          map.addLayer({
+            id: 'streets-layer',
+            type: 'line',
+            source: 'streets',
+            'source-layer': layerId,
+            filter: ['all', ['<', ['to-number', ['get', 'element_type']], 30]],
+            paint: {
+              'line-color': ['match', ['to-string', ['get', 'decision']],
+                '1', '#F21818',
+                '2', '#CF404F',
+                '3', '#AC6786',
+                '4', '#898FBD',
+                '5', '#66B6F3',
+                '#46494B'
+              ],
+              'line-width': 2,
+              'line-opacity': 0.7
+            }
+          });
+
+          // Highlight layer for hover (placed above), initially matches nothing
+          map.addLayer({
+            id: 'streets-layer-highlight',
+            type: 'line',
+            source: 'streets',
+            'source-layer': layerId,
+            filter: ['all', ['<', ['to-number', ['get', 'element_type']], 30], ['==', ['get', '_hover_key_'], '_none_']],
+            paint: {
+              'line-color': '#00ffff',
+              'line-width': 5,
+              'line-opacity': 0.9
+            }
+          });
+
+          // Determine a grouping key so the whole street behaves as one element
+          function pickGroupKey(props) {
+            var candidates = ['street_id', 'group_id', 'name', 'name:be', 'name:ru', 'ref', 'id', 'osm_id'];
+            for (var i = 0; i < candidates.length; i++) {
+              var k = candidates[i];
+              if (props[k] !== undefined && props[k] !== null && String(props[k]).length > 0) return k;
+            }
+            return 'id';
+          }
+
+          var currentKey = null;
+          var currentValue = null;
+
+          function setHoverFilter(key, value) {
+            // Update highlight layer filter to match all segments of the same street
+            var newFilter = ['all',
+              ['<', ['to-number', ['get', 'element_type']], 30],
+              ['==', ['get', key], value]
+            ];
+            map.setFilter('streets-layer-highlight', newFilter);
+          }
+
+          function clearHoverFilter() {
+            map.setFilter('streets-layer-highlight', ['all', ['<', ['to-number', ['get', 'element_type']], 30], ['==', ['get', '_hover_key_'], '_none_']]);
+            currentKey = null;
+            currentValue = null;
+          }
+
+          map.on('mouseenter', 'streets-layer', function() {
+            map.getCanvas().style.cursor = 'pointer';
+          });
+
+          map.on('mouseleave', 'streets-layer', function() {
+            map.getCanvas().style.cursor = '';
+            clearHoverFilter();
+          });
+
+          map.on('mousemove', 'streets-layer', function(e) {
+            if (!e.features || e.features.length === 0) return;
+            var f = e.features[0];
+            var key = pickGroupKey(f.properties || {});
+            var value = f.properties ? f.properties[key] : null;
+            if (key && value != null && (key !== currentKey || value !== currentValue)) {
+              currentKey = key;
+              currentValue = value;
+              setHoverFilter(key, value);
+            }
+          });
+
+          map.on('click', 'streets-layer', function(e) {
+            if (!e.features || e.features.length === 0) return;
+            var f = e.features[0];
+            renderInfoPanel(f.properties || {});
+          });
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

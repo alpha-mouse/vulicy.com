@@ -9,6 +9,38 @@ public class FeatureRepository(VulicyDbContext dbContext)
     : RepositoryBase<FeatureEntity, int>(dbContext)
         , IFeatureRepository
 {
+    public async Task<byte[]?> GetTile(int z, int x, int y)
+    {
+        const string query = $"""
+            select ST_AsMVT(tile, 'streets') as "Value" from (
+              select
+                ST_AsMVTGeom(ST_Transform(f."{nameof(FeatureEntity.Geometry)}", 3857), ST_TileEnvelope(@z, @x, @y), 4096, 64, true) AS geom,
+                f."{nameof(FeatureEntity.NameBeTarask)}",
+                f."{nameof(FeatureEntity.NameBeNark)}",
+                f."{nameof(FeatureEntity.NameRu)}",
+                coalesce(dr."{nameof(FeatureEntity.Classification)}", f."{nameof(FeatureEntity.Classification)}", 0) as "{nameof(FeatureEntity.Classification)}",
+                f."{nameof(FeatureEntity.Type)}",
+                f."{nameof(FeatureEntity.RenamingReason)}",
+                f."{nameof(FeatureEntity.HistoricNames)}",
+                f."{nameof(FeatureEntity.YearNamed)}",
+                f."{nameof(FeatureEntity.ForumRelativeLink)}",
+                f."{nameof(FeatureEntity.NamingCategoryId)}"
+              from "{FeatureConfiguration.TableName}" f
+              left outer join "{DossierRecordConfiguration.TableName}" dr on f."{nameof(FeatureEntity.DossierRecordId)}" = dr."{nameof(DossierRecordEntity.Id)}"
+              where not f."{nameof(FeatureEntity.IsDeleted)}"
+                and f."{nameof(FeatureEntity.Geometry)}" && ST_Transform(ST_TileEnvelope(@z, @x, @y), 4326)
+            ) AS tile
+            """;
+
+        return await Context.Database
+            .SqlQueryRaw<byte[]>(query,
+                new NpgsqlParameter("z", z),
+                new NpgsqlParameter("x", x),
+                new NpgsqlParameter("y", y))
+            .FirstOrDefaultAsync();
+    }
+
+
     public Task MirrorIsDeletedFromCadastre(DateTime now)
     {
         const string query =

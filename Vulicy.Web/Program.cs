@@ -17,5 +17,6 @@ var app = builder.Build();
 await app.Services.InitializeDatabases();
 
 app.MapImport();
+app.MapMap();
 
 app.Run();

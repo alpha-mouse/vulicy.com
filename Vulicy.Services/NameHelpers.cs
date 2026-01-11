@@ -44,6 +44,11 @@ public static partial class NameHelpers
         return threshold <= GetSimilarity(s1, s2);
     }
 
+    public static int GetLevenshteinDistance(string s1, string s2)
+    {
+        return Fastenshtein.Levenshtein.Distance(s1, s2);
+    }
+
     public static (int distance, int maxLength) GetLevenshteinDistanceWithMaxLength(string s1, string s2)
     {
         var distance = Fastenshtein.Levenshtein.Distance(s1, s2);
