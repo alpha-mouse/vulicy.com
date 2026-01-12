@@ -11,8 +11,6 @@ public partial class ImportPipeline(
     ILogger<ImportPipeline>? logger
 ) : IImportPipeline
 {
-    private const int DossierSimilarityThreshold = 3;
-
     private static readonly GeometryFactory GeometryFactory = new(new PrecisionModel(), 4326);
 
     public void StartRunning(int importId, ImportType importType, CancellationToken cancellationToken)
@@ -465,93 +463,44 @@ public partial class ImportPipeline(
         var namingCategoryRepository = scope.ServiceProvider.GetRequiredService<INamingCategoryRepository>();
         var initialCadastreFeatureImportRepository = scope.ServiceProvider.GetRequiredService<IInitialCadastreFeatureImportRepository>();
 
-        if (await dossierRecordRepository.HasAny())
-            throw new InvalidOperationException("Dossier records have already been initialized");
-
         var namingCategories = await namingCategoryRepository.GetAll();
         if (namingCategories.Count == 0)
             throw new InvalidOperationException("Naming categories not found, please import them first");
 
-        var namingCategoriesDictionary = namingCategories.ToDictionary(x => x.Name);
+        LogInitializingDossierRecords();
 
-        var candidateDossierRecords = await initialCadastreFeatureImportRepository.GetReasonShortInfoPairs();
-        var recordsToCreate = new List<DossierRecordEntity>();
+        var namingCategoriesDictionary = namingCategories.ToDictionary(x => x.Name, x => x.Id);
 
-        LogCreatingDossierRecords();
+        var dossierCandidateData = await initialCadastreFeatureImportRepository.GetDossierCandidateData();
+        var dossierCandidateDataLookup = dossierCandidateData.ToLookup(x => (x.reason, x.shortInfo));
 
-        foreach (var (reason, shortInfo, nameCategory, classification) in candidateDossierRecords.Where(p => p is { reason: not null, shortInfo: not null }))
+        const int take = 500;
+        for (var skip = 0; ; skip += take)
         {
-            AddIfUnique(reason, shortInfo, nameCategory, classification);
-            if (recordsToCreate.Count % 1000 == 0)
-                LogDossierRecordsProgress(recordsToCreate.Count);
-        }
+            var records = await dossierRecordRepository.GetRangeTracked(skip, take);
+            if (records.Count == 0)
+                if (skip == 0)
+                    throw new InvalidOperationException("Dossier records not found, please import them first via direct sql import");
+                else
+                    break;
 
-        foreach (var (reason, shortInfo, nameCategory, classification) in candidateDossierRecords.Where(p => (p.reason == null) != (p.shortInfo == null)))
-        {
-            AddIfUnique(reason, shortInfo, nameCategory, classification);
-            if (recordsToCreate.Count % 1000 == 0)
-                LogDossierRecordsProgress(recordsToCreate.Count);
-        }
+            foreach (var record in records)
+            {
+                var candidates = dossierCandidateDataLookup[(record.DescriptionBe, record.DescriptionRu)];
+                var nameCategory = candidates.Select(x => x.nameCategory).FirstOrDefault(x => x != null);
 
-        // Persist into the DB batching by 1000
-        const int batchSize = 1000;
-        for (int i = 0; i < recordsToCreate.Count; i += batchSize)
-        {
-            dossierRecordRepository.AddRange(recordsToCreate.Skip(i).Take(batchSize));
+                if (nameCategory != null)
+                    record.NamingCategoryId = namingCategoriesDictionary[nameCategory];
+
+                record.Classification = candidates.Select(x => x.classificationGrade).Max();
+            }
+
             await dossierRecordRepository.SaveChanges();
+            LogDossierRecordsProgress(skip + take);
             dossierRecordRepository.ClearChangeTracker();
         }
 
         LogDossierRecordsComplete();
-
-        return;
-
-        void AddIfUnique(string? reason, string? shortInfo, string? nameCategory, ClassificationGrade classificationGrade)
-        {
-            var canonicalDossierRecord = recordsToCreate.FirstOrDefault(existing =>
-            {
-                if (reason != null && shortInfo != null)
-                {
-                    if (DossierSimilarityThreshold < Math.Abs((existing.DescriptionBe?.Length ?? 0) - reason.Length) + Math.Abs((existing.DescriptionRu?.Length ?? 0) - shortInfo.Length))
-                        return false;
-                    var distanceBe = existing.DescriptionBe == null ? reason.Length : NameHelpers.GetLevenshteinDistance(existing.DescriptionBe, reason);
-                    var distanceRu = existing.DescriptionRu == null ? shortInfo.Length : NameHelpers.GetLevenshteinDistance(existing.DescriptionRu, shortInfo);
-                    return distanceBe + distanceRu <= DossierSimilarityThreshold;
-                }
-
-                if (reason != null)
-                    return existing.DescriptionBe != null
-                           && Math.Abs(existing.DescriptionBe.Length - reason.Length) <= DossierSimilarityThreshold
-                           && NameHelpers.GetLevenshteinDistance(existing.DescriptionBe, reason) <= DossierSimilarityThreshold;
-
-                if (shortInfo != null)
-                    return existing.DescriptionRu != null 
-                           && Math.Abs(existing.DescriptionRu.Length - shortInfo.Length) <= DossierSimilarityThreshold
-                           && NameHelpers.GetLevenshteinDistance(existing.DescriptionRu, shortInfo) <= DossierSimilarityThreshold;
-
-                return false;
-            });
-
-            if (canonicalDossierRecord == null)
-            {
-                recordsToCreate.Add(new DossierRecordEntity
-                {
-                    DescriptionBe = reason,
-                    DescriptionRu = shortInfo,
-                    NamingCategoryId = nameCategory != null ? namingCategoriesDictionary.GetValueOrDefault(nameCategory)?.Id : null,
-                    Classification = classificationGrade,
-                });
-            }
-            else
-            {
-                LogCanonicalizingDossierRecord(canonicalDossierRecord.DescriptionBe, reason, canonicalDossierRecord.DescriptionRu, shortInfo);
-                if (canonicalDossierRecord.Classification == ClassificationGrade.None)
-                    canonicalDossierRecord.Classification = classificationGrade;
-                else if (classificationGrade != ClassificationGrade.None && canonicalDossierRecord.Classification != classificationGrade)
-                // if in different cities the same dossier record is marked with different classification grades, assume the most permissive one (numerically highest)
-                    canonicalDossierRecord.Classification = (ClassificationGrade)Math.Max((int)canonicalDossierRecord.Classification, (int)classificationGrade);
-            }
-        }
     }
 
     public async Task InitializeFeaturesDossierCategoriesReferences(CancellationToken cancellationToken)
@@ -571,14 +520,7 @@ public partial class ImportPipeline(
         if (dossierRecords.Count == 0)
             throw new InvalidOperationException("Dossier records not found, please import them first");
 
-        var dossierRecordsPrepared = dossierRecords.Select(x => (
-                record: x.Id,
-                descriptionRu: x.DescriptionRu == null ? null : new Fastenshtein.Levenshtein(x.DescriptionRu),
-                descriptionBe: x.DescriptionBe == null ? null : new Fastenshtein.Levenshtein(x.DescriptionBe)))
-            .ToList();
-        var recordsByDescriptionBe = dossierRecords.Where(x => x.DescriptionBe != null).ToLookup(x => x.DescriptionBe, x => x.Id);
-        var recordsByDescriptionRu = dossierRecords.Where(x => x.DescriptionRu != null).ToLookup(x => x.DescriptionRu, x => x.Id);
-        dossierRecords = null;
+        var dossierRecordsLookup = dossierRecords.ToLookup(x => (x.DescriptionBe, x.DescriptionRu));
 
         var namingCategoriesDictionary = namingCategories.ToDictionary(x => x.Name);
         var initialCadastreFeatureImports = await initialCadastreFeatureImportRepository.GetReasonsAndNameCategories();
@@ -587,7 +529,6 @@ public partial class ImportPipeline(
         var ates = await cadastreFeatureRepository.GetAllAtes();
 
         var updatedCount = 0;
-
         foreach (var ate in ates)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -603,7 +544,7 @@ public partial class ImportPipeline(
                     var reason = initialCadastreFeatureImportsDictionary.GetValueOrDefault(feature.CadastreFeature!.Id).reason;
                     var shortInfo = feature.CadastreFeature.ShortInfo;
 
-                    var dossierRecord = FindDossierMatch(reason, shortInfo);
+                    var dossierRecord = FindDossierMatch(reason, shortInfo, feature.NameBeNark, feature.NameRu);
                     featureUpdated |= dossierRecord != null;
                     feature.DossierRecordId = dossierRecord;
                 }
@@ -619,7 +560,7 @@ public partial class ImportPipeline(
                 if (featureUpdated)
                     updatedCount++;
 
-                if (updatedCount % 1000 == 0)
+                if (updatedCount % 1000 == 0 && featureUpdated)
                     LogUpdateDossierLinkProgress(updatedCount);
             }
             await featureRepository.SaveChanges();
@@ -630,67 +571,18 @@ public partial class ImportPipeline(
 
         return;
 
-        int? FindDossierMatch(string? reason, string? shortInfo)
+        int? FindDossierMatch(string? reason, string? shortInfo, string? nameBeNark, string? nameRu)
         {
             if (reason == null && shortInfo == null) return null;
 
-            // 1. Precise fast-path via lookups
-            if (reason != null && shortInfo != null)
+            foreach (var candidate in dossierRecordsLookup[(reason, shortInfo)])
             {
-                var match = recordsByDescriptionBe[reason].Intersect(recordsByDescriptionRu[shortInfo]).Cast<int?>().FirstOrDefault();
-                if (match.HasValue) return match;
-            }
-            if (reason != null)
-            {
-                var match = recordsByDescriptionBe[reason].Cast<int?>().FirstOrDefault();
-                if (match.HasValue) return match;
-            }
-            if (shortInfo != null)
-            {
-                var match = recordsByDescriptionRu[shortInfo].Cast<int?>().FirstOrDefault();
-                if (match.HasValue) return match;
+                if (candidate.PossibleNamesRu != null && nameRu != null && candidate.PossibleNamesRu.Contains(nameRu, StringComparer.OrdinalIgnoreCase)
+                    || candidate.PossibleNamesBeNark != null && nameBeNark != null && candidate.PossibleNamesBeNark.Contains(nameBeNark, StringComparer.OrdinalIgnoreCase))
+                    return candidate.Id;
             }
 
-            // 2. Fuzzy fallback consistent with AddIfUnique logic
-            int? bestMatchId = null;
-            int bestDistance = int.MaxValue;
-
-            foreach (var record in dossierRecordsPrepared)
-            {
-                var distance = int.MaxValue;
-
-                if (reason != null && shortInfo != null)
-                {
-                    var lengthExistingBe = record.descriptionBe?.StoredLength ?? 0;
-                    var lengthExistingRu = record.descriptionRu?.StoredLength ?? 0;
-
-                    if (Math.Abs(lengthExistingBe - reason.Length) + Math.Abs(lengthExistingRu - shortInfo.Length) <= DossierSimilarityThreshold)
-                    {
-                        var distanceBe = record.descriptionBe?.DistanceFrom(reason) ?? reason.Length;
-                        var distanceRu = record.descriptionRu?.DistanceFrom(shortInfo) ?? shortInfo.Length;
-                        distance = distanceBe + distanceRu;
-                    }
-                }
-                else if (reason != null)
-                {
-                    if (record.descriptionBe != null && Math.Abs(record.descriptionBe.StoredLength - reason.Length) <= DossierSimilarityThreshold)
-                        distance = record.descriptionBe.DistanceFrom(reason);
-                }
-                else if (shortInfo != null)
-                {
-                    if (record.descriptionRu != null && Math.Abs(record.descriptionRu.StoredLength - shortInfo.Length) <= DossierSimilarityThreshold)
-                        distance = record.descriptionRu.DistanceFrom(shortInfo);
-                }
-
-                if (distance <= DossierSimilarityThreshold && distance < bestDistance)
-                {
-                    bestDistance = distance;
-                    bestMatchId = record.record;
-                    if (bestDistance == 0) break;
-                }
-            }
-
-            return bestMatchId;
+            return null;
         }
     }
 
@@ -804,16 +696,13 @@ public partial class ImportPipeline(
     private partial void LogUpdateDossierLinkComplete(int count);
 
 
-    [LoggerMessage(LogLevel.Information, "Creating dossier records...")]
-    private partial void LogCreatingDossierRecords();
+    [LoggerMessage(LogLevel.Information, "Assigning fields on dossier records...")]
+    private partial void LogInitializingDossierRecords();
 
-    [LoggerMessage(LogLevel.Information, "Dossier records progress: {count}...")]
+    [LoggerMessage(LogLevel.Information, "Dossier records fields progress: {count}...")]
     private partial void LogDossierRecordsProgress(int count);
 
-    [LoggerMessage(LogLevel.Information, "Dossier records canonicalization:\nCanonical Be: {canonicalBe}\n  Matched Be: {matchedBe}\nCanonical Ru: {canonicalRu}\n  Matched Ru: {matchedRu}")]
-    private partial void LogCanonicalizingDossierRecord(string? canonicalBe, string? matchedBe, string? canonicalRu, string? matchedRu);
-
-    [LoggerMessage(LogLevel.Information, "Dossier records creation complete")]
+    [LoggerMessage(LogLevel.Information, "Dossier records initialization complete")]
     private partial void LogDossierRecordsComplete();
 
 

@@ -12,7 +12,7 @@ public class InitialCadastreFeatureImportRepository(VulicyDbContext dbContext)
         return Entities.AnyAsync();
     }
 
-    public async Task<List<(string? reason, string? shortInfo, string? nameCategory, ClassificationGrade classificationGrade)>> GetReasonShortInfoPairs()
+    public async Task<List<(string? reason, string? shortInfo, string? nameCategory, ClassificationGrade classificationGrade)>> GetDossierCandidateData()
     {
         return await (
                 from cadastreFeature in Context.Set<CadastreFeatureEntity>()

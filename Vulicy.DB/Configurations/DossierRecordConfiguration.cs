@@ -14,5 +14,8 @@ internal class DossierRecordConfiguration : IEntityTypeConfiguration<DossierReco
         builder.Property(x => x.NameBeTarask).HasMaxLength(128);
         builder.Property(x => x.NameBeNark).HasMaxLength(128);
         builder.Property(x => x.NameRu).HasMaxLength(128);
+
+        builder.Property(x => x.PossibleNamesBeNark).HasJsonColumnType();
+        builder.Property(x => x.PossibleNamesRu).HasJsonColumnType();
     }
 }
