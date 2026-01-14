@@ -15,9 +15,15 @@ builder.Services.AddConventionalServices(typeof(IImportingService).Assembly);
 
 var app = builder.Build();
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 await app.Services.InitializeDatabases();
 
 app.MapImport();
 app.MapMap();
 
+app.MapFallbackToFile("index.html");
+
 app.Run();
+
