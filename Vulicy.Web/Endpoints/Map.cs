@@ -8,6 +8,7 @@ public static class Map
     {
         var group = builder.MapGroup("/api/map");
         group.MapGet("/tile/{z}/{x}/{y}.mvt", GetTile);
+        group.MapGet("/naming-categories", GetNamingCategories);
     }
 
     private static async Task<IResult> GetTile(int z, int x, int y, IFeatureRepository featureRepository)
@@ -20,5 +21,10 @@ public static class Map
         }
 
         return Results.NoContent();
+    }
+
+    private static Task<List<NamingCategoryEntity>> GetNamingCategories(INamingCategoryRepository namingCategoryRepository)
+    {
+        return namingCategoryRepository.GetAll();
     }
 }

@@ -14,17 +14,19 @@ public class FeatureRepository(VulicyDbContext dbContext)
         const string query = $"""
             select ST_AsMVT(tile, 'streets') as "Value" from (
               select
+                f."{nameof(FeatureEntity.Id)}",
                 ST_AsMVTGeom(ST_Transform(f."{nameof(FeatureEntity.Geometry)}", 3857), ST_TileEnvelope(@z, @x, @y), 4096, 64, true) AS geom,
                 f."{nameof(FeatureEntity.NameBeTarask)}",
                 f."{nameof(FeatureEntity.NameBeNark)}",
                 f."{nameof(FeatureEntity.NameRu)}",
-                coalesce(dr."{nameof(FeatureEntity.Classification)}", f."{nameof(FeatureEntity.Classification)}", 0) as "{nameof(FeatureEntity.Classification)}",
+                case when f."{nameof(FeatureEntity.Classification)}" = 0 then dr."{nameof(DossierRecordEntity.Classification)}" else f."{nameof(FeatureEntity.Classification)}" end as "{nameof(FeatureEntity.Classification)}",
                 f."{nameof(FeatureEntity.Type)}",
-                f."{nameof(FeatureEntity.RenamingReason)}",
+                coalesce(f."{nameof(FeatureEntity.RenamingReason)}", dr."{nameof(DossierRecordEntity.DescriptionBe)}") as "{nameof(FeatureEntity.RenamingReason)}",
+                dr."{nameof(DossierRecordEntity.NameBeTarask)}" as "EtymologyBeTarask",
                 f."{nameof(FeatureEntity.HistoricNames)}",
                 f."{nameof(FeatureEntity.YearNamed)}",
                 f."{nameof(FeatureEntity.ForumRelativeLink)}",
-                f."{nameof(FeatureEntity.NamingCategoryId)}"
+                coalesce (f."{nameof(FeatureEntity.NamingCategoryId)}", dr."{nameof(DossierRecordEntity.NamingCategoryId)}") as "{nameof(FeatureEntity.NamingCategoryId)}"
               from "{FeatureConfiguration.TableName}" f
               left outer join "{DossierRecordConfiguration.TableName}" dr on f."{nameof(FeatureEntity.DossierRecordId)}" = dr."{nameof(DossierRecordEntity.Id)}"
               where not f."{nameof(FeatureEntity.IsDeleted)}"

@@ -10,6 +10,13 @@ export default defineConfig({
         target: 'http://localhost:5165',
         changeOrigin: true,
         secure: false,
+        timeout: 0,  // Disable proxy timeout
+        proxyTimeout: 0,  // Disable proxy timeout
+        // Configure HTTP agent to allow more concurrent connections
+        agent: new (await import('http')).Agent({
+          keepAlive: true,
+          maxSockets: 100,  // Allow many concurrent requests
+        }),
       }
     }
   }

@@ -12,11 +12,37 @@ const CLASSIFICATION_COLORS = {
   0: '#d9d9d9', // None/Unknown - Grey
 };
 
+const FEATURE_TYPE_LABELS = {
+  11: 'вул.',
+  12: 'пр-т',
+  14: 'пл.',
+  15: 'бульв.',
+  16: 'тракт',
+  17: 'наб.',
+  18: 'шаша',
+  19: 'кальцо',
+  21: 'зав.',
+  22: 'пр-зд',
+  23: 'тупік',
+  24: 'спуск',
+  25: 'заезд',
+  34: 'парк',
+  39: 'сквэр',
+};
+
 const Map = () => {
   const mapContainer = useRef(null);
   const map = useRef(null);
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [hoveredFeature, setHoveredFeature] = useState(null);
+  const [namingCategories, setNamingCategories] = useState([]);
+
+  useEffect(() => {
+    fetch('/api/map/naming-categories')
+      .then(res => res.json())
+      .then(data => setNamingCategories(data))
+      .catch(err => console.error('Failed to fetch naming categories:', err));
+  }, []);
 
   useEffect(() => {
     if (map.current) return;
@@ -91,7 +117,7 @@ const Map = () => {
               ],
               'line-opacity': 0.6
             },
-            filter: ['==', ['get', 'NameBeTarask'], ''] // Initially hide
+            filter: ['==', ['get', 'Id'], -1] // Initially hide
           }
         ]
       },
@@ -107,20 +133,21 @@ const Map = () => {
         const feature = e.features[0];
         setHoveredFeature(feature.properties);
 
-        // Highlight logic - use a unique identifier if available, or NameBeTarask as fallback for grouping
-        const id = feature.properties.NameBeTarask || '';
-        map.current.setFilter('streets-highlight', ['==', ['get', 'NameBeTarask'], id]);
+        // Highlight logic - use unique Id for precise tracking
+        const id = feature.properties.Id;
+        map.current.setFilter('streets-highlight', ['==', ['get', 'Id'], id]);
       }
     });
 
     map.current.on('mouseleave', 'streets-layer', () => {
       map.current.getCanvas().style.cursor = '';
       setHoveredFeature(null);
-      map.current.setFilter('streets-highlight', ['==', ['get', 'NameBeTarask'], '']);
+      map.current.setFilter('streets-highlight', ['==', ['get', 'Id'], -1]);
     });
 
     map.current.on('click', 'streets-layer', (e) => {
       if (e.features.length > 0) {
+        console.log(e.features[0].properties);
         setSelectedFeature(e.features[0].properties);
       }
     });
@@ -136,7 +163,7 @@ const Map = () => {
 
   return (
     <div className="map-container w-full h-full absolute inset-0" ref={mapContainer}>
-      {/* Search Header (Placeholder) */}
+      {/* Search Header (Placeholder) - Hidden for now
       <div className="absolute top-4 left-4 z-10 w-80 glass p-3 flex items-center gap-3 rounded-xl">
         <MapIcon className="text-primary w-5 h-5" />
         <input
@@ -145,60 +172,68 @@ const Map = () => {
           className="bg-transparent border-none outline-none w-full text-sm"
         />
       </div>
+      */}
 
       {/* Selected Feature Info Panel */}
       {selectedFeature && (
-        <div className="absolute right-4 top-4 bottom-4 w-96 glass z-20 overflow-y-auto p-6 flex flex-col gap-6 animate-in slide-in-from-right duration-300">
+        <div className="absolute right-4 top-4 h-fit max-h-panel w-96 glass z-20 overflow-y-auto p-6 flex flex-col gap-6 animate-in slide-in-from-right duration-300">
           <div className="flex justify-between items-start">
-            <h2 className="text-2xl font-bold leading-tight">
+            <h2 className="text-2xl font-bold leading-tight m-0">
+              {FEATURE_TYPE_LABELS[selectedFeature.Type] && (
+                <span className="text-black/40 font-medium mr-2">{FEATURE_TYPE_LABELS[selectedFeature.Type]} </span>
+              )}
               {selectedFeature.NameBeTarask || selectedFeature.NameBeNark || selectedFeature.NameRu}
             </h2>
             <button
               onClick={() => setSelectedFeature(null)}
-              className="p-2 hover:bg-black/5 rounded-full transition-colors"
+              className="text-black/30 hover:text-black/60 transition-colors p-0 appearance-none bg-transparent border-none cursor-pointer outline-none"
             >
-              <X size={20} />
+              <X size={20} strokeWidth={1.2} />
             </button>
           </div>
 
-          <div className="space-y-4">
-            <section>
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-black/50 mb-1">Статус перайменаваньня</h3>
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: CLASSIFICATION_COLORS[selectedFeature.Classification] || CLASSIFICATION_COLORS[0] }}
-                />
-                <span className="font-medium text-lg">
-                  {getClassificationText(selectedFeature.Classification)}
-                </span>
+          <div className="flex flex-col gap-2">
+            <div className="text-sm leading-relaxed">
+              <span className="text-black/50">Клясыфікацыя: </span>
+              <span className="font-medium text-black">{getClassificationText(selectedFeature.Classification)}</span>
+            </div>
+
+            {selectedFeature.EtymologyBeTarask && (
+              <div className="text-sm leading-relaxed">
+                <span className="text-black/50">Этымалёгія: </span>
+                <span className="text-black">{selectedFeature.EtymologyBeTarask}</span>
               </div>
-            </section>
+            )}
 
             {selectedFeature.RenamingReason && (
-              <section>
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-black/50 mb-1">Абгрунтаваньне</h3>
-                <p className="text-sm leading-relaxed">{selectedFeature.RenamingReason}</p>
-              </section>
+              <div className="text-sm leading-relaxed">
+                <span className="text-black/50">Абгрунтаваньне: </span>
+                <span className="text-black">{selectedFeature.RenamingReason}</span>
+              </div>
+            )}
+
+            {selectedFeature.NamingCategoryId && (
+              <div className="text-sm leading-relaxed">
+                <span className="text-black/50">Катэгорыя: </span>
+                <span className="text-black">
+                  {namingCategories.find(c => c.id === selectedFeature.NamingCategoryId)?.name || '...'}
+                </span>
+              </div>
             )}
 
             {selectedFeature.HistoricNames && (
-              <section>
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-black/50 mb-1">Гістарычныя назвы</h3>
-                <p className="text-sm italic">{selectedFeature.HistoricNames}</p>
-              </section>
+              <div className="text-sm leading-relaxed">
+                <span className="text-black/50">Гістарычная(-ыя) назва(-ы): </span>
+                <span className="text-black italic">{selectedFeature.HistoricNames}</span>
+              </div>
             )}
 
-            <div className="pt-4 border-t border-black/10 grid grid-cols-2 gap-4">
-              <div>
-                <h4 className="text-[10px] font-bold uppercase text-black/40">Тып</h4>
-                <p className="text-sm">{selectedFeature.Type || 'Невядома'}</p>
+            {selectedFeature.YearNamed && (
+              <div className="text-sm leading-relaxed">
+                <span className="text-black/50">Год назвы: </span>
+                <span className="text-black">{selectedFeature.YearNamed}</span>
               </div>
-              <div>
-                <h4 className="text-[10px] font-bold uppercase text-black/40">Год назвы</h4>
-                <p className="text-sm">{selectedFeature.YearNamed || '—'}</p>
-              </div>
-            </div>
+            )}
           </div>
 
           {selectedFeature.ForumRelativeLink && (
@@ -216,7 +251,7 @@ const Map = () => {
 
       {/* Legend */}
       <div className="absolute left-4 bottom-10 glass p-4 rounded-xl z-10 w-64 space-y-2">
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2">
           <Layers size={16} className="text-black/60" />
           <span className="text-xs font-bold uppercase tracking-widest text-black/60">Легенда</span>
         </div>
@@ -235,13 +270,14 @@ const Map = () => {
 
 function getClassificationText(lvl) {
   const mapping = {
-    1: 'Прыярытэтнае перайменаваньне',
-    2: 'Неабходнае перайменаваньне',
-    3: 'Пажаданае перайменаваньне',
-    4: 'Магчымае перайменаваньне',
-    5: 'Не патрэбнае перайменаваньне',
+    0: 'Статус невядомы',
+    1: 'Перайменаваньне неабходнае ў прыярытэтным парадку',
+    2: 'Перайменаваньне неабходнае',
+    3: 'Перайменаваньне пажаданае',
+    4: 'Перайменаваньне магчымае',
+    5: 'Перайменаваньне не патрэбнае',
   };
-  return mapping[lvl] || 'Статус невядомы';
+  return mapping[lvl] || mapping[0];
 }
 
 export default Map;

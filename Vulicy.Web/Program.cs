@@ -6,7 +6,8 @@ var builder = WebApplication.CreateSlimBuilder(args);
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
-    options.SerializerOptions.TypeInfoResolverChain.Insert(0, VulicyJsonSerializerContext.Default);
+    options.SerializerOptions.TypeInfoResolverChain.Insert(0, VulicyWebSerializerContext.Default);
+    options.SerializerOptions.TypeInfoResolverChain.Insert(1, VulicyServicesSerializerContext.Default);
 });
 
 builder.Services.AddDatabase(builder.Configuration);
