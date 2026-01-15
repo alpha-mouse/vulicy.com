@@ -1,0 +1,11 @@
+**/.DS_Store
+**/.git
+**/.gitignore
+**/.vs
+**/.vscode
+**/bin
+**/obj
+**/node_modules
+**/dist
+**/wwwroot/*
+!**/wwwroot/index.html
