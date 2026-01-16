@@ -47,109 +47,96 @@ const Map = () => {
   useEffect(() => {
     if (map.current) return;
 
+    const MAPTILER_KEY = 'MmlCv2msuHGpnA8SG2Ko';
+
     map.current = new maplibregl.Map({
       container: mapContainer.current,
-      style: {
-        version: 8,
-        sources: {
-          'stadia-tiles': {
-            type: 'raster',
-            tiles: [
-              'https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}.png'
-            ],
-            tileSize: 256,
-            attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="http://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-          },
-          'vulicy-streets': {
-            type: 'vector',
-            tiles: [window.location.origin + '/api/map/tile/{z}/{x}/{y}.mvt'],
-            minzoom: 0,
-            maxzoom: 20
-          }
-        },
-        layers: [
-          {
-            id: 'base-layer',
-            type: 'raster',
-            source: 'stadia-tiles',
-          },
-          {
-            id: 'streets-layer',
-            type: 'line',
-            source: 'vulicy-streets',
-            'source-layer': 'streets',
-            paint: {
-              'line-color': [
-                'match',
-                ['to-string', ['get', 'Classification']],
-                '1', CLASSIFICATION_COLORS[1],
-                '2', CLASSIFICATION_COLORS[2],
-                '3', CLASSIFICATION_COLORS[3],
-                '4', CLASSIFICATION_COLORS[4],
-                '5', CLASSIFICATION_COLORS[5],
-                CLASSIFICATION_COLORS[0]
-              ],
-              'line-width': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                10, 1,
-                14, 3,
-                18, 6
-              ],
-              'line-opacity': 0.8
-            }
-          },
-          {
-            id: 'streets-highlight',
-            type: 'line',
-            source: 'vulicy-streets',
-            'source-layer': 'streets',
-            paint: {
-              'line-color': '#ffffff',
-              'line-width': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                10, 2,
-                14, 5,
-                18, 10
-              ],
-              'line-opacity': 0.6
-            },
-            filter: ['==', ['get', 'Id'], -1] // Initially hide
-          }
-        ]
-      },
+      style: `https://api.maptiler.com/maps/dataviz/style.json?key=${MAPTILER_KEY}`,
       center: [27.5615, 53.9045], // Minsk
       zoom: 12
     });
 
     map.current.addControl(new maplibregl.NavigationControl(), 'bottom-right');
 
-    map.current.on('mousemove', 'streets-layer', (e) => {
-      if (e.features.length > 0) {
-        map.current.getCanvas().style.cursor = 'pointer';
-        const feature = e.features[0];
-        setHoveredFeature(feature.properties);
+    map.current.on('load', () => {
+      map.current.addSource('vulicy-streets', {
+        type: 'vector',
+        tiles: [window.location.origin + '/api/map/tile/{z}/{x}/{y}.mvt'],
+        minzoom: 0,
+        maxzoom: 20
+      });
 
-        // Highlight logic - use unique Id for precise tracking
-        const id = feature.properties.Id;
-        map.current.setFilter('streets-highlight', ['==', ['get', 'Id'], id]);
-      }
-    });
+      map.current.addLayer({
+        id: 'streets-layer',
+        type: 'line',
+        source: 'vulicy-streets',
+        'source-layer': 'streets',
+        paint: {
+          'line-color': [
+            'match',
+            ['to-string', ['get', 'Classification']],
+            '1', CLASSIFICATION_COLORS[1],
+            '2', CLASSIFICATION_COLORS[2],
+            '3', CLASSIFICATION_COLORS[3],
+            '4', CLASSIFICATION_COLORS[4],
+            '5', CLASSIFICATION_COLORS[5],
+            CLASSIFICATION_COLORS[0]
+          ],
+          'line-width': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            10, 1,
+            14, 3,
+            18, 6
+          ],
+          'line-opacity': 0.8
+        }
+      });
 
-    map.current.on('mouseleave', 'streets-layer', () => {
-      map.current.getCanvas().style.cursor = '';
-      setHoveredFeature(null);
-      map.current.setFilter('streets-highlight', ['==', ['get', 'Id'], -1]);
-    });
+      map.current.addLayer({
+        id: 'streets-highlight',
+        type: 'line',
+        source: 'vulicy-streets',
+        'source-layer': 'streets',
+        paint: {
+          'line-color': '#ffffff',
+          'line-width': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            10, 2,
+            14, 5,
+            18, 10
+          ],
+          'line-opacity': 0.6
+        },
+        filter: ['==', ['get', 'Id'], -1]
+      });
 
-    map.current.on('click', 'streets-layer', (e) => {
-      if (e.features.length > 0) {
-        console.log(e.features[0].properties);
-        setSelectedFeature(e.features[0].properties);
-      }
+      // Events
+      map.current.on('mousemove', 'streets-layer', (e) => {
+        if (e.features.length > 0) {
+          map.current.getCanvas().style.cursor = 'pointer';
+          const feature = e.features[0];
+          setHoveredFeature(feature.properties);
+
+          const id = feature.properties.Id;
+          map.current.setFilter('streets-highlight', ['==', ['get', 'Id'], id]);
+        }
+      });
+
+      map.current.on('mouseleave', 'streets-layer', () => {
+        map.current.getCanvas().style.cursor = '';
+        setHoveredFeature(null);
+        map.current.setFilter('streets-highlight', ['==', ['get', 'Id'], -1]);
+      });
+
+      map.current.on('click', 'streets-layer', (e) => {
+        if (e.features.length > 0) {
+          setSelectedFeature(e.features[0].properties);
+        }
+      });
     });
 
     map.current.on('click', (e) => {
