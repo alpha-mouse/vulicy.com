@@ -38,3 +38,12 @@ POST {{Vulicy.Web_HostAddress}}/api/import/3-initialize-features-dossier-categor
 ###
 
 POST {{Vulicy.Web_HostAddress}}/api/import/4-map-fields-from-initial-cadastre-import
+
+###
+
+GET {{Vulicy.Web_HostAddress}}/api/map/naming-categories
+
+###
+
+GET {{Vulicy.Web_HostAddress}}/api/features/search?query=Скарыны
+

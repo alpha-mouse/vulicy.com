@@ -2,43 +2,30 @@ import React, { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Info, X, Map as MapIcon, Layers, Link, Check, Copy } from 'lucide-react';
+import Search from './Search';
+import { CLASSIFICATION_COLORS, FEATURE_TYPE_LABELS, getClassificationText } from '../constants/mapConstants';
 
-const CLASSIFICATION_COLORS = {
-  1: '#ff4d4f', // Priority - Vibrant Red
-  2: '#ff7875', // Required - Lighter Red
-  3: '#ffa940', // Suggested - Orange
-  4: '#ffec3d', // Possible - Yellow
-  5: '#73d13d', // Unneeded - Green
-  0: '#d9d9d9', // None/Unknown - Grey
-};
-
-const FEATURE_TYPE_LABELS = {
-  11: 'вул.',
-  12: 'пр-т',
-  14: 'пл.',
-  15: 'бульв.',
-  16: 'тракт',
-  17: 'наб.',
-  18: 'шаша',
-  19: 'кальцо',
-  21: 'зав.',
-  22: 'пр-зд',
-  23: 'тупік',
-  24: 'спуск',
-  25: 'заезд',
-  34: 'парк',
-  39: 'сквэр',
-};
 
 const Map = () => {
   const mapContainer = useRef(null);
   const map = useRef(null);
   const [selectedFeature, setSelectedFeature] = useState(null);
+  const selectedFeatureRef = useRef(null);
+  // Export ref for the pulse loop which is defined in the initial useEffect
+  useEffect(() => {
+    selectedFeatureRef.current = selectedFeature;
+    window._selectedFeatureRef = selectedFeatureRef;
+  }, [selectedFeature]);
+
   const [hoveredFeature, setHoveredFeature] = useState(null);
   const [namingCategories, setNamingCategories] = useState([]);
   const [isCopied, setIsCopied] = useState(false);
-  const initialFeatureId = useRef(new URLSearchParams(window.location.search).get('featureId'));
-  const isInitialLoad = useRef(true);
+  const initialParams = new URLSearchParams(window.location.search);
+  const [viewport, setViewport] = useState({
+    lat: parseFloat(initialParams.get('lat')) || 53.9045,
+    lng: parseFloat(initialParams.get('lng')) || 27.5615
+  });
+  const initialFeatureId = useRef(initialParams.get('featureId'));
 
   // Helper to update URL without page reload
   const updateUrl = (params) => {
@@ -122,18 +109,74 @@ const Map = () => {
         'source-layer': 'streets',
         paint: {
           'line-color': '#ffffff',
-          'line-width': [
-            'interpolate',
-            ['linear'],
-            ['zoom'],
-            10, 2,
-            14, 5,
-            18, 10
-          ],
+          'line-width': ['interpolate', ['linear'], ['zoom'], 10, 2, 14, 5, 18, 10],
           'line-opacity': 0.6
         },
         filter: ['==', ['get', 'Id'], -1]
       });
+
+      map.current.addLayer({
+        id: 'streets-selection-glow',
+        type: 'line',
+        source: 'vulicy-streets',
+        'source-layer': 'streets',
+        paint: {
+          'line-color': '#ffffff',
+          'line-width': ['interpolate', ['linear'], ['zoom'], 10, 4, 14, 10, 18, 20],
+          'line-opacity': 0.4,
+          'line-blur': 5
+        },
+        filter: ['==', ['get', 'Id'], -1]
+      });
+
+      // Animation loop for pulse
+      let startTime = Date.now();
+      const pulse = () => {
+        if (!map.current) return;
+
+        const selected = window._selectedFeatureRef?.current;
+        if (!selected) {
+          requestAnimationFrame(pulse);
+          return;
+        }
+
+        const duration = 1500; // Slightly faster pulse
+        const time = (Date.now() - startTime) % duration;
+        const t = (Math.sin((time / duration) * Math.PI * 2) + 1) / 2; // 0 to 1
+
+        const baseColor = CLASSIFICATION_COLORS[selected.Classification] || CLASSIFICATION_COLORS[0];
+
+        // Simple hex interpolation helper
+        const interpolateHex = (hex1, hex2, factor) => {
+          const r1 = parseInt(hex1.substring(1, 3), 16);
+          const g1 = parseInt(hex1.substring(3, 5), 16);
+          const b1 = parseInt(hex1.substring(5, 7), 16);
+
+          const r2 = parseInt(hex2.substring(1, 3), 16);
+          const g2 = parseInt(hex2.substring(3, 5), 16);
+          const b2 = parseInt(hex2.substring(5, 7), 16);
+
+          const r = Math.round(r1 + factor * (r2 - r1));
+          const g = Math.round(g1 + factor * (g2 - g1));
+          const b = Math.round(b1 + factor * (b2 - b1));
+
+          return `rgb(${r}, ${g}, ${b})`;
+        };
+
+        const targetColor = '#ffffff'; // White for glow
+        const interpolatedColor = interpolateHex(baseColor, targetColor, t);
+        const opacity = 0.4 + t * 0.4; // 0.4 to 0.8
+        const blur = 2 + t * 8; // 2 to 10
+
+        if (map.current.getLayer('streets-selection-glow')) {
+          map.current.setPaintProperty('streets-selection-glow', 'line-color', interpolatedColor);
+          map.current.setPaintProperty('streets-selection-glow', 'line-opacity', opacity);
+          map.current.setPaintProperty('streets-selection-glow', 'line-blur', blur);
+        }
+
+        requestAnimationFrame(pulse);
+      };
+      pulse();
 
       // Events
       map.current.on('mousemove', 'streets-layer', (e) => {
@@ -161,17 +204,27 @@ const Map = () => {
         }
       });
 
+      // Export selection logic to window for internal use or ref-like access
+      window._selectFeature = (id) => {
+        const features = map.current.querySourceFeatures('vulicy-streets', {
+          sourceLayer: 'streets',
+          filter: ['==', ['get', 'Id'], parseInt(id)]
+        });
+
+        if (features.length > 0) {
+          setSelectedFeature(features[0].properties);
+          return true;
+        }
+        return false;
+      };
+
       // Try to select initial feature when tiles are loaded
       const selectInitialFeature = () => {
-        if (initialFeatureId.current) {
-          const features = map.current.querySourceFeatures('vulicy-streets', {
-            sourceLayer: 'streets',
-            filter: ['==', ['get', 'Id'], parseInt(initialFeatureId.current)]
-          });
-
-          if (features.length > 0) {
-            setSelectedFeature(features[0].properties);
-            initialFeatureId.current = null; // Found it, clear the ref
+        const params = new URLSearchParams(window.location.search);
+        const featureId = params.get('featureId');
+        if (featureId) {
+          if (window._selectFeature(featureId)) {
+            // Found it
           }
         }
       };
@@ -185,6 +238,7 @@ const Map = () => {
 
     map.current.on('moveend', () => {
       const { lng, lat } = map.current.getCenter();
+      setViewport({ lat, lng });
       updateUrl({
         lat: lat.toFixed(6),
         lng: lng.toFixed(6),
@@ -212,18 +266,38 @@ const Map = () => {
 
   }, []);
 
+  useEffect(() => {
+    if (!map.current) return;
+
+    const id = selectedFeature?.Id || -1;
+    if (map.current.getLayer('streets-selection-glow')) {
+      map.current.setFilter('streets-selection-glow', ['==', ['get', 'Id'], id]);
+    }
+  }, [selectedFeature]);
+
   return (
-    <div className="map-container w-full h-full absolute inset-0" ref={mapContainer}>
-      {/* Search Header (Placeholder) - Hidden for now
-      <div className="absolute top-4 left-4 z-10 w-80 glass p-3 flex items-center gap-3 rounded-xl">
-        <MapIcon className="text-primary w-5 h-5" />
-        <input
-          type="text"
-          placeholder="Пошук вуліцы..."
-          className="bg-transparent border-none outline-none w-full text-sm"
-        />
-      </div>
-      */}
+    <>
+      <div className="map-container w-full h-full absolute inset-0" ref={mapContainer} />
+
+      <Search
+        currentLat={viewport.lat}
+        currentLng={viewport.lng}
+        onResultClick={(result) => {
+          if (map.current) {
+            map.current.flyTo({
+              center: [result.longitude, result.latitude],
+              zoom: 16,
+              essential: true,
+              speed: 2.4
+            });
+            updateUrl({ featureId: result.id });
+
+            // Try to select immediately, if not found, it will be picked up by sourcedata event
+            if (!window._selectFeature(result.id)) {
+              // Not in current tiles, will be selected when tiles load
+            }
+          }
+        }} />
 
       {/* Selected Feature Info Panel */}
       {selectedFeature && (
@@ -326,20 +400,9 @@ const Map = () => {
           )
         ))}
       </div>
-    </div>
+    </>
   );
 };
 
-function getClassificationText(lvl) {
-  const mapping = {
-    0: 'Статус невядомы',
-    1: 'Перайменаваньне неабходнае ў прыярытэтным парадку',
-    2: 'Перайменаваньне неабходнае',
-    3: 'Перайменаваньне пажаданае',
-    4: 'Перайменаваньне магчымае',
-    5: 'Перайменаваньне не патрэбнае',
-  };
-  return mapping[lvl] || mapping[0];
-}
 
 export default Map;

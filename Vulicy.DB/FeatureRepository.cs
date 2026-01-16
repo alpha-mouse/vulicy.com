@@ -5,10 +5,13 @@ using Vulicy.Domain;
 
 namespace Vulicy.DB;
 
-public class FeatureRepository(VulicyDbContext dbContext)
+public partial class FeatureRepository(VulicyDbContext dbContext)
     : RepositoryBase<FeatureEntity, int>(dbContext)
         , IFeatureRepository
 {
+    [System.Text.RegularExpressions.GeneratedRegex("[%_*]")]
+    private static partial System.Text.RegularExpressions.Regex SearchQueryCleanupRegex();
+
     public async Task<byte[]?> GetTile(int z, int x, int y)
     {
         const string query = $"""
@@ -40,6 +43,62 @@ public class FeatureRepository(VulicyDbContext dbContext)
                 new NpgsqlParameter("x", x),
                 new NpgsqlParameter("y", y))
             .FirstOrDefaultAsync();
+    }
+
+    public Task<List<FeatureSearchResult>> SearchByName(string query, double? lat = null, double? lng = null)
+    {
+        var cleanedQuery = SearchQueryCleanupRegex()
+            .Replace(query ?? "", m => m.Value == "*" ? "%" : "")
+            .Trim();
+
+        if (string.IsNullOrWhiteSpace(cleanedQuery))
+            return Task.FromResult(new List<FeatureSearchResult>());
+
+        const string baseSearchSql = $"""
+             select
+                 f."{nameof(FeatureEntity.Id)}",
+                 f."{nameof(FeatureEntity.NameBeTarask)}",
+                 f."{nameof(FeatureEntity.NameBeNark)}",
+                 f."{nameof(FeatureEntity.NameRu)}",
+                 f."{nameof(FeatureEntity.Type)}",
+                 ST_Y(ST_Centroid(f."{nameof(FeatureEntity.Geometry)}")) as "{nameof(FeatureSearchResult.Latitude)}",
+                 ST_X(ST_Centroid(f."{nameof(FeatureEntity.Geometry)}")) as "{nameof(FeatureSearchResult.Longitude)}"
+             from "{FeatureConfiguration.TableName}" f
+             where not f."{nameof(FeatureEntity.IsDeleted)}"
+               and (
+                   f."{nameof(FeatureEntity.NameBeTarask)}" ilike @query
+                   or f."{nameof(FeatureEntity.NameBeNark)}" ilike @query
+                   or f."{nameof(FeatureEntity.NameRu)}" ilike @query
+               )
+             
+             """;
+
+        const string searchWithoutCoordinates = baseSearchSql + "limit 20";
+        const string searchWithCoordinates = baseSearchSql +
+             $"""
+             order by f."{nameof(FeatureEntity.Geometry)}" <-> ST_SetSRID(ST_MakePoint(@lng, @lat), 4326)
+             limit 20
+             """;
+
+        IQueryable<FeatureSearchResult> result;
+        if (lat.HasValue && lng.HasValue)
+        {
+            result = Context.Database
+                .SqlQueryRaw<FeatureSearchResult>(searchWithCoordinates,
+                    new NpgsqlParameter("query", $"%{cleanedQuery}%"),
+                    new NpgsqlParameter("lat", lat.Value),
+                    new NpgsqlParameter("lng", lng.Value)
+                );
+        }
+        else
+        {
+            result = Context.Database
+                .SqlQueryRaw<FeatureSearchResult>(searchWithoutCoordinates,
+                    new NpgsqlParameter("query", $"%{cleanedQuery}%")
+                );
+        }
+
+        return result.ToListAsync();
     }
 
 

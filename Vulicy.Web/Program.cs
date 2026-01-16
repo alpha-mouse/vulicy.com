@@ -22,6 +22,7 @@ await app.Services.InitializeDatabases();
 
 app.MapImport();
 app.MapMap();
+app.MapFeatures();
 
 app.MapFallbackToFile("index.html");
 
