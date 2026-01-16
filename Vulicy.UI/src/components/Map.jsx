@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { Info, X, Map as MapIcon, Layers } from 'lucide-react';
+import { Info, X, Map as MapIcon, Layers, Link, Check, Copy } from 'lucide-react';
 
 const CLASSIFICATION_COLORS = {
   1: '#ff4d4f', // Priority - Vibrant Red
@@ -36,6 +36,22 @@ const Map = () => {
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [hoveredFeature, setHoveredFeature] = useState(null);
   const [namingCategories, setNamingCategories] = useState([]);
+  const [isCopied, setIsCopied] = useState(false);
+  const initialFeatureId = useRef(new URLSearchParams(window.location.search).get('featureId'));
+  const isInitialLoad = useRef(true);
+
+  // Helper to update URL without page reload
+  const updateUrl = (params) => {
+    const url = new URL(window.location);
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === null || value === undefined) {
+        url.searchParams.delete(key);
+      } else {
+        url.searchParams.set(key, value);
+      }
+    });
+    window.history.replaceState({}, '', url);
+  };
 
   useEffect(() => {
     fetch('/api/map/naming-categories')
@@ -49,11 +65,16 @@ const Map = () => {
 
     const MAPTILER_KEY = 'MmlCv2msuHGpnA8SG2Ko';
 
+    const params = new URLSearchParams(window.location.search);
+    const lat = parseFloat(params.get('lat'));
+    const lng = parseFloat(params.get('lng'));
+    const zoom = parseFloat(params.get('z'));
+
     map.current = new maplibregl.Map({
       container: mapContainer.current,
       style: `https://api.maptiler.com/maps/dataviz/style.json?key=${MAPTILER_KEY}`,
-      center: [27.5615, 53.9045], // Minsk
-      zoom: 12
+      center: (lat && lng) ? [lng, lat] : [27.5615, 53.9045], // Minsk
+      zoom: zoom || 12
     });
 
     map.current.addControl(new maplibregl.NavigationControl(), 'bottom-right');
@@ -134,8 +155,40 @@ const Map = () => {
 
       map.current.on('click', 'streets-layer', (e) => {
         if (e.features.length > 0) {
-          setSelectedFeature(e.features[0].properties);
+          const feature = e.features[0];
+          setSelectedFeature(feature.properties);
+          updateUrl({ featureId: feature.properties.Id });
         }
+      });
+
+      // Try to select initial feature when tiles are loaded
+      const selectInitialFeature = () => {
+        if (initialFeatureId.current) {
+          const features = map.current.querySourceFeatures('vulicy-streets', {
+            sourceLayer: 'streets',
+            filter: ['==', ['get', 'Id'], parseInt(initialFeatureId.current)]
+          });
+
+          if (features.length > 0) {
+            setSelectedFeature(features[0].properties);
+            initialFeatureId.current = null; // Found it, clear the ref
+          }
+        }
+      };
+
+      map.current.on('sourcedata', (e) => {
+        if (e.sourceId === 'vulicy-streets' && e.isSourceLoaded) {
+          selectInitialFeature();
+        }
+      });
+    });
+
+    map.current.on('moveend', () => {
+      const { lng, lat } = map.current.getCenter();
+      updateUrl({
+        lat: lat.toFixed(6),
+        lng: lng.toFixed(6),
+        z: map.current.getZoom().toFixed(2)
       });
     });
 
@@ -143,8 +196,19 @@ const Map = () => {
       const features = map.current.queryRenderedFeatures(e.point, { layers: ['streets-layer'] });
       if (features.length === 0) {
         setSelectedFeature(null);
+        updateUrl({ featureId: null });
       }
     });
+
+    // Handle back/forward buttons (optional but good practice)
+    window.onpopstate = () => {
+      const params = new URLSearchParams(window.location.search);
+      const featureId = params.get('featureId');
+      if (!featureId) {
+        setSelectedFeature(null);
+      }
+      // Note: Map view state restoration could be added here if desired
+    };
 
   }, []);
 
@@ -170,6 +234,17 @@ const Map = () => {
                 <span className="text-black/40 font-medium mr-2">{FEATURE_TYPE_LABELS[selectedFeature.Type]} </span>
               )}
               {selectedFeature.NameBeTarask || selectedFeature.NameBeNark || selectedFeature.NameRu}
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  setIsCopied(true);
+                  setTimeout(() => setIsCopied(false), 2000);
+                }}
+                className="ml-2 p-1 inline-flex items-center justify-center text-black/30 hover:text-black/60 transition-colors bg-transparent border-none cursor-pointer outline-none align-middle"
+                title="Скапіяваць спасылку"
+              >
+                {isCopied ? <Check size={16} className="text-green-500" /> : <Link size={16} />}
+              </button>
             </h2>
             <button
               onClick={() => setSelectedFeature(null)}

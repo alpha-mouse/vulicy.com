@@ -1,4 +1,5 @@
 ﻿using Vulicy.Domain;
+using Vulicy.Services;
 
 namespace Vulicy.Web.Endpoints;
 
@@ -23,8 +24,8 @@ public static class Map
         return Results.NoContent();
     }
 
-    private static Task<List<NamingCategoryEntity>> GetNamingCategories(INamingCategoryRepository namingCategoryRepository)
+    private static Task<List<NamingCategoryDto>> GetNamingCategories(INamingCategoryService namingCategoryService)
     {
-        return namingCategoryRepository.GetAll();
+        return namingCategoryService.GetAll();
     }
 }
