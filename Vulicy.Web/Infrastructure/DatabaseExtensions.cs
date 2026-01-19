@@ -18,6 +18,9 @@ public static class DatabaseExtensions
 
         var context = scope.ServiceProvider.GetRequiredService<VulicyDbContext>();
         await context.Database.MigrateAsync();
+
+        // Warm up connection pool to avoid cold start delays on first requests
+        await context.Database.ExecuteSqlRawAsync("SELECT 1");
     }
 
     public static void AddDbContext(this IServiceCollection serviceCollection, IConfiguration configuration)
