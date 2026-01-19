@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import Search from './Search';
+import TopBar from './TopBar';
 import Legend from './Legend';
 import FeatureInfoPanel from './FeatureInfoPanel';
 import { useMapInitialization } from '../hooks/useMapInitialization';
+import { useAuth } from '../hooks/useAuth';
 import type { FeatureProperties, NamingCategory, Viewport, SearchResult } from '../types/feature';
 
 // Helper to update URL without page reload
@@ -34,6 +35,9 @@ const MapComponent = () => {
     lng: parseFloat(initialParams.get('lng') || '') || 27.5615
   });
 
+  // Auth state
+  const { user, isLoading: authLoading, isAdmin, login, logout, clearAuthState } = useAuth();
+
   // Sync ref with state for animation loop access
   useEffect(() => {
     selectedFeatureRef.current = selectedFeature;
@@ -47,6 +51,8 @@ const MapComponent = () => {
     onFeatureSelect: setSelectedFeature,
     onViewportChange: setViewport,
     updateUrl,
+    isAdmin,
+    onAdminFallback: clearAuthState,
   });
 
   // Fetch naming categories
@@ -93,28 +99,39 @@ const MapComponent = () => {
     updateUrl({ featureId: null });
   }, []);
 
-  return (
-    <>
-      <div className="map-container w-full h-full absolute inset-0" ref={mapContainer} />
+  const handleLogin = useCallback(() => {
+    login(window.location.href);
+  }, [login]);
 
-      <Search
+  return (
+    <div className="flex flex-col h-full w-full">
+      <TopBar
+        user={user}
+        isLoading={authLoading}
+        onLogin={handleLogin}
+        onLogout={logout}
         currentLat={viewport.lat}
         currentLng={viewport.lng}
         onResultClick={handleResultClick}
       />
 
-      {selectedFeature && (
-        <FeatureInfoPanel
-          feature={selectedFeature}
-          namingCategories={namingCategories}
-          isCopied={isCopied}
-          onCopyLink={handleCopyLink}
-          onClose={handleClosePanel}
-        />
-      )}
+      <div className="map-container-with-topbar">
+        <div className="map-container" ref={mapContainer} />
 
-      <Legend />
-    </>
+        {selectedFeature && (
+          <FeatureInfoPanel
+            feature={selectedFeature}
+            namingCategories={namingCategories}
+            isCopied={isCopied}
+            onCopyLink={handleCopyLink}
+            onClose={handleClosePanel}
+            isAdmin={isAdmin}
+          />
+        )}
+
+        <Legend />
+      </div>
+    </div>
   );
 };
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import maplibregl, { Map as MapLibreMap, MapMouseEvent, MapSourceDataEvent } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { CLASSIFICATION_COLORS } from '../constants/mapConstants';
@@ -18,6 +18,8 @@ interface UseMapInitializationOptions {
   onFeatureSelect: (feature: FeatureProperties | null) => void;
   onViewportChange: (viewport: Viewport) => void;
   updateUrl: (params: Record<string, string | number | null | undefined>) => void;
+  isAdmin: boolean;
+  onAdminFallback?: () => void;
 }
 
 // Helper function for color interpolation
@@ -43,9 +45,13 @@ export const useMapInitialization = ({
   onFeatureSelect,
   onViewportChange,
   updateUrl,
+  isAdmin,
+  onAdminFallback,
 }: UseMapInitializationOptions) => {
   const map = useRef<MapLibreMap | null>(null);
   const animationFrameId = useRef<number | null>(null);
+  const [usingAdminTiles, setUsingAdminTiles] = useState(isAdmin);
+  const adminFallbackTriggered = useRef(false);
 
   const flyTo = useCallback((longitude: number, latitude: number, zoom = 16) => {
     if (map.current) {
@@ -57,6 +63,22 @@ export const useMapInitialization = ({
       });
     }
   }, []);
+
+  // Get tile URL based on admin status
+  const getTileUrl = useCallback((useAdmin: boolean) => {
+    const endpoint = useAdmin ? 'tile-details' : 'tile';
+    return window.location.origin + `/api/map/${endpoint}/{z}/{x}/{y}.mvt`;
+  }, []);
+
+  // Update tile source when admin status changes
+  useEffect(() => {
+    if (!map.current || !map.current.isStyleLoaded()) return;
+
+    const source = map.current.getSource('vulicy-streets');
+    if (source && 'setTiles' in source) {
+      (source as maplibregl.VectorTileSource).setTiles([getTileUrl(usingAdminTiles)]);
+    }
+  }, [usingAdminTiles, getTileUrl]);
 
   useEffect(() => {
     if (map.current || !containerRef.current) return;
@@ -72,18 +94,40 @@ export const useMapInitialization = ({
       container: containerRef.current,
       style: `https://api.maptiler.com/maps/dataviz/style.json?key=${MAPTILER_KEY}`,
       center: (lat && lng) ? [lng, lat] : [27.5615, 53.9045],
-      zoom: zoom || 12
+      zoom: zoom || 12,
+      transformRequest: (url, resourceType) => {
+        // Handle 401 errors for admin tiles by catching them in error handler
+        if (resourceType === 'Tile' && url.includes('/api/map/tile-details/')) {
+          return {
+            url,
+            credentials: 'same-origin' as const,
+          };
+        }
+        return { url };
+      }
     });
 
     map.current.addControl(new maplibregl.NavigationControl(), 'bottom-right');
 
+    // Handle tile loading errors (for 401 fallback)
+    map.current.on('error', (e) => {
+      if (e.error && 'status' in e.error && (e.error as { status: number }).status === 401) {
+        if (!adminFallbackTriggered.current && usingAdminTiles) {
+          adminFallbackTriggered.current = true;
+          console.log('Admin tiles returned 401, falling back to regular tiles');
+          setUsingAdminTiles(false);
+          onAdminFallback?.();
+        }
+      }
+    });
+
     map.current.on('load', () => {
       if (!map.current) return;
 
-      // Add vector tile source
+      // Add vector tile source - use admin tiles if admin
       map.current.addSource('vulicy-streets', {
         type: 'vector',
-        tiles: [window.location.origin + '/api/map/tile/{z}/{x}/{y}.mvt'],
+        tiles: [getTileUrl(isAdmin)],
         minzoom: 0,
         maxzoom: 20
       });
@@ -97,7 +141,13 @@ export const useMapInitialization = ({
         paint: {
           'line-color': [
             'match',
-            ['to-string', ['get', 'Classification']],
+            ['to-string',
+              ['case',
+                ['all', ['has', 'Classification'], ['>', ['get', 'Classification'], 0]],
+                ['get', 'Classification'],
+                ['coalesce', ['get', 'DossierRecordClassification'], 0]
+              ]
+            ],
             '1', CLASSIFICATION_COLORS[1],
             '2', CLASSIFICATION_COLORS[2],
             '3', CLASSIFICATION_COLORS[3],
@@ -154,7 +204,10 @@ export const useMapInitialization = ({
         const time = (Date.now() - startTime) % duration;
         const t = (Math.sin((time / duration) * Math.PI * 2) + 1) / 2;
 
-        const baseColor = CLASSIFICATION_COLORS[selected.Classification] || CLASSIFICATION_COLORS[0];
+        const classification = (selected.Classification !== undefined && selected.Classification !== 0)
+          ? selected.Classification
+          : (selected.DossierRecordClassification ?? 0);
+        const baseColor = CLASSIFICATION_COLORS[classification] || CLASSIFICATION_COLORS[0];
         const interpolatedColor = interpolateHex(baseColor, '#ffffff', t);
 
         if (map.current.getLayer('streets-selection-glow')) {
@@ -168,7 +221,7 @@ export const useMapInitialization = ({
       animationFrameId.current = requestAnimationFrame(pulse);
 
       // Mouse events
-      map.current.on('mousemove', 'streets-layer', (e: MapMouseEvent) => {
+      map.current.on('mousemove', 'streets-layer', (e: any) => {
         if (!map.current || !e.features || e.features.length === 0) return;
         map.current.getCanvas().style.cursor = 'pointer';
         const id = (e.features[0].properties as FeatureProperties).Id;
@@ -181,8 +234,9 @@ export const useMapInitialization = ({
         map.current.setFilter('streets-highlight', ['==', ['get', 'Id'], -1]);
       });
 
-      map.current.on('click', 'streets-layer', (e: MapMouseEvent) => {
+      map.current.on('click', 'streets-layer', (e: any) => {
         if (!e.features || e.features.length === 0) return;
+        console.log(e.features[0]);
         const props = e.features[0].properties as FeatureProperties;
         onFeatureSelect(props);
         updateUrl({ featureId: props.Id });
@@ -197,7 +251,8 @@ export const useMapInitialization = ({
         });
 
         if (features.length > 0) {
-          onFeatureSelect(features[0].properties as FeatureProperties);
+          const props = features[0].properties as FeatureProperties;
+          onFeatureSelect(props);
           return true;
         }
         return false;
@@ -250,7 +305,7 @@ export const useMapInitialization = ({
         map.current = null;
       }
     };
-  }, [containerRef, onFeatureSelect, onViewportChange, updateUrl]);
+  }, [containerRef, onFeatureSelect, onViewportChange, updateUrl, isAdmin, getTileUrl, onAdminFallback, usingAdminTiles]);
 
   // Update selection glow filter when selection changes
   useEffect(() => {

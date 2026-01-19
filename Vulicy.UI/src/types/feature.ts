@@ -1,3 +1,21 @@
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  name?: string;
+  avatarUrl?: string;
+  isAdmin: boolean;
+}
+
+export interface DossierRecord {
+  Id: number;
+  NameBeTarask?: string;
+  Classification: number;
+  DescriptionBe?: string;
+  DescriptionRu?: string;
+  NamingCategoryId?: number;
+}
+
 export interface FeatureProperties {
   Id: number;
   Type: number;
@@ -11,6 +29,14 @@ export interface FeatureProperties {
   HistoricNames?: string;
   YearNamed?: number;
   ForumRelativeLink?: string;
+  // Admin-only fields from tile-details endpoint
+  Comment?: string;
+  DossierRecordId?: number;
+  DossierRecordNameBeTarask?: string;
+  DossierRecordClassification?: number;
+  DossierRecordDescriptionBe?: string;
+  DossierRecordDescriptionRu?: string;
+  DossierRecordNamingCategoryId?: number;
 }
 
 export interface SearchResult {

@@ -9,6 +9,8 @@ namespace Vulicy.Web.Endpoints;
 
 public static class Auth
 {
+    public const string AdminRole = "Admin";
+
     public static void MapAuth(this IEndpointRouteBuilder builder)
     {
         var group = builder.MapGroup("/api/auth");
@@ -67,7 +69,7 @@ public static class Auth
 
         if (user.IsAdmin)
         {
-            claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+            claims.Add(new Claim(ClaimTypes.Role, AdminRole));
         }
 
         if (!string.IsNullOrEmpty(user.Name)) claims.Add(new Claim("name", user.Name));
@@ -106,7 +108,7 @@ public static class Auth
             context.User.FindFirstValue(ClaimTypes.Email)!,
             context.User.FindFirstValue("name"),
             context.User.FindFirstValue("avatar_url"),
-            context.User.IsInRole("Admin")
+            context.User.IsInRole(AdminRole)
         ));
     }
 }

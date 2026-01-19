@@ -4,6 +4,8 @@
 @theme {
   --color-primary: #2563eb;
   --color-primary-hover: #1d4ed8;
+  --color-secondary: #f1f5f9;
+  --color-secondary-hover: #e2e8f0;
 }
 
 :root {
@@ -23,6 +25,7 @@
   --bg-panel: rgba(255, 255, 255, 0.85);
   --border: rgba(0, 0, 0, 0.1);
   --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --topbar-height: 3.5rem;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -31,6 +34,8 @@
     background-color: #0f172a;
     --bg-panel: rgba(15, 23, 42, 0.85);
     --border: rgba(255, 255, 255, 0.1);
+    --color-secondary: rgba(255, 255, 255, 0.05);
+    --color-secondary-hover: rgba(255, 255, 255, 0.1);
   }
 }
 
@@ -45,12 +50,30 @@ body {
 #root {
   width: 100vw;
   height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 @media (prefers-color-scheme: dark) {
   body {
     background-color: #0f172a;
   }
+}
+
+/* TopBar styling */
+.topbar {
+  height: var(--topbar-height);
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  gap: 1rem;
+  z-index: 40;
+  flex-shrink: 0;
 }
 
 /* Glassmorphism utility */
@@ -64,17 +87,23 @@ body {
   border-radius: 1rem;
 }
 
+/* Map container - fills remaining space below TopBar */
+.map-container-with-topbar {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .map-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  flex: 1;
+  min-height: 0;
 }
 
 /* Custom utilities not in Tailwind */
 .max-h-panel {
-  max-height: calc(100% - 2rem);
+  max-height: calc(100% - var(--topbar-height) - 2rem);
 }
 
 /* Animations */
@@ -88,12 +117,16 @@ body {
 
 /* Dark mode text adjustments */
 @media (prefers-color-scheme: dark) {
-  .text-black\/30 { color: rgba(255, 255, 255, 0.45); }
-  .text-black\/40, .text-black\/50, .text-black\/60 { color: rgba(255, 255, 255, 0.65); }
-  .text-black\/70, .text-black\/80, .text-black\/90 { color: rgba(255, 255, 255, 0.9); }
-  .hover\:text-black\/60:hover { color: rgba(255, 255, 255, 1); }
+  .text-black { color: #f8fafc; }
+  .text-black\/20 { color: rgba(248, 250, 252, 0.25); }
+  .text-black\/30 { color: rgba(248, 250, 252, 0.4); }
+  .text-black\/40, .text-black\/50, .text-black\/60 { color: rgba(248, 250, 252, 0.65); }
+  .text-black\/70, .text-black\/80, .text-black\/90 { color: rgba(248, 250, 252, 0.9); }
+  .placeholder\:text-black\/30::placeholder { color: rgba(248, 250, 252, 0.4); }
+  .hover\:text-black\/60:hover { color: rgba(248, 250, 252, 1); }
   .border-black\/10 { border-color: rgba(255, 255, 255, 0.1); }
   .hover\:bg-black\/5:hover { background-color: rgba(255, 255, 255, 0.1); }
+  .hover\:bg-white\/50:hover { background-color: rgba(255, 255, 255, 0.2); }
 }
 
 /* MapLibre Controls Overrides */
@@ -107,3 +140,4 @@ body {
 .maplibregl-ctrl-group button {
   background: transparent !important;
 }
+

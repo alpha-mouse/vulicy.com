@@ -8,6 +8,7 @@ interface FeatureInfoPanelProps {
   isCopied: boolean;
   onCopyLink: () => void;
   onClose: () => void;
+  isAdmin?: boolean;
 }
 
 const FeatureInfoPanel = ({
@@ -16,7 +17,10 @@ const FeatureInfoPanel = ({
   isCopied,
   onCopyLink,
   onClose,
+  isAdmin = false,
 }: FeatureInfoPanelProps) => {
+  const hasAdminData = isAdmin && (feature.Comment || feature.DossierRecordId);
+
   return (
     <div className="absolute right-4 top-4 h-fit max-h-panel w-96 glass z-20 overflow-y-auto p-6 flex flex-col gap-6 animate-in">
       <div className="flex justify-between items-start">
@@ -42,10 +46,13 @@ const FeatureInfoPanel = ({
       </div>
 
       <div className="flex flex-col gap-2">
-        <div className="text-sm leading-relaxed">
-          <span className="text-black/50">Клясыфікацыя: </span>
-          <span className="font-medium text-black">{getClassificationText(feature.Classification)}</span>
-        </div>
+        {/* Classification - only show if not 0 (None) */}
+        {feature.Classification !== 0 && (
+          <div className="text-sm leading-relaxed">
+            <span className="text-black/50">Клясыфікацыя: </span>
+            <span className="font-medium text-black">{getClassificationText(feature.Classification)}</span>
+          </div>
+        )}
 
         {feature.EtymologyBeTarask && (
           <div className="text-sm leading-relaxed">
@@ -83,7 +90,57 @@ const FeatureInfoPanel = ({
             <span className="text-black">{feature.YearNamed}</span>
           </div>
         )}
+
+        {/* Admin-only: Comment field */}
+        {isAdmin && feature.Comment && (
+          <div className="text-sm leading-relaxed">
+            <span className="text-black/50">Камэнтар: </span>
+            <span className="text-black">{feature.Comment}</span>
+          </div>
+        )}
       </div>
+
+      {/* DossierRecord section - admin only, separated by horizontal line */}
+      {hasAdminData && feature.DossierRecordId && (
+        <div className="flex flex-col gap-2 pt-4 border-t border-black/10">
+          {feature.DossierRecordNameBeTarask && (
+            <div className="text-sm leading-relaxed">
+              <span className="text-black/50">Этымалёгія: </span>
+              <span className="text-black">{feature.DossierRecordNameBeTarask}</span>
+            </div>
+          )}
+
+          {feature.DossierRecordClassification !== undefined && feature.DossierRecordClassification !== 0 && (
+            <div className="text-sm leading-relaxed">
+              <span className="text-black/50">Клясыфікацыя: </span>
+              <span className="font-medium text-black">{getClassificationText(feature.DossierRecordClassification)}</span>
+            </div>
+          )}
+
+          {feature.DossierRecordDescriptionBe && (
+            <div className="text-sm leading-relaxed">
+              <span className="text-black/50">Апісаньне: </span>
+              <span className="text-black">{feature.DossierRecordDescriptionBe}</span>
+            </div>
+          )}
+
+          {feature.DossierRecordDescriptionRu && (
+            <div className="text-sm leading-relaxed">
+              <span className="text-black/50">Апісаньне КА: </span>
+              <span className="text-black">{feature.DossierRecordDescriptionRu}</span>
+            </div>
+          )}
+
+          {feature.DossierRecordNamingCategoryId && (
+            <div className="text-sm leading-relaxed">
+              <span className="text-black/50">Катэгорыя: </span>
+              <span className="text-black">
+                {namingCategories.find(c => c.id === feature.DossierRecordNamingCategoryId)?.name || '...'}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       {feature.ForumRelativeLink && (
         <a

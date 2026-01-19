@@ -7,9 +7,10 @@ interface SearchProps {
   onResultClick: (result: SearchResult) => void;
   currentLat: number;
   currentLng: number;
+  embedded?: boolean;
 }
 
-const Search = ({ onResultClick, currentLat, currentLng }: SearchProps) => {
+const Search = ({ onResultClick, currentLat, currentLng, embedded = false }: SearchProps) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -67,9 +68,21 @@ const Search = ({ onResultClick, currentLat, currentLng }: SearchProps) => {
     setIsOpen(false);
   };
 
+  const containerClasses = embedded
+    ? "relative flex-1 max-w-md flex flex-col gap-2"
+    : "absolute top-4 left-4 z-30 w-80 flex flex-col gap-2";
+
+  const inputContainerClasses = embedded
+    ? "bg-white/10 h-9 flex items-center gap-3 rounded-lg border border-white/10 px-3 box-border"
+    : "glass p-3 h-10 flex items-center gap-3 rounded-xl shadow-lg border border-white/20 box-border";
+
+  const dropdownClasses = embedded
+    ? "absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 rounded-lg shadow-2xl border border-black/10 dark:border-white/10 overflow-hidden z-50"
+    : "glass rounded-xl shadow-2xl border border-white/20 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200";
+
   return (
-    <div className="absolute top-4 left-4 z-30 w-80 flex flex-col gap-2" ref={searchRef}>
-      <div className="glass p-3 h-10 flex items-center gap-3 rounded-xl shadow-lg border border-white/20 box-border">
+    <div className={containerClasses} ref={searchRef}>
+      <div className={inputContainerClasses}>
         <SearchIcon className="text-black/40 w-5 h-5 shrink-0" />
         <input
           type="text"
@@ -97,7 +110,7 @@ const Search = ({ onResultClick, currentLat, currentLng }: SearchProps) => {
       </div>
 
       {isOpen && (results.length > 0 || isLoading) && (
-        <div className="glass rounded-xl shadow-2xl border border-white/20 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className={dropdownClasses}>
           {isLoading ? (
             <div className="p-4 text-center text-sm text-black/40">Шукаем...</div>
           ) : (
