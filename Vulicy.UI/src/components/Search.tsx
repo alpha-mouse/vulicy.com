@@ -1,14 +1,42 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Search as SearchIcon, X, MapPin } from 'lucide-react';
 import { FEATURE_TYPE_LABELS } from '../constants/mapConstants';
+import type { SearchResult } from '../types/feature';
 
+interface SearchProps {
+  onResultClick: (result: SearchResult) => void;
+  currentLat: number;
+  currentLng: number;
+}
 
-const Search = ({ onResultClick, currentLat, currentLng }) => {
+const Search = ({ onResultClick, currentLat, currentLng }: SearchProps) => {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const searchRef = useRef(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  // Memoize search function to use in dependency array
+  const performSearch = useCallback(async (searchQuery: string, lat: number, lng: number) => {
+    setIsLoading(true);
+    try {
+      const url = new URL('/api/features/search', window.location.origin);
+      url.searchParams.set('query', searchQuery);
+      if (lat && lng) {
+        url.searchParams.set('lat', lat.toString());
+        url.searchParams.set('lng', lng.toString());
+      }
+
+      const response = await fetch(url);
+      const data: SearchResult[] = await response.json();
+      setResults(data);
+      setIsOpen(true);
+    } catch (error) {
+      console.error('Search failed:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (!query || query.length < 2) {
@@ -16,33 +44,16 @@ const Search = ({ onResultClick, currentLat, currentLng }) => {
       return;
     }
 
-    const timer = setTimeout(async () => {
-      setIsLoading(true);
-      try {
-        const url = new URL('/api/features/search', window.location.origin);
-        url.searchParams.set('query', query);
-        if (currentLat && currentLng) {
-          url.searchParams.set('lat', currentLat);
-          url.searchParams.set('lng', currentLng);
-        }
-
-        const response = await fetch(url);
-        const data = await response.json();
-        setResults(data);
-        setIsOpen(true);
-      } catch (error) {
-        console.error('Search failed:', error);
-      } finally {
-        setIsLoading(false);
-      }
+    const timer = setTimeout(() => {
+      performSearch(query, currentLat, currentLng);
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, currentLat, currentLng, performSearch]);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (searchRef.current && !searchRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
@@ -58,7 +69,7 @@ const Search = ({ onResultClick, currentLat, currentLng }) => {
 
   return (
     <div className="absolute top-4 left-4 z-30 w-80 flex flex-col gap-2" ref={searchRef}>
-      <div className="glass p-3 h-5 flex items-center gap-3 rounded-xl shadow-lg border border-white/20 box-border">
+      <div className="glass p-3 h-10 flex items-center gap-3 rounded-xl shadow-lg border border-white/20 box-border">
         <SearchIcon className="text-black/40 w-5 h-5 shrink-0" />
         <input
           type="text"
@@ -119,7 +130,5 @@ const Search = ({ onResultClick, currentLat, currentLng }) => {
     </div>
   );
 };
-
-
 
 export default Search;

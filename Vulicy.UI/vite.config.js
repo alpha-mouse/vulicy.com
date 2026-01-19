@@ -1,9 +1,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   build: {
     outDir: '../Vulicy.Web/wwwroot',
     emptyOutDir: true,
@@ -14,15 +15,13 @@ export default defineConfig({
         target: 'http://localhost:5165',
         changeOrigin: true,
         secure: false,
-        timeout: 0,  // Disable proxy timeout
-        proxyTimeout: 0,  // Disable proxy timeout
-        // Configure HTTP agent to allow more concurrent connections
+        timeout: 0,
+        proxyTimeout: 0,
         agent: new (await import('http')).Agent({
           keepAlive: true,
-          maxSockets: 100,  // Allow many concurrent requests
+          maxSockets: 100,
         }),
       }
     }
   }
 })
-
