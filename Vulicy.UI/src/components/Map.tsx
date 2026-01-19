@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import TopBar from './TopBar';
-import Legend from './Legend';
 import FeatureInfoPanel from './FeatureInfoPanel';
 import { useMapInitialization } from '../hooks/useMapInitialization';
 import { useAuth } from '../hooks/useAuth';
@@ -128,8 +127,6 @@ const MapComponent = () => {
             isAdmin={isAdmin}
           />
         )}
-
-        <Legend />
       </div>
     </div>
   );
