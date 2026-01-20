@@ -1,0 +1,58 @@
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Config } from '../types/config';
+
+interface ConfigContextType {
+  config: Config | null;
+  loading: boolean;
+}
+
+const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
+
+const LOCAL_STORAGE_KEY = 'vulicy_config';
+
+export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [config, setConfig] = useState<Config | null>(() => {
+    const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
+    return cached ? JSON.parse(cached) : null;
+  });
+  const [loading, setLoading] = useState(!config);
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const response = await fetch('/api/config');
+        if (response.ok) {
+          const newConfig: Config = await response.json();
+
+          setConfig(prev => {
+            if (JSON.stringify(newConfig) !== JSON.stringify(prev)) {
+              localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newConfig));
+              return newConfig;
+            }
+            return prev;
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch config:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchConfig();
+  }, []);
+
+  return (
+    <ConfigContext.Provider value={{ config, loading }}>
+      {children}
+    </ConfigContext.Provider>
+  );
+};
+
+export const useConfig = () => {
+  const context = useContext(ConfigContext);
+  if (context === undefined) {
+    throw new Error('useConfig must be used within a ConfigProvider');
+  }
+  return context;
+};

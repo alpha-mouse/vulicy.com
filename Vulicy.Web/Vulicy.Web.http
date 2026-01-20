@@ -47,3 +47,6 @@ GET {{Vulicy.Web_HostAddress}}/api/map/naming-categories
 
 GET {{Vulicy.Web_HostAddress}}/api/features/search?query=Скарыны
 
+###
+
+GET {{Vulicy.Web_HostAddress}}/api/config

@@ -3,6 +3,7 @@ import maplibregl, { Map as MapLibreMap, MapMouseEvent, MapSourceDataEvent } fro
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { CLASSIFICATION_COLORS } from '../constants/mapConstants';
 import type { FeatureProperties, Viewport } from '../types/feature';
+import { useConfig } from './useConfig';
 
 // Extend Window interface for global state
 declare global {
@@ -48,6 +49,7 @@ export const useMapInitialization = ({
   isAdmin,
   onAdminFallback,
 }: UseMapInitializationOptions) => {
+  const { config } = useConfig();
   const map = useRef<MapLibreMap | null>(null);
   const animationFrameId = useRef<number | null>(null);
   const [usingAdminTiles, setUsingAdminTiles] = useState(isAdmin);
@@ -81,9 +83,7 @@ export const useMapInitialization = ({
   }, [usingAdminTiles, getTileUrl]);
 
   useEffect(() => {
-    if (map.current || !containerRef.current) return;
-
-    const MAPTILER_KEY = 'MmlCv2msuHGpnA8SG2Ko';
+    if (map.current || !containerRef.current || !config?.mapKey) return;
 
     const params = new URLSearchParams(window.location.search);
     const lat = parseFloat(params.get('lat') || '');
@@ -92,7 +92,7 @@ export const useMapInitialization = ({
 
     map.current = new maplibregl.Map({
       container: containerRef.current,
-      style: `https://api.maptiler.com/maps/dataviz/style.json?key=${MAPTILER_KEY}`,
+      style: `https://api.maptiler.com/maps/dataviz/style.json?key=${config.mapKey}`,
       center: (lat && lng) ? [lng, lat] : [27.5615, 53.9045],
       zoom: zoom || 12,
       transformRequest: (url, resourceType) => {
@@ -305,7 +305,7 @@ export const useMapInitialization = ({
         map.current = null;
       }
     };
-  }, [containerRef, onFeatureSelect, onViewportChange, updateUrl, isAdmin, getTileUrl, onAdminFallback, usingAdminTiles]);
+  }, [containerRef, onFeatureSelect, onViewportChange, updateUrl, isAdmin, getTileUrl, onAdminFallback, usingAdminTiles, config?.mapKey]);
 
   // Update selection glow filter when selection changes
   useEffect(() => {

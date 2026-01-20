@@ -13,6 +13,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 });
 
 builder.Services.AddConfigs(builder.Configuration, typeof(AuthConfig).Assembly);
+builder.Services.AddConfigs(builder.Configuration, typeof(FrontConfig).Assembly);
 
 builder.Services.AddDatabase(builder.Configuration);
 builder.Services.AddConventionalServices(typeof(IImportingService).Assembly);
@@ -21,6 +22,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     .AddCookie(options =>
     {
         options.Cookie.Name = "Vulicy.Auth";
+        options.ExpireTimeSpan = TimeSpan.FromDays(30);
+        options.SlidingExpiration = true;
         options.Events.OnRedirectToLogin = context =>
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -30,6 +33,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+app.Services.GetRequiredService<FrontConfig>().DiscourseBaseUrl = app.Services.GetRequiredService<AuthConfig>().DiscourseBaseUrl; // dirty, but let it be so for now
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
@@ -43,6 +48,7 @@ app.MapImport();
 app.MapMap();
 app.MapFeatures();
 app.MapAuth();
+app.MapConfig();
 
 app.MapFallbackToFile("index.html");
 

@@ -17,7 +17,7 @@ public static class RegistrationExtensions
 
         public void AddConfigs(IConfiguration configuration, Assembly assembly)
         {
-            foreach (var type in assembly.ExportedTypes.Where(x => x.Name.EndsWith("Config")))
+            foreach (var type in assembly.ExportedTypes.Where(x => x.Name.EndsWith("Config") && x is { IsClass: true, IsAbstract: false }))
             {
                 var section = configuration.GetSection(type.Name);
                 serviceCollection.AddSingleton(type, section.Get(type));
