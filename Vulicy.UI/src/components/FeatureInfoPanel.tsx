@@ -77,7 +77,7 @@ const FeatureInfoPanel = ({
       <div className="flex justify-between items-start">
         <h2 className="text-2xl font-bold leading-tight m-0">
           {FEATURE_TYPE_LABELS[feature.Type] && (
-            <span className="text-black/40 font-medium mr-2">{FEATURE_TYPE_LABELS[feature.Type]} </span>
+            <span className="text-black/40 font-medium">{FEATURE_TYPE_LABELS[feature.Type]} </span>
           )}
           {feature.NameBeTarask || feature.NameBeNark || feature.NameRu}
           <button

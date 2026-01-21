@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Search as SearchIcon, X, MapPin } from 'lucide-react';
-import { FEATURE_TYPE_LABELS } from '../constants/mapConstants';
 import type { SearchResult } from '../types/feature';
 import { api } from '../utils/api';
+import FeatureListItem from './FeatureListItem';
 
 interface SearchProps {
   onResultClick: (result: SearchResult) => void;
@@ -123,14 +123,7 @@ const Search = ({ onResultClick, currentLat, currentLng, embedded = false }: Sea
                   className="p-3 hover:bg-white/50 cursor-pointer transition-colors flex items-center gap-3 group"
                 >
                   <MapPin size={16} className="text-black/20 group-hover:text-primary transition-colors shrink-0" />
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium text-black">
-                      {FEATURE_TYPE_LABELS[result.type] && (
-                        <span className="text-black/40 font-medium mr-1.5">{FEATURE_TYPE_LABELS[result.type]} </span>
-                      )}
-                      {result.nameBeTarask || result.nameBeNark || result.nameRu}
-                    </span>
-                  </div>
+                  <FeatureListItem feature={result} />
                 </div>
               ))}
             </div>

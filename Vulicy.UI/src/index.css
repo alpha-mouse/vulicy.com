@@ -115,6 +115,14 @@ body {
   animation: slideInRight 0.3s ease-out forwards;
 }
 
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s ease-out forwards;
+}
+
 /* Dark mode text adjustments */
 @media (prefers-color-scheme: dark) {
   .text-black { color: #f8fafc; }

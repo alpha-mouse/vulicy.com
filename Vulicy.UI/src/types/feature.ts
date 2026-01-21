@@ -45,8 +45,21 @@ export interface SearchResult {
   nameBeTarask?: string;
   nameBeNark?: string;
   nameRu?: string;
+  location?: string;
   latitude: number;
   longitude: number;
+}
+
+export interface DossierRecordSearchResult {
+  id: number;
+  nameBeTarask?: string;
+  nameBeNark?: string;
+  nameRu?: string;
+  descriptionBe?: string;
+  descriptionRu?: string;
+  classification: number;
+  namingCategoryId?: number;
+  numFeatures: number;
 }
 
 export interface NamingCategory {

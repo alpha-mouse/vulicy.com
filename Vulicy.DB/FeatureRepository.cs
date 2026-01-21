@@ -56,10 +56,11 @@ public partial class FeatureRepository(VulicyDbContext dbContext)
                  f."{nameof(FeatureEntity.NameBeNark)}",
                  f."{nameof(FeatureEntity.NameRu)}",
                  f."{nameof(FeatureEntity.Type)}",
-                 null as "{nameof(FeatureSearchResult.Location)}",
+                 cf."{nameof(CadastreFeatureEntity.AteNameBel)}" as "{nameof(FeatureSearchResult.Location)}",
                  ST_Y(ST_Centroid(f."{nameof(FeatureEntity.Geometry)}")) as "{nameof(FeatureSearchResult.Latitude)}",
                  ST_X(ST_Centroid(f."{nameof(FeatureEntity.Geometry)}")) as "{nameof(FeatureSearchResult.Longitude)}"
              from "{FeatureConfiguration.TableName}" f
+             left outer join "{CadastreFeatureConfiguration.TableName}" cf on f."{nameof(FeatureEntity.Id)}" = cf."{nameof(CadastreFeatureEntity.FeatureId)}"
              where not f."{nameof(FeatureEntity.IsDeleted)}"
                and (
                    f."{nameof(FeatureEntity.NameBeTarask)}" ilike @query
@@ -145,7 +146,7 @@ public partial class FeatureRepository(VulicyDbContext dbContext)
                 x.NameBeTarask,
                 x.NameBeNark,
                 x.NameRu,
-                x.CadastreFeature == null ? null : x.CadastreFeature.AteName,
+                x.CadastreFeature == null ? null : x.CadastreFeature.AteNameBel,
                 x.Type,
                 x.Geometry.Centroid.Y,
                 x.Geometry.Centroid.X

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import TopBar from './TopBar';
 import FeatureInfoPanel from './FeatureInfoPanel';
+import DossierRecordsPanel from './DossierRecordsPanel';
 import { useMapInitialization } from '../hooks/useMapInitialization';
 import { useAuth } from '../hooks/useAuth';
 import { useConfig } from '../hooks/useConfig';
@@ -32,6 +33,7 @@ const MapComponent = () => {
 
   const [namingCategories, setNamingCategories] = useState<NamingCategory[]>([]);
   const [isCopied, setIsCopied] = useState(false);
+  const [isDossierPanelOpen, setIsDossierPanelOpen] = useState(false);
 
   const initialParams = new URLSearchParams(window.location.search);
   const [viewport, setViewport] = useState<Viewport>({
@@ -141,6 +143,8 @@ const MapComponent = () => {
         currentLat={viewport.lat}
         currentLng={viewport.lng}
         onResultClick={handleResultClick}
+        isAdmin={isAdmin}
+        onOpenDossierPanel={() => setIsDossierPanelOpen(true)}
       />
 
       <div className="map-container-with-topbar">
@@ -159,6 +163,13 @@ const MapComponent = () => {
             onForumLinkCreated={handleForumLinkCreated}
           />
         )}
+
+        <DossierRecordsPanel
+          isOpen={isDossierPanelOpen}
+          onClose={() => setIsDossierPanelOpen(false)}
+          onFeatureClick={handleResultClick}
+          namingCategories={namingCategories}
+        />
       </div>
     </div>
   );
