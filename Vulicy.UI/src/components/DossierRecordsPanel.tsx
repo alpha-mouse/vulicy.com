@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ChevronLeft, Search as SearchIcon, X, MapPin, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { ChevronLeft, Search as SearchIcon, X, MapPin, ChevronDown, ChevronUp, Loader2, FileUser } from 'lucide-react';
 import { getClassificationText } from '../constants/mapConstants';
 import type { DossierRecordSearchResult, SearchResult, NamingCategory } from '../types/feature';
 import { api } from '../utils/api';
@@ -129,7 +129,10 @@ const DossierRecordsPanel = ({
         >
           <ChevronLeft size={20} className="text-black/60" />
         </button>
-        <h2 className="text-lg font-semibold m-0">Імёны</h2>
+        <div className="flex items-center gap-2">
+          <FileUser size={20} className="text-black/60" />
+          <h2 className="text-lg font-semibold m-0">Імёны</h2>
+        </div>
       </div>
 
       {/* Search bar */}

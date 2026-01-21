@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { LogIn, LogOut, Menu } from 'lucide-react';
+import { LogIn, LogOut, Menu, FileUser } from 'lucide-react';
 import Search from './Search';
 import type { User, SearchResult } from '../types/feature';
 
@@ -63,9 +63,10 @@ const TopBar = ({
             <div className="absolute top-full left-0 mt-1 bg-white dark:bg-slate-800 rounded-lg shadow-2xl border border-black/10 dark:border-white/10 overflow-hidden z-50 min-w-40">
               <button
                 onClick={() => handleMenuItemClick(() => onOpenDossierPanel?.())}
-                className="w-full px-4 py-2.5 text-left text-sm font-medium text-black hover:bg-black/5 transition-colors bg-transparent border-none cursor-pointer outline-none"
+                className="w-full px-4 py-2.5 text-left text-sm font-medium text-black hover:bg-black/5 transition-colors bg-transparent border-none cursor-pointer outline-none flex items-center gap-2"
               >
-                Імёны
+                <FileUser size={18} className="text-black/60" />
+                <span>Імёны</span>
               </button>
             </div>
           )}

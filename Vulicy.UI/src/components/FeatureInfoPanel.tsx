@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { X, Link, Check, MessageSquarePlus, Loader2 } from 'lucide-react';
+import { X, Link, Check, MessageSquarePlus, MessageSquare, Loader2 } from 'lucide-react';
 import { FEATURE_TYPE_LABELS, getClassificationText } from '../constants/mapConstants';
 import type { FeatureProperties, NamingCategory } from '../types/feature';
 import { api } from '../utils/api';
@@ -73,7 +73,7 @@ const FeatureInfoPanel = ({
   };
 
   return (
-    <div className="absolute right-4 top-4 h-fit max-h-panel w-96 glass z-20 overflow-y-auto p-6 flex flex-col gap-6 animate-in">
+    <div className="absolute right-4 top-4 h-fit max-h-panel w-96 glass z-20 overflow-y-auto p-6 flex flex-col gap-3 animate-in">
       <div className="flex justify-between items-start">
         <h2 className="text-2xl font-bold leading-tight m-0">
           {FEATURE_TYPE_LABELS[feature.Type] && (
@@ -157,8 +157,9 @@ const FeatureInfoPanel = ({
           href={forumFullUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="bg-primary text-white py-3 px-4 rounded-xl text-center font-semibold hover:bg-primary-hover transition-all shadow-lg shadow-primary/20"
+          className="flex items-center gap-1.5 text-primary hover:underline text-sm w-fit transition-colors"
         >
+          <MessageSquare size={16} />
           Абмеркаваць на форуме
         </a>
       )}
@@ -168,7 +169,7 @@ const FeatureInfoPanel = ({
         <button
           onClick={handleCreateDiscussion}
           disabled={isCreatingTopic}
-          className="bg-primary/10 text-primary py-3 px-4 rounded-xl text-center font-semibold hover:bg-primary/20 transition-all border-2 border-primary/30 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center justify-center gap-2 px-4 py-1.5 text-sm font-medium bg-secondary text-black rounded-lg hover:bg-secondary-hover transition-colors border border-black/10 cursor-pointer outline-none shadow-sm disabled:opacity-50 disabled:cursor-not-allowed w-fit"
         >
           {isCreatingTopic ? (
             <>
