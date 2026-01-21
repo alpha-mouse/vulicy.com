@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { User } from '../types/feature';
+import { api } from '../utils/api';
 
 const AUTH_STORAGE_KEY = 'vulicy_user';
 
@@ -30,16 +31,15 @@ export const useAuth = (): UseAuthResult => {
 
   const validateSession = useCallback(async () => {
     try {
-      const response = await fetch('/api/auth/me');
-      if (response.ok) {
-        const userData: User = await response.json();
-        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
-        setUser(userData);
-      } else if (response.status === 401) {
-        clearAuthState();
-      }
+      const userData = await api.get<User>('/api/auth/me');
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
+      setUser(userData);
     } catch (error) {
-      console.error('Failed to validate session:', error);
+      if (error instanceof Error && error.message.includes('401')) {
+        clearAuthState();
+      } else {
+        console.error('Failed to validate session:', error);
+      }
       // Keep existing localStorage state on network error
     } finally {
       setIsLoading(false);

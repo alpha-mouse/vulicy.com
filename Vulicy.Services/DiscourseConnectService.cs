@@ -5,7 +5,7 @@ using System.Net;
 
 namespace Vulicy.Services;
 
-public class DiscourseConnectService(AuthConfig config, IUserRepository userRepository) : IDiscourseConnectService
+public class DiscourseConnectService(DiscourseConfig config, IUserRepository userRepository) : IDiscourseConnectService
 {
     public string CreateLoginUrl(string returnUrl, string nonce)
     {
@@ -13,7 +13,7 @@ public class DiscourseConnectService(AuthConfig config, IUserRepository userRepo
         var base64Payload = Convert.ToBase64String(Encoding.UTF8.GetBytes(payload));
         var signature = CalculateSignature(base64Payload);
 
-        return $"{config.DiscourseBaseUrl}/session/sso_provider?sso={WebUtility.UrlEncode(base64Payload)}&sig={signature}";
+        return $"{config.BaseUrl}/session/sso_provider?sso={WebUtility.UrlEncode(base64Payload)}&sig={signature}";
     }
 
     public async Task<UserEntity?> VerifyAndGetOrCreateUser(string payload, string signature, string nonce)
@@ -74,7 +74,7 @@ public class DiscourseConnectService(AuthConfig config, IUserRepository userRepo
 
     private string CalculateSignature(string payload)
     {
-        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(config.DiscourseSecret));
+        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(config.AuthSecret));
         var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(payload));
         return Convert.ToHexString(hash).ToLower();
     }

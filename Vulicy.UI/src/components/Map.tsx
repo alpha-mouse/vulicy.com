@@ -4,7 +4,9 @@ import TopBar from './TopBar';
 import FeatureInfoPanel from './FeatureInfoPanel';
 import { useMapInitialization } from '../hooks/useMapInitialization';
 import { useAuth } from '../hooks/useAuth';
+import { useConfig } from '../hooks/useConfig';
 import type { FeatureProperties, NamingCategory, Viewport, SearchResult } from '../types/feature';
+import { api } from '../utils/api';
 
 // Helper to update URL without page reload
 const updateUrl = (params: Record<string, string | number | null | undefined>): void => {
@@ -25,6 +27,9 @@ const MapComponent = () => {
   const [selectedFeature, setSelectedFeature] = useState<FeatureProperties | null>(null);
   const selectedFeatureRef = useRef<FeatureProperties | null>(null);
 
+  // Cache of forum links created during this session (featureId -> forumLink)
+  const forumLinksCache = useRef<Map<number, string>>(new Map());
+
   const [namingCategories, setNamingCategories] = useState<NamingCategory[]>([]);
   const [isCopied, setIsCopied] = useState(false);
 
@@ -36,18 +41,30 @@ const MapComponent = () => {
 
   // Auth state
   const { user, isLoading: authLoading, isAdmin, login, logout, clearAuthState } = useAuth();
+  const { config } = useConfig();
 
   // Sync ref with state for animation loop access
   useEffect(() => {
     selectedFeatureRef.current = selectedFeature;
     window._selectedFeatureRef = selectedFeatureRef;
+    setIsCopied(false);
   }, [selectedFeature]);
+
+  // Wrapper for feature selection that enriches with cached forum links
+  const handleFeatureSelect = useCallback((feature: FeatureProperties | null) => {
+    if (feature && forumLinksCache.current.has(feature.Id)) {
+      const cachedLink = forumLinksCache.current.get(feature.Id)!;
+      setSelectedFeature({ ...feature, ForumRelativeLink: cachedLink });
+    } else {
+      setSelectedFeature(feature);
+    }
+  }, []);
 
   // Initialize map with custom hook
   const { flyTo } = useMapInitialization({
     containerRef: mapContainer,
     selectedFeatureRef,
-    onFeatureSelect: setSelectedFeature,
+    onFeatureSelect: handleFeatureSelect,
     onViewportChange: setViewport,
     updateUrl,
     isAdmin,
@@ -56,9 +73,8 @@ const MapComponent = () => {
 
   // Fetch naming categories
   useEffect(() => {
-    fetch('/api/map/naming-categories')
-      .then(res => res.json())
-      .then((data: NamingCategory[]) => setNamingCategories(data))
+    api.get<NamingCategory[]>('/api/map/naming-categories')
+      .then((data) => setNamingCategories(data))
       .catch(err => console.error('Failed to fetch naming categories:', err));
   }, []);
 
@@ -98,6 +114,19 @@ const MapComponent = () => {
     updateUrl({ featureId: null });
   }, []);
 
+  // Handler for when a forum topic is created
+  const handleForumLinkCreated = useCallback((featureId: number, forumLink: string) => {
+    // Cache the link for future re-selections
+    forumLinksCache.current.set(featureId, forumLink);
+
+    // Update the current selected feature if it matches
+    setSelectedFeature(prev =>
+      prev && prev.Id === featureId
+        ? { ...prev, ForumRelativeLink: forumLink }
+        : prev
+    );
+  }, []);
+
   const handleLogin = useCallback(() => {
     login(window.location.href);
   }, [login]);
@@ -125,6 +154,9 @@ const MapComponent = () => {
             onCopyLink={handleCopyLink}
             onClose={handleClosePanel}
             isAdmin={isAdmin}
+            isAuthenticated={!!user}
+            discourseBaseUrl={config?.discourseBaseUrl}
+            onForumLinkCreated={handleForumLinkCreated}
           />
         )}
       </div>

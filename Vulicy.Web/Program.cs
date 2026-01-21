@@ -12,11 +12,12 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.TypeInfoResolverChain.Insert(1, VulicyServicesSerializerContext.Default);
 });
 
-builder.Services.AddConfigs(builder.Configuration, typeof(AuthConfig).Assembly);
+builder.Services.AddConfigs(builder.Configuration, typeof(DiscourseConfig).Assembly);
 builder.Services.AddConfigs(builder.Configuration, typeof(FrontConfig).Assembly);
 
 builder.Services.AddDatabase(builder.Configuration);
 builder.Services.AddConventionalServices(typeof(IImportingService).Assembly);
+builder.Services.AddHttpClient();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -34,7 +35,7 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-app.Services.GetRequiredService<FrontConfig>().DiscourseBaseUrl = app.Services.GetRequiredService<AuthConfig>().DiscourseBaseUrl; // dirty, but let it be so for now
+app.Services.GetRequiredService<FrontConfig>().DiscourseBaseUrl = app.Services.GetRequiredService<DiscourseConfig>().BaseUrl; // dirty, but let it be so for now
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
@@ -49,6 +50,7 @@ app.MapMap();
 app.MapFeatures();
 app.MapAuth();
 app.MapConfig();
+app.MapForum();
 
 app.MapFallbackToFile("index.html");
 

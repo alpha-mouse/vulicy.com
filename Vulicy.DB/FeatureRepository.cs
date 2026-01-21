@@ -140,6 +140,59 @@ public partial class FeatureRepository(VulicyDbContext dbContext)
             .FirstOrDefaultAsync();
     }
 
+    public Task<ForumTopicData?> GetCreateForumTopicData(int id)
+    {
+        const string query = $"""
+            select
+                f."{nameof(FeatureEntity.Type)}",
+                coalesce(f."{nameof(FeatureEntity.NameBeTarask)}", f."{nameof(FeatureEntity.NameBeNark)}", f."{nameof(FeatureEntity.NameRu)}") as "Name",
+                ST_Y(ST_Centroid(f."{nameof(FeatureEntity.Geometry)}")) as "Lat",
+                ST_X(ST_Centroid(f."{nameof(FeatureEntity.Geometry)}")) as "Lng"
+            from "{FeatureConfiguration.TableName}" f
+            where f."{nameof(FeatureEntity.Id)}" = @id
+            """;
+
+        return Context.Database
+            .SqlQueryRaw<ForumTopicData>(query, new NpgsqlParameter("id", id))
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task UpdateForumLink(int featureId, string forumRelativeLink, int userId)
+    {
+        await using var transaction = await Context.Database.BeginTransactionAsync();
+        var feature = await Entities.AsTracking().FirstOrDefaultAsync(x => x.Id == featureId);
+        if (feature != null)
+        {
+            var history = FeatureHistoricEntity.FromBase(feature);
+            history.ChangeDateTime = DateTime.UtcNow;
+            history.InHistoryById = userId;
+            Context.Add(history);
+
+            feature.ForumRelativeLink = forumRelativeLink;
+            feature.LastModifiedById = userId;
+            await Context.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+    }
+
+    public async Task SetForumLinkIfEmpty(int featureId, string forumRelativeLink, int userId)
+    {
+        await using var transaction = await Context.Database.BeginTransactionAsync();
+        var feature = await Entities.AsTracking().FirstOrDefaultAsync(x => x.Id == featureId);
+        if (feature is { ForumRelativeLink: null })
+        {
+            var history = FeatureHistoricEntity.FromBase(feature);
+            history.ChangeDateTime = DateTime.UtcNow;
+            history.InHistoryById = userId;
+            Context.Add(history);
+
+            feature.ForumRelativeLink = forumRelativeLink;
+            feature.LastModifiedById = userId;
+            await Context.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+    }
+
 
     public Task MirrorIsDeletedFromCadastre(DateTime now)
     {

@@ -39,6 +39,29 @@ public static partial class NameHelpers
         };
     }
 
+    public static string GetLabel(FeatureType type)
+    {
+        return type switch
+        {
+            FeatureType.Street => "вул.",
+            FeatureType.Avenue => "пр-т",
+            FeatureType.Square => "пл.",
+            FeatureType.Boulevard => "бульв.",
+            FeatureType.HighRoad => "тракт",
+            FeatureType.Riverside => "наб.",
+            FeatureType.Highway => "шаша",
+            FeatureType.Roundabout => "кальцо",
+            FeatureType.Alley => "зав.",
+            FeatureType.Driveway => "пр-зд",
+            FeatureType.DeadEnd => "тупік",
+            FeatureType.Descent => "спуск",
+            FeatureType.Entryway => "заезд",
+            FeatureType.Park => "парк",
+            FeatureType.PublicGarden => "сквэр",
+            _ => ""
+        };
+    }
+
     public static bool IsSimilar(string s1, string s2, double threshold)
     {
         return threshold <= GetSimilarity(s1, s2);

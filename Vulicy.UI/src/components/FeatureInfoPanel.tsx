@@ -1,6 +1,8 @@
-import { X, Link, Check } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { X, Link, Check, MessageSquarePlus, Loader2 } from 'lucide-react';
 import { FEATURE_TYPE_LABELS, getClassificationText } from '../constants/mapConstants';
 import type { FeatureProperties, NamingCategory } from '../types/feature';
+import { api } from '../utils/api';
 
 interface FeatureInfoPanelProps {
   feature: FeatureProperties;
@@ -9,6 +11,9 @@ interface FeatureInfoPanelProps {
   onCopyLink: () => void;
   onClose: () => void;
   isAdmin?: boolean;
+  isAuthenticated?: boolean;
+  discourseBaseUrl?: string;
+  onForumLinkCreated?: (featureId: number, forumLink: string) => void;
 }
 
 const FeatureInfoPanel = ({
@@ -18,8 +23,54 @@ const FeatureInfoPanel = ({
   onCopyLink,
   onClose,
   isAdmin = false,
+  isAuthenticated = false,
+  discourseBaseUrl,
+  onForumLinkCreated,
 }: FeatureInfoPanelProps) => {
+  const currentIdRef = useRef(feature.Id);
+  currentIdRef.current = feature.Id;
+
+  const [isCreatingTopic, setIsCreatingTopic] = useState(false);
+  const [localForumLink, setLocalForumLink] = useState<string | null>(null);
+
+  // Reset local state when switching features without re-mounting
+  const [prevFeatureId, setPrevFeatureId] = useState(feature.Id);
+  if (feature.Id !== prevFeatureId) {
+    setPrevFeatureId(feature.Id);
+    setLocalForumLink(null);
+    setIsCreatingTopic(false);
+  }
+
+  const effectiveForumLink = localForumLink || feature.ForumRelativeLink;
+  const forumFullUrl = effectiveForumLink && discourseBaseUrl
+    ? `${discourseBaseUrl}${effectiveForumLink.startsWith('/') ? '' : '/'}${effectiveForumLink}`
+    : null;
   const hasAdminData = isAdmin && (feature.Comment || feature.DossierRecordId);
+
+  const handleCreateDiscussion = async () => {
+    if (isCreatingTopic) return;
+    const targetFeatureId = feature.Id;
+    setIsCreatingTopic(true);
+
+    try {
+      const data = await api.post<{ forumRelativeLink: string }>('/api/forum/create-topic', {
+        featureId: targetFeatureId
+      });
+
+      if (data.forumRelativeLink && currentIdRef.current === targetFeatureId) {
+        setLocalForumLink(data.forumRelativeLink);
+        // Notify parent to update the feature's forum link in its state
+        onForumLinkCreated?.(targetFeatureId, data.forumRelativeLink);
+      }
+    } catch (error) {
+      console.error('Failed to create forum topic:', error);
+    } finally {
+      // Only reset loading state if we're still on the same feature
+      if (currentIdRef.current === targetFeatureId) {
+        setIsCreatingTopic(false);
+      }
+    }
+  };
 
   return (
     <div className="absolute right-4 top-4 h-fit max-h-panel w-96 glass z-20 overflow-y-auto p-6 flex flex-col gap-6 animate-in">
@@ -100,6 +151,39 @@ const FeatureInfoPanel = ({
         )}
       </div>
 
+      {/* Forum link - shown before dossier record details */}
+      {forumFullUrl && (
+        <a
+          href={forumFullUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="bg-primary text-white py-3 px-4 rounded-xl text-center font-semibold hover:bg-primary-hover transition-all shadow-lg shadow-primary/20"
+        >
+          Абмеркаваць на форуме
+        </a>
+      )}
+
+      {/* Create discussion button - shown when authenticated and no forum link */}
+      {isAuthenticated && !forumFullUrl && (
+        <button
+          onClick={handleCreateDiscussion}
+          disabled={isCreatingTopic}
+          className="bg-primary/10 text-primary py-3 px-4 rounded-xl text-center font-semibold hover:bg-primary/20 transition-all border-2 border-primary/30 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isCreatingTopic ? (
+            <>
+              <Loader2 size={18} className="animate-spin" />
+              Стварэньне...
+            </>
+          ) : (
+            <>
+              <MessageSquarePlus size={18} />
+              Стварыць абмеркаваньне
+            </>
+          )}
+        </button>
+      )}
+
       {/* DossierRecord section - admin only, separated by horizontal line */}
       {hasAdminData && feature.DossierRecordId && (
         <div className="flex flex-col gap-2 pt-4 border-t border-black/10">
@@ -141,19 +225,9 @@ const FeatureInfoPanel = ({
           )}
         </div>
       )}
-
-      {feature.ForumRelativeLink && (
-        <a
-          href={feature.ForumRelativeLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-auto bg-primary text-white py-3 px-4 rounded-xl text-center font-semibold hover:bg-primary-hover transition-all shadow-lg shadow-primary/20"
-        >
-          Абмеркаваць на форуме
-        </a>
-      )}
     </div>
   );
 };
 
 export default FeatureInfoPanel;
+

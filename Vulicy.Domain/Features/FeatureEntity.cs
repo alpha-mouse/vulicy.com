@@ -19,22 +19,26 @@ public class FeatureBaseEntity : Entity<int>
 
     public Geometry Geometry { get; set; } = null!;
 
+    public int LastModifiedById { get; set; }
+
     public int? NamingCategoryId { get; set; }
-    public NamingCategoryEntity? NamingCategory { get; set; }
 
     public int? DossierRecordId { get; set; }
-    public DossierRecordEntity? DossierRecord { get; set; }
 }
 
 public class FeatureEntity : FeatureBaseEntity
 {
     public CadastreFeatureEntity? CadastreFeature { get; set; }
     public List<OsmFeatureEntity> OsmFeatures { get; set; } = [];
+    public UserEntity LastModifiedBy { get; set; }
+    public NamingCategoryEntity? NamingCategory { get; set; }
+    public DossierRecordEntity? DossierRecord { get; set; }
 }
 
 public class FeatureHistoricEntity : FeatureBaseEntity, IHistoricEntity<int>
 {
     public DateTime ChangeDateTime { get; set; }
+    public int InHistoryById { get; set; }
 
     public static FeatureHistoricEntity FromBase(FeatureEntity entity) =>
         new()

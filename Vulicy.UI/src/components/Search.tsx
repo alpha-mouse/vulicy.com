@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Search as SearchIcon, X, MapPin } from 'lucide-react';
 import { FEATURE_TYPE_LABELS } from '../constants/mapConstants';
 import type { SearchResult } from '../types/feature';
+import { api } from '../utils/api';
 
 interface SearchProps {
   onResultClick: (result: SearchResult) => void;
@@ -21,15 +22,11 @@ const Search = ({ onResultClick, currentLat, currentLng, embedded = false }: Sea
   const performSearch = useCallback(async (searchQuery: string, lat: number, lng: number) => {
     setIsLoading(true);
     try {
-      const url = new URL('/api/features/search', window.location.origin);
-      url.searchParams.set('query', searchQuery);
-      if (lat && lng) {
-        url.searchParams.set('lat', lat.toString());
-        url.searchParams.set('lng', lng.toString());
-      }
-
-      const response = await fetch(url);
-      const data: SearchResult[] = await response.json();
+      const data = await api.get<SearchResult[]>('/api/features/search', {
+        query: searchQuery,
+        lat: lat || undefined,
+        lng: lng || undefined,
+      });
       setResults(data);
       setIsOpen(true);
     } catch (error) {

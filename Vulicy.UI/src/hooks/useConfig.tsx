@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Config } from '../types/config';
+import { api } from '../utils/api';
 
 interface ConfigContextType {
   config: Config | null;
@@ -20,18 +21,15 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const response = await fetch('/api/config');
-        if (response.ok) {
-          const newConfig: Config = await response.json();
+        const newConfig = await api.get<Config>('/api/config');
 
-          setConfig(prev => {
-            if (JSON.stringify(newConfig) !== JSON.stringify(prev)) {
-              localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newConfig));
-              return newConfig;
-            }
-            return prev;
-          });
-        }
+        setConfig(prev => {
+          if (JSON.stringify(newConfig) !== JSON.stringify(prev)) {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newConfig));
+            return newConfig;
+          }
+          return prev;
+        });
       } catch (error) {
         console.error('Failed to fetch config:', error);
       } finally {
