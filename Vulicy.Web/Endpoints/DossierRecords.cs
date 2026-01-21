@@ -9,10 +9,16 @@ public static class DossierRecords
     {
         var group = builder.MapGroup("/api/dossier-records");
         group.MapGet("/search", Search);
+        group.MapGet("/{id:int}/features", GetFeatures);
     }
 
     private static Task<List<DossierRecordSearchResult>> Search(string? query, int? skip, int? take, IDossierRecordService dossierRecordService)
     {
         return dossierRecordService.SearchByName(query, skip, take);
+    }
+
+    private static Task<List<FeatureSearchResult>> GetFeatures(int id, IFeatureService featureService)
+    {
+        return featureService.GetByDossierRecord(id);
     }
 }

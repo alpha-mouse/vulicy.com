@@ -6,10 +6,10 @@ namespace Vulicy.Web.Infrastructure;
 
 public static class DatabaseExtensions
 {
-    public static void AddDatabase(this IServiceCollection serviceCollection, IConfiguration configuration)
+    public static void AddDatabase(this IServiceCollection serviceCollection, IConfiguration configuration, IWebHostEnvironment environment)
     {
         serviceCollection.AddConventionalServices(typeof(VulicyDbContext).Assembly);
-        serviceCollection.AddDbContext(configuration);
+        serviceCollection.AddDbContext(configuration, environment);
     }
 
     public static async Task InitializeDatabases(this IServiceProvider serviceProvider)
@@ -23,7 +23,7 @@ public static class DatabaseExtensions
         await context.Database.ExecuteSqlRawAsync("SELECT 1");
     }
 
-    public static void AddDbContext(this IServiceCollection serviceCollection, IConfiguration configuration)
+    public static void AddDbContext(this IServiceCollection serviceCollection, IConfiguration configuration, IWebHostEnvironment environment)
     {
         var connectionString = configuration.GetConnectionString("DefaultConnection");
         var npgsqlDataSource = new NpgsqlDataSourceBuilder(connectionString)
@@ -41,6 +41,12 @@ public static class DatabaseExtensions
             });
 
             options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+
+            if (environment.IsDevelopment())
+            {
+                options.EnableSensitiveDataLogging();
+                options.EnableDetailedErrors();
+            }
         });
     }
 }

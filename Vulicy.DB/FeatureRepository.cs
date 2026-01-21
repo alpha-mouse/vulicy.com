@@ -56,6 +56,7 @@ public partial class FeatureRepository(VulicyDbContext dbContext)
                  f."{nameof(FeatureEntity.NameBeNark)}",
                  f."{nameof(FeatureEntity.NameRu)}",
                  f."{nameof(FeatureEntity.Type)}",
+                 null as "{nameof(FeatureSearchResult.Location)}",
                  ST_Y(ST_Centroid(f."{nameof(FeatureEntity.Geometry)}")) as "{nameof(FeatureSearchResult.Latitude)}",
                  ST_X(ST_Centroid(f."{nameof(FeatureEntity.Geometry)}")) as "{nameof(FeatureSearchResult.Longitude)}"
              from "{FeatureConfiguration.TableName}" f
@@ -133,6 +134,23 @@ public partial class FeatureRepository(VulicyDbContext dbContext)
                 new NpgsqlParameter("x", x),
                 new NpgsqlParameter("y", y))
             .FirstOrDefaultAsync();
+    }
+
+    public Task<List<FeatureSearchResult>> GetByDossierRecord(int dossierRecordId)
+    {
+        return Entities
+            .Where(x => !x.IsDeleted && x.DossierRecordId == dossierRecordId)
+            .Select(x => new FeatureSearchResult(
+                x.Id,
+                x.NameBeTarask,
+                x.NameBeNark,
+                x.NameRu,
+                x.CadastreFeature == null ? null : x.CadastreFeature.AteName,
+                x.Type,
+                x.Geometry.Centroid.Y,
+                x.Geometry.Centroid.X
+            ))
+            .ToListAsync();
     }
 
     public Task<ForumTopicData?> GetCreateForumTopicData(int id)

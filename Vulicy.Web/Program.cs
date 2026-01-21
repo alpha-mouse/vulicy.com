@@ -16,7 +16,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 builder.Services.AddConfigs(builder.Configuration, typeof(DiscourseConfig).Assembly);
 builder.Services.AddConfigs(builder.Configuration, typeof(FrontConfig).Assembly);
 
-builder.Services.AddDatabase(builder.Configuration);
+builder.Services.AddDatabase(builder.Configuration, builder.Environment);
 builder.Services.AddConventionalServices(typeof(IImportingService).Assembly);
 builder.Services.AddHttpClient();
 
