@@ -49,6 +49,7 @@ await app.Services.InitializeDatabases();
 app.MapImport();
 app.MapMap();
 app.MapFeatures();
+app.MapDossierRecords();
 app.MapAuth();
 app.MapConfig();
 app.MapForum();

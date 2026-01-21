@@ -9,9 +9,6 @@ public partial class FeatureRepository(VulicyDbContext dbContext)
     : RepositoryBase<FeatureEntity, int>(dbContext)
         , IFeatureRepository
 {
-    [System.Text.RegularExpressions.GeneratedRegex("[%_*]")]
-    private static partial System.Text.RegularExpressions.Regex SearchQueryCleanupRegex();
-
     public Task<byte[]?> GetTile(int z, int x, int y)
     {
         const string query = $"""
@@ -47,9 +44,7 @@ public partial class FeatureRepository(VulicyDbContext dbContext)
 
     public Task<List<FeatureSearchResult>> SearchByName(string query, double? lat = null, double? lng = null)
     {
-        var cleanedQuery = SearchQueryCleanupRegex()
-            .Replace(query ?? "", m => m.Value == "*" ? "%" : "")
-            .Trim();
+        var cleanedQuery = CleanQuery(query);
 
         if (string.IsNullOrWhiteSpace(cleanedQuery))
             return Task.FromResult(new List<FeatureSearchResult>());

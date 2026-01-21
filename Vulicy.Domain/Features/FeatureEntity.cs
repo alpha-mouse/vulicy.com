@@ -2,7 +2,7 @@
 
 namespace Vulicy.Domain;
 
-public class FeatureBaseEntity : Entity<int>
+public abstract class FeatureBaseEntity : Entity<int>
 {
     public string NameBeTarask { get; set; } = null!;
     public string NameBeNark { get; set; } = null!;
@@ -20,9 +20,7 @@ public class FeatureBaseEntity : Entity<int>
     public Geometry Geometry { get; set; } = null!;
 
     public int LastModifiedById { get; set; }
-
     public int? NamingCategoryId { get; set; }
-
     public int? DossierRecordId { get; set; }
 }
 

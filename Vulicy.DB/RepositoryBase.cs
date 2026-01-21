@@ -3,7 +3,7 @@ using Vulicy.Domain;
 
 namespace Vulicy.DB;
 
-public class RepositoryBase<T, TKey>(VulicyDbContext dbContext) : IRepository<T, TKey>
+public partial class RepositoryBase<T, TKey>(VulicyDbContext dbContext) : IRepository<T, TKey>
     where T : Entity<TKey>
 {
     protected VulicyDbContext Context { get; } = dbContext;
@@ -43,4 +43,14 @@ public class RepositoryBase<T, TKey>(VulicyDbContext dbContext) : IRepository<T,
     {
         Context.ChangeTracker.Clear();
     }
+
+    protected string CleanQuery(string? query)
+    {
+        return SearchQueryCleanupRegex()
+            .Replace(query ?? "", m => m.Value == "*" ? "%" : "")
+            .Trim();
+    }
+
+    [System.Text.RegularExpressions.GeneratedRegex("[%_*]")]
+    private static partial System.Text.RegularExpressions.Regex SearchQueryCleanupRegex();
 }
