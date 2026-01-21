@@ -80,25 +80,17 @@ public static partial class Forum
         // Parse the body to get the topic content
         try
         {
-            using var doc = JsonDocument.Parse(body);
-            if (doc.RootElement.TryGetProperty("topic", out var topic) &&
-                topic.TryGetProperty("id", out var topicId) &&
-                topic.TryGetProperty("slug", out var topicSlug))
+            var payload = JsonSerializer.Deserialize(body, DiscourseJsonSerializerContext.Default.DiscourseWebhookPayload);
+            if (payload?.Topic != null)
             {
-                // Try to get the first post content to extract feature ID
-                string? rawContent = null;
-                if (doc.RootElement.TryGetProperty("post", out var post) &&
-                    post.TryGetProperty("raw", out var raw))
-                {
-                    rawContent = raw.GetString();
-                }
+                var rawContent = payload.Post?.Raw;
 
                 if (!string.IsNullOrEmpty(rawContent))
                 {
                     var match = FeatureIdRegex().Match(rawContent);
                     if (match.Success && int.TryParse(match.Groups[1].Value, out var featureId))
                     {
-                        var forumRelativeLink = $"/t/{topicSlug.GetString()}/{topicId.GetInt32()}";
+                        var forumRelativeLink = $"/t/{payload.Topic.Slug}/{payload.Topic.Id}";
                         await featureRepository.SetForumLinkIfEmpty(featureId, forumRelativeLink, 0);
                     }
                 }

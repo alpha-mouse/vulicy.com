@@ -39,15 +39,11 @@ public class ForumService(AppConfig appConfig, DiscourseConfig discourseConfig, 
             return null;
         }
 
-        var responseContent = await response.Content.ReadAsStringAsync();
-        using var doc = JsonDocument.Parse(responseContent);
+        var postResponse = await response.Content.ReadFromJsonAsync(DiscourseJsonSerializerContext.Default.DiscoursePostResponse);
 
-        if (doc.RootElement.TryGetProperty("topic_id", out var topicIdEl) &&
-            doc.RootElement.TryGetProperty("topic_slug", out var topicSlugEl))
+        if (postResponse != null)
         {
-            var topicId = topicIdEl.GetInt32();
-            var topicSlug = topicSlugEl.GetString();
-            var forumRelativeLink = $"/t/{topicSlug}/{topicId}";
+            var forumRelativeLink = $"/t/{postResponse.TopicSlug}/{postResponse.TopicId}";
 
             await featureRepository.UpdateForumLink(featureId, forumRelativeLink, userId);
 

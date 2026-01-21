@@ -9,7 +9,8 @@ var builder = WebApplication.CreateSlimBuilder(args);
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.TypeInfoResolverChain.Insert(0, VulicyWebSerializerContext.Default);
-    options.SerializerOptions.TypeInfoResolverChain.Insert(1, VulicyServicesSerializerContext.Default);
+    options.SerializerOptions.TypeInfoResolverChain.Insert(1, DiscourseJsonSerializerContext.Default);
+    options.SerializerOptions.TypeInfoResolverChain.Insert(2, VulicyServicesSerializerContext.Default);
 });
 
 builder.Services.AddConfigs(builder.Configuration, typeof(DiscourseConfig).Assembly);
