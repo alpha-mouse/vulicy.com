@@ -89,10 +89,9 @@ public static class Auth
         return Results.Redirect(string.IsNullOrEmpty(finalRedirect) ? "/" : finalRedirect);
     }
 
-    private static async Task<IResult> Logout(HttpContext context)
+    private static IResult Logout()
     {
-        await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        return Results.Redirect("/");
+        return Results.SignOut(new AuthenticationProperties { RedirectUri = "/" }, [CookieAuthenticationDefaults.AuthenticationScheme]);
     }
 
     private static IResult Me(HttpContext context)
