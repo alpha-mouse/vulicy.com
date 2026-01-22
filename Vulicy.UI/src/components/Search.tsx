@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Search as SearchIcon, X, MapPin } from 'lucide-react';
+import { useClickOutside } from '../hooks/useClickOutside';
 import type { SearchResult } from '../types/feature';
 import { api } from '../utils/api';
 import FeatureListItem from './FeatureListItem';
@@ -18,46 +19,44 @@ const Search = ({ onResultClick, currentLat, currentLng, embedded = false }: Sea
   const [isOpen, setIsOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  // Memoize search function to use in dependency array
-  const performSearch = useCallback(async (searchQuery: string, lat: number, lng: number) => {
+  // Close dropdown on click outside
+  useClickOutside(searchRef, () => setIsOpen(false));
+
+  // Memoize search function
+  const performSearch = useCallback(async (searchQuery: string) => {
     setIsLoading(true);
     try {
       const data = await api.get<SearchResult[]>('/api/features/search', {
         query: searchQuery,
-        lat: lat || undefined,
-        lng: lng || undefined,
+        lat: currentLat || undefined,
+        lng: currentLng || undefined,
       });
       setResults(data);
       setIsOpen(true);
     } catch (error) {
       console.error('Search failed:', error);
+      setResults([]);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [currentLat, currentLng]);
 
-  useEffect(() => {
-    if (!query || query.length < 2) {
+  // Debounce search
+  const handleQueryChange = useCallback((newQuery: string) => {
+    setQuery(newQuery);
+
+    if (!newQuery || newQuery.length < 2) {
       setResults([]);
       return;
     }
 
+    // Debounce
     const timer = setTimeout(() => {
-      performSearch(query, currentLat, currentLng);
+      performSearch(newQuery);
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [query, currentLat, currentLng, performSearch]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [performSearch]);
 
   const handleClear = () => {
     setQuery('');
@@ -85,7 +84,7 @@ const Search = ({ onResultClick, currentLat, currentLng, embedded = false }: Sea
           type="text"
           value={query}
           onChange={(e) => {
-            setQuery(e.target.value);
+            handleQueryChange(e.target.value);
             setIsOpen(true);
           }}
           onFocus={() => {

@@ -6,45 +6,37 @@ import DossierRecordsPanel from './DossierRecordsPanel';
 import { useMapInitialization } from '../hooks/useMapInitialization';
 import { useAuth } from '../hooks/useAuth';
 import { useConfig } from '../hooks/useConfig';
-import type { FeatureProperties, NamingCategory, Viewport, SearchResult } from '../types/feature';
+import { useUrlParams } from '../hooks/useUrlParams';
+import { useMapStore } from '../store/mapStore';
+import type { FeatureProperties, NamingCategory, SearchResult } from '../types/feature';
 import { api } from '../utils/api';
-
-// Helper to update URL without page reload
-const updateUrl = (params: Record<string, string | number | null | undefined>): void => {
-  const url = new URL(window.location.href);
-  Object.entries(params).forEach(([key, value]) => {
-    if (value === null || value === undefined) {
-      url.searchParams.delete(key);
-    } else {
-      url.searchParams.set(key, String(value));
-    }
-  });
-  window.history.replaceState({}, '', url);
-};
 
 const MapComponent = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
-
-  const [selectedFeature, setSelectedFeature] = useState<FeatureProperties | null>(null);
   const selectedFeatureRef = useRef<FeatureProperties | null>(null);
 
-  // Cache of forum links created during this session (featureId -> forumLink)
-  const forumLinksCache = useRef<Map<number, string>>(new Map());
+  // Zustand store
+  const {
+    selectedFeature,
+    setSelectedFeature,
+    isFeatureLoading,
+    setFeatureLoading,
+    viewport,
+    setViewport,
+    cacheForumLink,
+    getForumLink,
+    isDossierPanelOpen,
+    setDossierPanelOpen,
+    isCopied,
+    setIsCopied,
+  } = useMapStore();
 
   const [namingCategories, setNamingCategories] = useState<NamingCategory[]>([]);
-  const [isCopied, setIsCopied] = useState(false);
-  const [isDossierPanelOpen, setIsDossierPanelOpen] = useState(false);
-  const [isFeatureLoading, setIsFeatureLoading] = useState(false);
 
-  const initialParams = new URLSearchParams(window.location.search);
-  const [viewport, setViewport] = useState<Viewport>({
-    lat: parseFloat(initialParams.get('lat') || '') || 53.9045,
-    lng: parseFloat(initialParams.get('lng') || '') || 27.5615
-  });
-
-  // Auth state
+  // Hooks
   const { user, isLoading: authLoading, isAdmin, login, logout, clearAuthState } = useAuth();
   const { config } = useConfig();
+  const { updateParams } = useUrlParams();
 
   // Sync ref with state for animation loop access
   useEffect(() => {
@@ -55,14 +47,14 @@ const MapComponent = () => {
 
   // Wrapper for feature selection that enriches with cached forum links
   const handleFeatureSelect = useCallback((feature: FeatureProperties | null) => {
-    setIsFeatureLoading(false);
-    if (feature && forumLinksCache.current.has(feature.Id)) {
-      const cachedLink = forumLinksCache.current.get(feature.Id)!;
-      setSelectedFeature({ ...feature, ForumRelativeLink: cachedLink });
+    setFeatureLoading(false);
+    if (feature) {
+      const cachedLink = getForumLink(feature.Id);
+      setSelectedFeature(cachedLink ? { ...feature, ForumRelativeLink: cachedLink } : feature);
     } else {
-      setSelectedFeature(feature);
+      setSelectedFeature(null);
     }
-  }, []);
+  }, [setFeatureLoading, setSelectedFeature, getForumLink]);
 
   // Initialize map with custom hook
   const { flyTo } = useMapInitialization({
@@ -70,7 +62,7 @@ const MapComponent = () => {
     selectedFeatureRef,
     onFeatureSelect: handleFeatureSelect,
     onViewportChange: setViewport,
-    updateUrl,
+    updateUrl: updateParams,
     isAdmin,
     onAdminFallback: clearAuthState,
   });
@@ -102,47 +94,42 @@ const MapComponent = () => {
   }, [selectedFeature]);
 
   const handleResultClick = useCallback((result: SearchResult) => {
-    setIsFeatureLoading(true);
+    setFeatureLoading(true);
     flyTo(result.longitude, result.latitude);
-    updateUrl({ featureId: result.id });
+    updateParams({ featureId: result.id });
     window._selectFeature?.(result.id);
-  }, [flyTo]);
+  }, [flyTo, setFeatureLoading, updateParams]);
 
   const handleCopyLink = useCallback(() => {
     navigator.clipboard.writeText(window.location.href);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
-  }, []);
+  }, [setIsCopied]);
 
   const handleClosePanel = useCallback(() => {
     setSelectedFeature(null);
-    setIsFeatureLoading(false);
-    updateUrl({ featureId: null });
-  }, []);
+    setFeatureLoading(false);
+    updateParams({ featureId: null });
+  }, [setSelectedFeature, setFeatureLoading, updateParams]);
 
   // Handler for when a forum topic is created
   const handleForumLinkCreated = useCallback((featureId: number, forumLink: string) => {
     // Cache the link for future re-selections
-    forumLinksCache.current.set(featureId, forumLink);
+    cacheForumLink(featureId, forumLink);
 
     // Update the current selected feature if it matches
-    setSelectedFeature(prev =>
-      prev && prev.Id === featureId
-        ? { ...prev, ForumRelativeLink: forumLink }
-        : prev
-    );
-  }, []);
+    if (selectedFeature && selectedFeature.Id === featureId) {
+      setSelectedFeature({ ...selectedFeature, ForumRelativeLink: forumLink });
+    }
+  }, [cacheForumLink, selectedFeature, setSelectedFeature]);
 
   // Handler for when a feature is updated - re-select to get fresh data
   const handleFeatureUpdated = useCallback((featureId: number, updatedData?: Partial<FeatureProperties>) => {
-    if (updatedData) {
+    if (updatedData && selectedFeature && selectedFeature.Id === featureId) {
       // Use Object.assign instead of spread to properly overwrite with undefined values
-      setSelectedFeature(prev => prev && prev.Id === featureId
-        ? Object.assign({}, prev, updatedData) as FeatureProperties
-        : prev
-      );
+      setSelectedFeature(Object.assign({}, selectedFeature, updatedData) as FeatureProperties);
     }
-  }, []);
+  }, [selectedFeature, setSelectedFeature]);
 
   const handleLogin = useCallback(() => {
     login(window.location.href);
@@ -159,7 +146,7 @@ const MapComponent = () => {
         currentLng={viewport.lng}
         onResultClick={handleResultClick}
         isAdmin={isAdmin}
-        onOpenDossierPanel={() => setIsDossierPanelOpen(true)}
+        onOpenDossierPanel={() => setDossierPanelOpen(true)}
       />
 
       <div className="map-container-with-topbar">
@@ -183,7 +170,7 @@ const MapComponent = () => {
 
         <DossierRecordsPanel
           isOpen={isDossierPanelOpen}
-          onClose={() => setIsDossierPanelOpen(false)}
+          onClose={() => setDossierPanelOpen(false)}
           onFeatureClick={handleResultClick}
           namingCategories={namingCategories}
         />

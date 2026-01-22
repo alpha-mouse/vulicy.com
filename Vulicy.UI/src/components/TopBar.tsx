@@ -1,5 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { LogIn, LogOut, Menu, FileUser } from 'lucide-react';
+import { useClickOutside } from '../hooks/useClickOutside';
+import Button from './Button';
 import Search from './Search';
 import type { User, SearchResult } from '../types/feature';
 
@@ -30,15 +32,7 @@ const TopBar = ({
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu on click outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  useClickOutside(menuRef, () => setIsMenuOpen(false));
 
   const handleMenuItemClick = (action: () => void) => {
     action();
@@ -86,22 +80,24 @@ const TopBar = ({
         ) : user ? (
           <>
             <span className="text-sm font-medium text-black">{user.username}</span>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={onLogout}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-black/60 hover:text-black transition-colors bg-transparent border-none cursor-pointer outline-none"
+              icon={<LogOut size={16} />}
               title="Выйсьці"
-            >
-              <LogOut size={16} />
-            </button>
+              className="px-3"
+            />
           </>
         ) : (
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={onLogin}
-            className="flex items-center gap-2 px-4 py-1.5 text-sm font-medium bg-secondary text-black rounded-lg hover:bg-secondary-hover transition-colors border border-black/10 cursor-pointer outline-none shadow-sm"
+            icon={<LogIn size={16} />}
           >
-            <LogIn size={16} />
-            <span>Увайсьці</span>
-          </button>
+            Увайсьці
+          </Button>
         )}
       </div>
     </div>

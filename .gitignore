@@ -3,3 +3,4 @@ obj/
 bin/
 *.user
 Vulicy.Web/wwwroot/
+.claude/
