@@ -1,5 +1,7 @@
 ﻿using Vulicy.Domain;
 using Vulicy.Services;
+using Microsoft.Extensions.Caching.Memory;
+
 
 namespace Vulicy.Web.Endpoints;
 
@@ -14,13 +16,20 @@ public static class Map
         group.MapGet("/tile-details/{z}/{x}/{y}.mvt", GetTileDetails).RequireAuthorization(policy => policy.RequireRole(Auth.AdminRole));
     }
 
-    private static async Task<IResult> GetTile(int z, int x, int y, IFeatureRepository featureRepository)
+    private static async Task<IResult> GetTile(int z, int x, int y, IFeatureRepository featureRepository, IMemoryCache cache)
     {
+        var cacheKey = $"tile-{z}-{x}-{y}";
+        if (cache.TryGetValue(cacheKey, out byte[]? bytes))
+        {
+            return Results.File(bytes!, "application/x-protobuf");
+        }
+
         var result = await featureRepository.GetTile(z, x, y);
 
-        if (result is byte[] { Length: > 0 } bytes)
+        if (result is byte[] { Length: > 0 } newBytes)
         {
-            return Results.File(bytes, "application/x-protobuf");
+            cache.Set(cacheKey, newBytes, TimeSpan.FromMinutes(10));
+            return Results.File(newBytes, "application/x-protobuf");
         }
 
         return Results.NoContent();

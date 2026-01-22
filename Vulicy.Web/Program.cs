@@ -20,6 +20,8 @@ builder.Services.AddConfigs(builder.Configuration, typeof(FrontConfig).Assembly)
 builder.Services.AddDatabase(builder.Configuration, builder.Environment);
 builder.Services.AddConventionalServices(typeof(IImportingService).Assembly);
 builder.Services.AddHttpClient();
+builder.Services.AddMemoryCache();
+
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
