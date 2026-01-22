@@ -26,12 +26,12 @@ public static partial class Forum
 
     private static async Task<IResult> CreateTopic(
         CreateTopicRequest request,
-        IForumService forumService,
+        IDiscourseService discourseService,
         HttpContext context)
     {
-        var userId = context.User.UserId().Value;
+        var userId = context.User.GetUserId();
 
-        var forumRelativeLink = await forumService.CreateTopic(request.FeatureId, userId);
+        var forumRelativeLink = await discourseService.CreateTopic(request.FeatureId, userId);
         if (forumRelativeLink == null)
         {
             return Results.Problem("Failed to create forum topic. Check Discourse configuration.");

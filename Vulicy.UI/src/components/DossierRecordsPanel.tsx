@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, Search as SearchIcon, X, MapPin, ChevronDown, ChevronUp, Loader2, FileUser } from 'lucide-react';
-import { getClassificationText } from '../constants/mapConstants';
 import type { DossierRecordSearchResult, SearchResult, NamingCategory } from '../types/feature';
 import { api } from '../utils/api';
 import FeatureListItem from './FeatureListItem';
+import DossierRecordItem from './DossierRecordItem';
 
 interface DossierRecordsPanelProps {
   isOpen: boolean;
@@ -12,7 +12,7 @@ interface DossierRecordsPanelProps {
   namingCategories: NamingCategory[];
 }
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 50;
 
 const DossierRecordsPanel = ({
   isOpen,
@@ -23,7 +23,7 @@ const DossierRecordsPanel = ({
   const [query, setQuery] = useState('');
   const [records, setRecords] = useState<DossierRecordSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore, setHasMore] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [features, setFeatures] = useState<Record<number, SearchResult[]>>({});
   const [loadingFeatures, setLoadingFeatures] = useState<Record<number, boolean>>({});
@@ -181,50 +181,10 @@ const DossierRecordsPanel = ({
               )}
             </div>
 
-            {/* Expanded details */}
             {expandedId === record.id && (
               <div className="px-4 pb-4 flex flex-col gap-3 bg-black/[0.02]">
                 {/* Record details */}
-                <div className="flex flex-col gap-1.5 text-sm">
-                  {record.nameBeNark && (
-                    <div className="leading-relaxed">
-                      <span className="text-black/50">Акадэмічны: </span>
-                      <span className="text-black">{record.nameBeNark}</span>
-                    </div>
-                  )}
-                  {record.nameRu && (
-                    <div className="leading-relaxed">
-                      <span className="text-black/50">Расейская: </span>
-                      <span className="text-black">{record.nameRu}</span>
-                    </div>
-                  )}
-                  {record.descriptionBe && (
-                    <div className="leading-relaxed">
-                      <span className="text-black/50">Апісаньне: </span>
-                      <span className="text-black">{record.descriptionBe}</span>
-                    </div>
-                  )}
-                  {record.descriptionRu && (
-                    <div className="leading-relaxed">
-                      <span className="text-black/50">Апісаньне КА: </span>
-                      <span className="text-black">{record.descriptionRu}</span>
-                    </div>
-                  )}
-                  {record.classification !== 0 && (
-                    <div className="leading-relaxed">
-                      <span className="text-black/50">Клясыфікацыя: </span>
-                      <span className="font-medium text-black">{getClassificationText(record.classification)}</span>
-                    </div>
-                  )}
-                  {record.namingCategoryId && (
-                    <div className="leading-relaxed">
-                      <span className="text-black/50">Катэгорыя: </span>
-                      <span className="text-black">
-                        {namingCategories.find(c => c.id === record.namingCategoryId)?.name || '...'}
-                      </span>
-                    </div>
-                  )}
-                </div>
+                <DossierRecordItem record={record} namingCategories={namingCategories} />
 
                 {/* Features */}
                 {loadingFeatures[record.id] ? (
@@ -266,12 +226,12 @@ const DossierRecordsPanel = ({
         )}
 
         {/* Sentinel for infinite scroll */}
-        {hasMore && !isLoading && <div ref={sentinelRef} className="h-4" />}
+        {records.length > 0 && hasMore && !isLoading && <div ref={sentinelRef} className="h-4" />}
 
         {/* Empty state */}
         {!isLoading && records.length === 0 && (
           <div className="p-4 text-center text-sm text-black/40">
-            {query ? 'Нічога не знойдзена' : 'Пачніце пошук'}
+            {query ? 'Нічога ня знойдзена' : 'Пачніце пошук'}
           </div>
         )}
       </div>

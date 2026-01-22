@@ -4,6 +4,7 @@ using Vulicy.Web.Endpoints;
 namespace Vulicy.Web.Infrastructure;
 
 [JsonSerializable(typeof(string))]
+[JsonSerializable(typeof(FrontConfig))]
 [JsonSerializable(typeof(CreateTopicRequest))]
 [JsonSerializable(typeof(CreateTopicResponse))]
 internal partial class VulicyWebSerializerContext : JsonSerializerContext

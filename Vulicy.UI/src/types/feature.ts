@@ -27,6 +27,7 @@ export interface FeatureProperties {
   RenamingReason?: string;
   NamingCategoryId?: number;
   HistoricNames?: string;
+  HistoricPossible: boolean;
   YearNamed?: number;
   ForumRelativeLink?: string;
   // Admin-only fields from tile-details endpoint
@@ -70,4 +71,19 @@ export interface NamingCategory {
 export interface Viewport {
   lat: number;
   lng: number;
+}
+
+export interface FeatureEditRequest {
+  nameBeTarask: string;
+  nameBeNark: string;
+  nameRu: string;
+  classification: number;
+  type: number;
+  renamingReason: string | null;
+  historicNames: string | null;
+  comment: string | null;
+  historicPossible: boolean;
+  yearNamed: string | null;
+  namingCategoryId: number | null;
+  dossierRecordId: number | null;
 }

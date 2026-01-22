@@ -1,4 +1,6 @@
-﻿namespace Vulicy.Domain;
+﻿using System.Data.Common;
+
+namespace Vulicy.Domain;
 
 public interface IRepository<T, in TKey>
     where T : Entity<TKey>
@@ -10,4 +12,10 @@ public interface IRepository<T, in TKey>
     void AddRange(IEnumerable<T> entities);
     Task SaveChanges();
     void ClearChangeTracker();
+    Task<ITransaction> BeginTransaction();
+}
+
+public interface ITransaction : IDisposable, IAsyncDisposable
+{
+    Task Commit();
 }

@@ -1,10 +1,9 @@
 using System.Net.Http.Json;
-using System.Text.Json;
 using Vulicy.Domain;
 
 namespace Vulicy.Services;
 
-public class ForumService(AppConfig appConfig, DiscourseConfig discourseConfig, IHttpClientFactory httpClientFactory, IFeatureRepository featureRepository) : IForumService
+public class DiscourseService(AppConfig appConfig, DiscourseConfig discourseConfig, IHttpClientFactory httpClientFactory, IFeatureRepository featureRepository) : IDiscourseService
 {
     public async Task<string?> CreateTopic(int featureId, int userId)
     {

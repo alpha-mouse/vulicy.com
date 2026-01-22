@@ -8,9 +8,10 @@ var builder = WebApplication.CreateSlimBuilder(args);
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
-    options.SerializerOptions.TypeInfoResolverChain.Insert(0, VulicyWebSerializerContext.Default);
-    options.SerializerOptions.TypeInfoResolverChain.Insert(1, DiscourseJsonSerializerContext.Default);
-    options.SerializerOptions.TypeInfoResolverChain.Insert(2, VulicyServicesSerializerContext.Default);
+    options.SerializerOptions.TypeInfoResolverChain.Clear();
+    options.SerializerOptions.TypeInfoResolverChain.Add(VulicyWebSerializerContext.Default);
+    options.SerializerOptions.TypeInfoResolverChain.Add(DiscourseJsonSerializerContext.Default);
+    options.SerializerOptions.TypeInfoResolverChain.Add(VulicyServicesSerializerContext.Default);
 });
 
 builder.Services.AddConfigs(builder.Configuration, typeof(DiscourseConfig).Assembly);
@@ -34,6 +35,10 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 builder.Services.AddAuthorization();
 
+builder.Services.AddValidatorsFromAssemblyContaining<FeatureEditRequest>();
+
+
+
 var app = builder.Build();
 
 app.Services.GetRequiredService<FrontConfig>().DiscourseBaseUrl = app.Services.GetRequiredService<DiscourseConfig>().BaseUrl; // dirty, but let it be so for now
@@ -56,5 +61,7 @@ app.MapForum();
 
 app.MapFallbackToFile("index.html");
 
-app.Run();
+app.Services.GetRequiredService<IHostApplicationLifetime>()
+    .ApplicationStarted.Register(() => app.Services.CheckValidators());
 
+await app.RunAsync();

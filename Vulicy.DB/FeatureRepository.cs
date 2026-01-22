@@ -24,6 +24,7 @@ public partial class FeatureRepository(VulicyDbContext dbContext)
                 coalesce(f."{nameof(FeatureEntity.RenamingReason)}", dr."{nameof(DossierRecordEntity.DescriptionBe)}") as "{nameof(FeatureEntity.RenamingReason)}",
                 dr."{nameof(DossierRecordEntity.NameBeTarask)}" as "EtymologyBeTarask",
                 f."{nameof(FeatureEntity.HistoricNames)}",
+                f."{nameof(FeatureEntity.HistoricPossible)}",
                 f."{nameof(FeatureEntity.YearNamed)}",
                 f."{nameof(FeatureEntity.ForumRelativeLink)}",
                 coalesce (f."{nameof(FeatureEntity.NamingCategoryId)}", dr."{nameof(DossierRecordEntity.NamingCategoryId)}") as "{nameof(FeatureEntity.NamingCategoryId)}"
@@ -112,6 +113,7 @@ public partial class FeatureRepository(VulicyDbContext dbContext)
                 f."{nameof(FeatureEntity.Type)}",
                 f."{nameof(FeatureEntity.RenamingReason)}",
                 f."{nameof(FeatureEntity.HistoricNames)}",
+                f."{nameof(FeatureEntity.HistoricPossible)}",
                 f."{nameof(FeatureEntity.Comment)}",
                 dr."{nameof(DossierRecordEntity.Id)}" as "DossierRecordId",
                 dr."{nameof(DossierRecordEntity.NameBeTarask)}" as "DossierRecordNameBeTarask",

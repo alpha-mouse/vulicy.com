@@ -38,3 +38,31 @@ export function getClassificationText(lvl: number | string): string {
   const level = typeof lvl === 'string' ? parseInt(lvl, 10) : lvl;
   return CLASSIFICATION_TEXTS[level] || CLASSIFICATION_TEXTS[0];
 }
+
+// Dropdown options for editing
+export const CLASSIFICATION_OPTIONS = [
+  { value: 0, label: 'з прывязанага імені' },
+  { value: 1, label: 'Перайменаваньне неабходнае ў прыярытэтным парадку' },
+  { value: 2, label: 'Перайменаваньне неабходнае' },
+  { value: 3, label: 'Перайменаваньне пажаданае' },
+  { value: 4, label: 'Перайменаваньне магчымае' },
+  { value: 5, label: 'Перайменаваньне не патрэбнае' },
+];
+
+export const FEATURE_TYPE_OPTIONS = [
+  { value: 11, label: 'вуліца' },
+  { value: 12, label: 'праспэкт' },
+  { value: 14, label: 'плошча' },
+  { value: 15, label: 'бульвар' },
+  { value: 16, label: 'тракт' },
+  { value: 17, label: 'набярэжная' },
+  { value: 18, label: 'шаша' },
+  { value: 19, label: 'кальцо' },
+  { value: 21, label: 'завулак' },
+  { value: 22, label: 'праезд' },
+  { value: 23, label: 'тупік' },
+  { value: 24, label: 'спуск' },
+  { value: 25, label: 'заезд' },
+  { value: 34, label: 'парк' },
+  { value: 39, label: 'сквэр' },
+];

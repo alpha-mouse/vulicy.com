@@ -34,6 +34,7 @@ const MapComponent = () => {
   const [namingCategories, setNamingCategories] = useState<NamingCategory[]>([]);
   const [isCopied, setIsCopied] = useState(false);
   const [isDossierPanelOpen, setIsDossierPanelOpen] = useState(false);
+  const [isFeatureLoading, setIsFeatureLoading] = useState(false);
 
   const initialParams = new URLSearchParams(window.location.search);
   const [viewport, setViewport] = useState<Viewport>({
@@ -54,6 +55,7 @@ const MapComponent = () => {
 
   // Wrapper for feature selection that enriches with cached forum links
   const handleFeatureSelect = useCallback((feature: FeatureProperties | null) => {
+    setIsFeatureLoading(false);
     if (feature && forumLinksCache.current.has(feature.Id)) {
       const cachedLink = forumLinksCache.current.get(feature.Id)!;
       setSelectedFeature({ ...feature, ForumRelativeLink: cachedLink });
@@ -100,6 +102,7 @@ const MapComponent = () => {
   }, [selectedFeature]);
 
   const handleResultClick = useCallback((result: SearchResult) => {
+    setIsFeatureLoading(true);
     flyTo(result.longitude, result.latitude);
     updateUrl({ featureId: result.id });
     window._selectFeature?.(result.id);
@@ -113,6 +116,7 @@ const MapComponent = () => {
 
   const handleClosePanel = useCallback(() => {
     setSelectedFeature(null);
+    setIsFeatureLoading(false);
     updateUrl({ featureId: null });
   }, []);
 
@@ -127,6 +131,17 @@ const MapComponent = () => {
         ? { ...prev, ForumRelativeLink: forumLink }
         : prev
     );
+  }, []);
+
+  // Handler for when a feature is updated - re-select to get fresh data
+  const handleFeatureUpdated = useCallback((featureId: number, updatedData?: Partial<FeatureProperties>) => {
+    if (updatedData) {
+      // Use Object.assign instead of spread to properly overwrite with undefined values
+      setSelectedFeature(prev => prev && prev.Id === featureId
+        ? Object.assign({}, prev, updatedData) as FeatureProperties
+        : prev
+      );
+    }
   }, []);
 
   const handleLogin = useCallback(() => {
@@ -150,9 +165,10 @@ const MapComponent = () => {
       <div className="map-container-with-topbar">
         <div className="map-container" ref={mapContainer} />
 
-        {selectedFeature && (
+        {(selectedFeature || isFeatureLoading) && (
           <FeatureInfoPanel
             feature={selectedFeature}
+            isLoading={isFeatureLoading}
             namingCategories={namingCategories}
             isCopied={isCopied}
             onCopyLink={handleCopyLink}
@@ -161,6 +177,7 @@ const MapComponent = () => {
             isAuthenticated={!!user}
             discourseBaseUrl={config?.discourseBaseUrl}
             onForumLinkCreated={handleForumLinkCreated}
+            onFeatureUpdated={handleFeatureUpdated}
           />
         )}
 

@@ -1,6 +1,6 @@
 namespace Vulicy.Services;
 
-public interface IForumService
+public interface IDiscourseService
 {
     Task<string?> CreateTopic(int featureId, int userId);
 }

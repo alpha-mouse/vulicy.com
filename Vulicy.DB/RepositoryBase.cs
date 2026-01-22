@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Vulicy.Domain;
 
 namespace Vulicy.DB;
@@ -44,6 +45,11 @@ public partial class RepositoryBase<T, TKey>(VulicyDbContext dbContext) : IRepos
         Context.ChangeTracker.Clear();
     }
 
+    public async Task<ITransaction> BeginTransaction()
+    {
+        return new Transaction(await Context.Database.BeginTransactionAsync());
+    }
+
     protected string CleanQuery(string? query)
     {
         return SearchQueryCleanupRegex()
@@ -53,4 +59,13 @@ public partial class RepositoryBase<T, TKey>(VulicyDbContext dbContext) : IRepos
 
     [System.Text.RegularExpressions.GeneratedRegex("[%_*]")]
     private static partial System.Text.RegularExpressions.Regex SearchQueryCleanupRegex();
+
+    private record Transaction(IDbContextTransaction DbContextTransaction) : ITransaction
+    {
+        public Task Commit() => DbContextTransaction.CommitAsync();
+
+        public void Dispose() => DbContextTransaction.Dispose();
+
+        public ValueTask DisposeAsync() => DbContextTransaction.DisposeAsync();
+    }
 }

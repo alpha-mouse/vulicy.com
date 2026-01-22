@@ -11,7 +11,15 @@ const handleResponse = async (response: Response) => {
     }
     throw new Error(errorMessage);
   }
-  return response.json();
+
+  // Handle 204 No Content or empty response bodies
+  const contentLength = response.headers.get('content-length');
+  if (response.status === 204 || contentLength === '0') {
+    return {} as any;
+  }
+
+  const text = await response.text();
+  return text ? JSON.parse(text) : {};
 };
 
 export const api = {
@@ -31,6 +39,15 @@ export const api = {
   post: async <T>(url: string, body?: any): Promise<T> => {
     const response = await fetch(url, {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    return handleResponse(response);
+  },
+
+  put: async <T>(url: string, body?: any): Promise<T> => {
+    const response = await fetch(url, {
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: body ? JSON.stringify(body) : undefined,
     });
