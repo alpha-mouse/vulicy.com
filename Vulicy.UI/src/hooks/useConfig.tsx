@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import * as Sentry from "@sentry/react";
 import { Config } from '../types/config';
 import { api } from '../utils/api';
 
@@ -39,6 +40,16 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     fetchConfig();
   }, []);
+
+  useEffect(() => {
+    if (config?.sentryFeDsn) {
+      Sentry.init({
+        dsn: config.sentryFeDsn,
+        environment: config.environment,
+        sendDefaultPii: false,
+      });
+    }
+  }, [config?.sentryFeDsn, config?.environment]);
 
   return (
     <ConfigContext.Provider value={{ config, loading }}>

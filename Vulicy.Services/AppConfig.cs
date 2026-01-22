@@ -3,5 +3,5 @@
 public class AppConfig
 {
     public string BaseUrl { get; set; }
-    public int DefaultZoom { get; set; } = 16;
+    public int DefaultZoom { get; set; }
 }

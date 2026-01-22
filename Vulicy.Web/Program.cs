@@ -1,10 +1,16 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Vulicy.Services;
 using Vulicy.Web.Endpoints;
 using Vulicy.Web.Infrastructure;
 
-using Microsoft.AspNetCore.Authentication.Cookies;
-
 var builder = WebApplication.CreateSlimBuilder(args);
+
+var sentryDsn = builder.Configuration.GetValue<string>("AppConfig:SentryBeDsn");
+builder.WebHost.UseSentry(o =>
+{
+    o.Dsn = sentryDsn;
+    o.Environment = builder.Environment.IsProduction() ? "production" : "development";
+});
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
@@ -43,7 +49,10 @@ builder.Services.AddValidatorsFromAssemblyContaining<FeatureEditRequest>();
 
 var app = builder.Build();
 
-app.Services.GetRequiredService<FrontConfig>().DiscourseBaseUrl = app.Services.GetRequiredService<DiscourseConfig>().BaseUrl; // dirty, but let it be so for now
+var frontConfig = app.Services.GetRequiredService<FrontConfig>();
+// dirty, but let it be so for now
+frontConfig.DiscourseBaseUrl = app.Services.GetRequiredService<DiscourseConfig>().BaseUrl;
+frontConfig.Environment = app.Environment.IsProduction() ? "production" : "development" ;
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
