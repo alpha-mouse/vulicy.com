@@ -60,7 +60,7 @@ namespace Vulicy.DB.Migrations
                 INSERT INTO "User" ("Id", "ExternalId", "Username", "Email", "IsAdmin", "CreatedDateTime", "ModifiedDateTime")
                 VALUES (0, 0, 'System', 'system@vulicy.com', false, '2026-01-01', '2026-01-01');
 
-                SELECT setval(pg_get_serial_sequence('"User"', 'Id'), (SELECT MAX("Id") FROM "User"));
+                SELECT setval(pg_get_serial_sequence('"User"', 'Id'), (SELECT MAX("Id") FROM "User")) WHERE (SELECT MAX("Id") FROM "User") > 0;
             """);
         }
 
