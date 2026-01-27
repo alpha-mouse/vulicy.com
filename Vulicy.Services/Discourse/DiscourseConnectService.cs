@@ -43,7 +43,7 @@ public class DiscourseConnectService(DiscourseConfig config, IUserRepository use
         var avatarUrl = parameters.GetValueOrDefault("avatarUrl"); // Discourse sometimes uses avatar_url or avatarUrl depending on version/config, but usually avatar_url
         if (string.IsNullOrEmpty(avatarUrl)) avatarUrl = parameters.GetValueOrDefault("avatar_url");
 
-        var isAdmin = parameters.GetValueOrDefault("admin") == "true";
+        var isAdmin = parameters.GetValueOrDefault("admin") == "true" || parameters.GetValueOrDefault("moderator") == "true";
 
         var user = await userRepository.GetByExternalIdTracking(externalId);
         if (user == null)
