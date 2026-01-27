@@ -9,6 +9,8 @@ RUN npm run build
 
 # --- 2. Build Backend (.NET SDK) ---
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+ARG COMMIT_HASH
+ARG COMMIT_TIME
 WORKDIR /src
 
 # Copy project files for restore
@@ -24,6 +26,10 @@ COPY . .
 
 # Copy UI build artifacts into the Web project's wwwroot
 COPY --from=ui-build /src/Vulicy.Web/wwwroot ./Vulicy.Web/wwwroot
+
+# Create version.json in wwwroot
+RUN COMMIT_TIME_UTC=$(date -u -d "@${COMMIT_TIME}" +%Y-%m-%dT%H:%M:%SZ) && \
+    echo "{\"commitHash\": \"${COMMIT_HASH}\", \"commitTime\": \"${COMMIT_TIME_UTC}\", \"buildTime\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > ./Vulicy.Web/wwwroot/version.json
 
 # Publish
 RUN dotnet publish Vulicy.Web/Vulicy.Web.csproj -c Release -o /app/publish /p:UseAppHost=false
