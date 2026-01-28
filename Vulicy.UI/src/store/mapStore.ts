@@ -12,10 +12,11 @@ interface MapState {
   viewport: Viewport;
   setViewport: (viewport: Viewport) => void;
 
-  // Forum links cache (featureId -> forumLink)
-  forumLinksCache: Map<number, string>;
-  cacheForumLink: (featureId: number, forumLink: string) => void;
-  getForumLink: (featureId: number) => string | undefined;
+  // Feature cache (featureId -> full feature data)
+  // Used for caching updated feature data (edits, forum links) to avoid stale tile data
+  featureCache: Map<number, FeatureProperties>;
+  cacheFeature: (feature: FeatureProperties) => void;
+  getCachedFeature: (featureId: number) => FeatureProperties | undefined;
 
   // Panel state
   isDossierPanelOpen: boolean;
@@ -40,14 +41,14 @@ export const useMapStore = create<MapState>((set, get) => ({
   },
   setViewport: (viewport) => set({ viewport }),
 
-  // Forum links cache
-  forumLinksCache: new Map(),
-  cacheForumLink: (featureId, forumLink) => {
-    const cache = new Map(get().forumLinksCache);
-    cache.set(featureId, forumLink);
-    set({ forumLinksCache: cache });
+  // Feature cache
+  featureCache: new Map(),
+  cacheFeature: (feature) => {
+    const cache = new Map(get().featureCache);
+    cache.set(feature.Id, feature);
+    set({ featureCache: cache });
   },
-  getForumLink: (featureId) => get().forumLinksCache.get(featureId),
+  getCachedFeature: (featureId) => get().featureCache.get(featureId),
 
   // Panels
   isDossierPanelOpen: false,

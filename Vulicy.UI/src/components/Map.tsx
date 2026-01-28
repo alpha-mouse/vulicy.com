@@ -23,8 +23,8 @@ const MapComponent = () => {
     setFeatureLoading,
     viewport,
     setViewport,
-    cacheForumLink,
-    getForumLink,
+    cacheFeature,
+    getCachedFeature,
     isDossierPanelOpen,
     setDossierPanelOpen,
     isCopied,
@@ -45,19 +45,20 @@ const MapComponent = () => {
     setIsCopied(false);
   }, [selectedFeature]);
 
-  // Wrapper for feature selection that enriches with cached forum links
+  // Wrapper for feature selection that uses cached data if available
   const handleFeatureSelect = useCallback((feature: FeatureProperties | null) => {
     setFeatureLoading(false);
     if (feature) {
-      const cachedLink = getForumLink(feature.Id);
-      setSelectedFeature(cachedLink ? { ...feature, ForumRelativeLink: cachedLink } : feature);
+      // Use cached feature data if available (contains recent edits/forum links)
+      const cached = getCachedFeature(feature.Id);
+      setSelectedFeature(cached ?? feature);
     } else {
       setSelectedFeature(null);
     }
-  }, [setFeatureLoading, setSelectedFeature, getForumLink]);
+  }, [setFeatureLoading, setSelectedFeature, getCachedFeature]);
 
   // Initialize map with custom hook
-  const { flyTo } = useMapInitialization({
+  const { flyTo, setFeatureClassification } = useMapInitialization({
     containerRef: mapContainer,
     selectedFeatureRef,
     onFeatureSelect: handleFeatureSelect,
@@ -114,22 +115,32 @@ const MapComponent = () => {
 
   // Handler for when a forum topic is created
   const handleForumLinkCreated = useCallback((featureId: number, forumLink: string) => {
-    // Cache the link for future re-selections
-    cacheForumLink(featureId, forumLink);
-
-    // Update the current selected feature if it matches
+    // Update current feature and cache it
     if (selectedFeature && selectedFeature.Id === featureId) {
-      setSelectedFeature({ ...selectedFeature, ForumRelativeLink: forumLink });
+      const updated = { ...selectedFeature, ForumRelativeLink: forumLink };
+      setSelectedFeature(updated);
+      cacheFeature(updated);
     }
-  }, [cacheForumLink, selectedFeature, setSelectedFeature]);
+  }, [cacheFeature, selectedFeature, setSelectedFeature]);
 
-  // Handler for when a feature is updated - re-select to get fresh data
+  // Handler for when a feature is updated
   const handleFeatureUpdated = useCallback((featureId: number, updatedData?: Partial<FeatureProperties>) => {
     if (updatedData && selectedFeature && selectedFeature.Id === featureId) {
-      // Use Object.assign instead of spread to properly overwrite with undefined values
-      setSelectedFeature(Object.assign({}, selectedFeature, updatedData) as FeatureProperties);
+      // Merge updates and cache the result
+      const updated = Object.assign({}, selectedFeature, updatedData) as FeatureProperties;
+      setSelectedFeature(updated);
+      cacheFeature(updated);
+
+      // Update map color if classification or dossier record changed
+      // Use same logic as paint: if own Classification is 0, use DossierRecordClassification
+      if (updatedData.Classification !== undefined || updatedData.DossierRecordClassification !== undefined) {
+        const effectiveClassification = (updated.Classification && updated.Classification > 0)
+          ? updated.Classification
+          : (updated.DossierRecordClassification ?? 0);
+        setFeatureClassification(featureId, effectiveClassification);
+      }
     }
-  }, [selectedFeature, setSelectedFeature]);
+  }, [cacheFeature, selectedFeature, setSelectedFeature, setFeatureClassification]);
 
   const handleLogin = useCallback(() => {
     login(window.location.href);

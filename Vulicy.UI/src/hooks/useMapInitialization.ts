@@ -108,6 +108,15 @@ export const useMapInitialization = ({
     }
   }, []);
 
+  // Set feature classification state for immediate color update
+  const setFeatureClassification = useCallback((featureId: number, classification: number) => {
+    if (!map.current) return;
+    map.current.setFeatureState(
+      { source: 'vulicy-streets', sourceLayer: 'streets', id: featureId },
+      { classification }
+    );
+  }, []);
+
   // Get tile URL based on admin status
   const getTileUrl = useCallback((useAdmin: boolean) => {
     const endpoint = useAdmin ? 'tile-details' : 'tile';
@@ -167,14 +176,16 @@ export const useMapInitialization = ({
       if (!map.current) return;
 
       // Add vector tile source - use admin tiles if admin
+      // promoteId tells MapLibre to use the 'Id' property as the feature id for setFeatureState
       map.current.addSource('vulicy-streets', {
         type: 'vector',
         tiles: [getTileUrl(isAdmin)],
         minzoom: 0,
-        maxzoom: 20
+        maxzoom: 20,
+        promoteId: { 'streets': 'Id' }
       });
 
-      // Main streets layer
+      // Main streets layer - uses feature-state for classification override
       map.current.addLayer({
         id: 'streets-layer',
         type: 'line',
@@ -184,10 +195,15 @@ export const useMapInitialization = ({
           'line-color': [
             'match',
             ['to-string',
+              // Prefer feature-state classification if set (from recent edits)
               ['case',
-                ['all', ['has', 'Classification'], ['>', ['get', 'Classification'], 0]],
-                ['get', 'Classification'],
-                ['coalesce', ['get', 'DossierRecordClassification'], 0]
+                ['!=', ['feature-state', 'classification'], null],
+                ['feature-state', 'classification'],
+                ['case',
+                  ['all', ['has', 'Classification'], ['>', ['get', 'Classification'], 0]],
+                  ['get', 'Classification'],
+                  ['coalesce', ['get', 'DossierRecordClassification'], 0]
+                ]
               ]
             ],
             '1', CLASSIFICATION_COLORS[1],
@@ -337,5 +353,5 @@ export const useMapInitialization = ({
     }
   });
 
-  return { map, flyTo };
+  return { map, flyTo, setFeatureClassification };
 };
