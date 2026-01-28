@@ -21,7 +21,8 @@ public static partial class Forum
     {
         var group = builder.MapGroup("/api/forum");
         group.MapPost("/create-topic", CreateTopic).RequireAuthorization();
-        group.MapPost("/discourse-webhook", DiscourseWebhook);
+        // AllowAnonymous: This webhook uses HMAC signature verification instead of cookie auth
+        group.MapPost("/discourse-webhook", DiscourseWebhook).AllowAnonymous();
     }
 
     private static async Task<IResult> CreateTopic(

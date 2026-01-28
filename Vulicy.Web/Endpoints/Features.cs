@@ -10,7 +10,7 @@ public static class Features
     {
         var group = builder.MapGroup("/api/features");
         group.MapGet("/search", Search);
-        group.MapPut("/{id:int}", EditFeature).Validate<FeatureEditRequest>();
+        group.MapPut("/{id:int}", EditFeature).RequireAuthorization().Validate<FeatureEditRequest>();
     }
 
     private static Task<List<FeatureSearchResult>> Search(string query, double? lat, double? lng, IFeatureService featureService)

@@ -74,6 +74,10 @@ app.MapForum();
 app.MapFallbackToFile("index.html");
 
 app.Services.GetRequiredService<IHostApplicationLifetime>()
-    .ApplicationStarted.Register(() => app.Services.CheckValidators());
+    .ApplicationStarted.Register(() =>
+    {
+        app.Services.CheckValidators();
+        app.Services.CheckNonGetEndpointsRequireAuthorization();
+    });
 
 await app.RunAsync();

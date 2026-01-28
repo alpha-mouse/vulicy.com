@@ -7,7 +7,8 @@ public static class Import
 {
     public static void MapImport(this IEndpointRouteBuilder builder)
     {
-        var group = builder.MapGroup("/api/import");
+        // AllowAnonymous: These endpoints are only registered in Development mode (see Program.cs)
+        var group = builder.MapGroup("/api/import").AllowAnonymous();
         group.MapPost("/osm", ImportOsm);
         group.MapPost("/cadastre", ImportCadastre);
         group.MapPost("/cadastre-initial", ImportCadastreInitial);
