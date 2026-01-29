@@ -1,21 +1,3 @@
-export interface User {
-  id: string;
-  username: string;
-  email: string;
-  name?: string;
-  avatarUrl?: string;
-  isAdmin: boolean;
-}
-
-export interface DossierRecord {
-  Id: number;
-  NameBeTarask?: string;
-  Classification: number;
-  DescriptionBe?: string;
-  DescriptionRu?: string;
-  NamingCategoryId?: number;
-}
-
 export interface FeatureProperties {
   Id: number;
   Type: number;
@@ -49,23 +31,6 @@ export interface SearchResult {
   location?: string;
   latitude: number;
   longitude: number;
-}
-
-export interface DossierRecordSearchResult {
-  id: number;
-  nameBeTarask?: string;
-  nameBeNark?: string;
-  nameRu?: string;
-  descriptionBe?: string;
-  descriptionRu?: string;
-  classification: number;
-  namingCategoryId?: number;
-  numFeatures: number;
-}
-
-export interface NamingCategory {
-  id: number;
-  name: string;
 }
 
 export interface Viewport {

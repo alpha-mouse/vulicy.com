@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { User } from '../types/feature';
+import type { User } from '../types';
 import { api } from '../utils/api';
 
 const AUTH_STORAGE_KEY = 'vulicy_user';

@@ -2,8 +2,8 @@
 
 public class FrontConfig
 {
-    public string DiscourseBaseUrl { get; set; }
-    public string MapKey { get; set; }
-    public string SentryFeDsn { get; set; }
-    public string Environment { get; set; }
+    public string DiscourseBaseUrl { get; set; } = null!;
+    public string MapKey { get; set; } = null!;
+    public string SentryFeDsn { get; set; } = null!;
+    public string Environment { get; set; } = null!;
 }

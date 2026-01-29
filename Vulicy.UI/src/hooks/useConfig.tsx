@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import * as Sentry from "@sentry/react";
-import { Config } from '../types/config';
+import { Config } from '../types';
 import { api } from '../utils/api';
 
 interface ConfigContextType {

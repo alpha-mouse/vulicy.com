@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import FeatureInfoView from './FeatureInfoView';
 import FeatureEditForm from './FeatureEditForm';
-import type { FeatureProperties, NamingCategory } from '../types/feature';
+import type { FeatureProperties, NamingCategory } from '../types';
 
 interface FeatureInfoPanelProps {
   feature: FeatureProperties | null;

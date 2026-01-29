@@ -26,7 +26,7 @@ public class DiscourseService(AppConfig appConfig, DiscourseConfig discourseConf
         {
             title = title,
             raw = topicBody,
-            category = discourseConfig.ForumCategoryId.Value
+            category = discourseConfig.ForumCategoryId
         };
 
         var response = await client.PostAsJsonAsync(

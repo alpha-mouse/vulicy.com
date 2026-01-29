@@ -1,5 +1,6 @@
 using Vulicy.Domain;
 using Vulicy.Services;
+using Vulicy.Web.Infrastructure;
 
 namespace Vulicy.Web.Endpoints;
 
@@ -10,6 +11,9 @@ public static class DossierRecords
         var group = builder.MapGroup("/api/dossier-records");
         group.MapGet("/search", Search);
         group.MapGet("/{id:int}/features", GetFeatures);
+        group.MapPut("/{id:int}", EditRecord).RequireAuthorization().Validate<EditDossierRecordRequest>();
+        group.MapPut("/{id:int}/merge-other", MergeOtherRecord).RequireAuthorization().Validate<MergeDossierRecordRequest>();
+        group.MapDelete("/{id:int}", DeleteRecord).RequireAuthorization();
     }
 
     private static Task<List<DossierRecordSearchResult>> Search(string? query, int? skip, int? take, IDossierRecordService dossierRecordService)
@@ -20,5 +24,23 @@ public static class DossierRecords
     private static Task<List<FeatureSearchResult>> GetFeatures(int id, IFeatureService featureService)
     {
         return featureService.GetByDossierRecord(id);
+    }
+
+    private static Task EditRecord(int id, EditDossierRecordRequest request, IDossierRecordService dossierRecordService, HttpContext context)
+    {
+        var userId = context.User.GetUserId();
+        return dossierRecordService.EditRecord(id, request, userId);
+    }
+
+    private static Task MergeOtherRecord(int id, MergeDossierRecordRequest request, IDossierRecordService dossierRecordService, HttpContext context)
+    {
+        var userId = context.User.GetUserId();
+        return dossierRecordService.MergeDossierRecord(id, request, userId);
+    }
+
+    private static Task DeleteRecord(int id, IDossierRecordService dossierRecordService, HttpContext context)
+    {
+        var userId = context.User.GetUserId();
+        return dossierRecordService.DeleteDossierRecord(id, userId);
     }
 }

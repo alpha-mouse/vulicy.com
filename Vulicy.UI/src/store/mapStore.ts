@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { FeatureProperties, Viewport } from '../types/feature';
+import type { FeatureProperties, Viewport } from '../types';
 
 interface MapState {
   // Selected feature state

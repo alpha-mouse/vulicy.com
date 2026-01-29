@@ -7,7 +7,7 @@ import {
   CLASSIFICATION_OPTIONS,
   FEATURE_TYPE_OPTIONS,
 } from '../constants/mapConstants';
-import type { FeatureProperties, NamingCategory, FeatureEditRequest, DossierRecordSearchResult } from '../types/feature';
+import type { FeatureProperties, FeatureEditRequest, NamingCategory, DossierRecordSearchResult } from '../types';
 import { api } from '../utils/api';
 
 interface FeatureEditFormProps {

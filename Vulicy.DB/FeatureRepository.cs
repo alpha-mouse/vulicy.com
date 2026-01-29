@@ -30,8 +30,7 @@ public partial class FeatureRepository(VulicyDbContext dbContext)
                 coalesce (f."{nameof(FeatureEntity.NamingCategoryId)}", dr."{nameof(DossierRecordEntity.NamingCategoryId)}") as "{nameof(FeatureEntity.NamingCategoryId)}"
               from "{FeatureConfiguration.TableName}" f
               left outer join "{DossierRecordConfiguration.TableName}" dr on f."{nameof(FeatureEntity.DossierRecordId)}" = dr."{nameof(DossierRecordEntity.Id)}"
-              where not f."{nameof(FeatureEntity.IsDeleted)}"
-                and f."{nameof(FeatureEntity.Geometry)}" && ST_Transform(ST_TileEnvelope(@z, @x, @y), 4326)
+              where f."{nameof(FeatureEntity.Geometry)}" && ST_Transform(ST_TileEnvelope(@z, @x, @y), 4326)
             ) AS tile
             """;
 
@@ -62,8 +61,7 @@ public partial class FeatureRepository(VulicyDbContext dbContext)
                  ST_X(ST_Centroid(f."{nameof(FeatureEntity.Geometry)}")) as "{nameof(FeatureSearchResult.Longitude)}"
              from "{FeatureConfiguration.TableName}" f
              left outer join "{CadastreFeatureConfiguration.TableName}" cf on f."{nameof(FeatureEntity.Id)}" = cf."{nameof(CadastreFeatureEntity.FeatureId)}"
-             where not f."{nameof(FeatureEntity.IsDeleted)}"
-               and (
+             where (
                    f."{nameof(FeatureEntity.NameBeTarask)}" ilike @query
                    or f."{nameof(FeatureEntity.NameBeNark)}" ilike @query
                    or f."{nameof(FeatureEntity.NameRu)}" ilike @query
@@ -126,8 +124,7 @@ public partial class FeatureRepository(VulicyDbContext dbContext)
                 f."{nameof(FeatureEntity.NamingCategoryId)}"
               from "{FeatureConfiguration.TableName}" f
               left outer join "{DossierRecordConfiguration.TableName}" dr on f."{nameof(FeatureEntity.DossierRecordId)}" = dr."{nameof(DossierRecordEntity.Id)}"
-              where not f."{nameof(FeatureEntity.IsDeleted)}"
-                and f."{nameof(FeatureEntity.Geometry)}" && ST_Transform(ST_TileEnvelope(@z, @x, @y), 4326)
+              where f."{nameof(FeatureEntity.Geometry)}" && ST_Transform(ST_TileEnvelope(@z, @x, @y), 4326)
             ) AS tile
             """;
 
@@ -142,7 +139,7 @@ public partial class FeatureRepository(VulicyDbContext dbContext)
     public Task<List<FeatureSearchResult>> GetByDossierRecord(int dossierRecordId)
     {
         return Entities
-            .Where(x => !x.IsDeleted && x.DossierRecordId == dossierRecordId)
+            .Where(x => x.DossierRecordId == dossierRecordId)
             .Select(x => new FeatureSearchResult(
                 x.Id,
                 x.NameBeTarask,
@@ -214,11 +211,11 @@ public partial class FeatureRepository(VulicyDbContext dbContext)
     {
         const string query =
             $"""
-             with "UpdatingFeatures" as (
+             with "DeletingFeatures" as (
                 select f."{nameof(FeatureEntity.Id)}"
                 from "{FeatureConfiguration.TableName}" as f
                 join "{CadastreFeatureConfiguration.TableName}" as cf on f."{nameof(FeatureEntity.Id)}" = cf."{nameof(CadastreFeatureEntity.FeatureId)}"
-                where f."{nameof(FeatureEntity.IsDeleted)}" != cf."{nameof(CadastreFeatureEntity.IsDeleted)}"
+                where cf."{nameof(CadastreFeatureEntity.IsDeleted)}"
              )
              insert into "{FeatureHistoricConfiguration.TableName}" (
                  "{nameof(FeatureHistoricEntity.Id)}",
@@ -234,7 +231,6 @@ public partial class FeatureRepository(VulicyDbContext dbContext)
                  "{nameof(FeatureHistoricEntity.Comment)}",
                  "{nameof(FeatureHistoricEntity.HistoricPossible)}",
                  "{nameof(FeatureHistoricEntity.YearNamed)}",
-                 "{nameof(FeatureHistoricEntity.IsDeleted)}",
                  "{nameof(FeatureHistoricEntity.ForumRelativeLink)}",
                  "{nameof(FeatureHistoricEntity.Geometry)}",
                  "{nameof(FeatureHistoricEntity.NamingCategoryId)}",
@@ -255,23 +251,24 @@ public partial class FeatureRepository(VulicyDbContext dbContext)
                  f."{nameof(FeatureEntity.Comment)}",
                  f."{nameof(FeatureEntity.HistoricPossible)}",
                  f."{nameof(FeatureEntity.YearNamed)}",
-                 f."{nameof(FeatureEntity.IsDeleted)}",
                  f."{nameof(FeatureEntity.ForumRelativeLink)}",
                  f."{nameof(FeatureEntity.Geometry)}",
                  f."{nameof(FeatureEntity.NamingCategoryId)}",
                  f."{nameof(FeatureEntity.DossierRecordId)}",
                  @now
              from "{FeatureConfiguration.TableName}" f
-             join "UpdatingFeatures" uf on f."{nameof(FeatureEntity.Id)}" = uf."{nameof(FeatureEntity.Id)}"
+             join "DeletingFeatures" df on f."{nameof(FeatureEntity.Id)}" = df."{nameof(FeatureEntity.Id)}"
              ;
-             
-             merge into "{FeatureConfiguration.TableName}" as target
-                 using "{CadastreFeatureConfiguration.TableName}" as source
-             on target."{nameof(FeatureEntity.Id)}" = source."{nameof(CadastreFeatureEntity.FeatureId)}"
-                 and target."{nameof(FeatureEntity.IsDeleted)}" != source."{nameof(CadastreFeatureEntity.IsDeleted)}"
-             when matched then
-             update set
-                 "{nameof(FeatureEntity.IsDeleted)}" = source."{nameof(CadastreFeatureEntity.IsDeleted)}"
+
+             with "DeletingFeatures" as (
+                select f."{nameof(FeatureEntity.Id)}"
+                from "{FeatureConfiguration.TableName}" as f
+                join "{CadastreFeatureConfiguration.TableName}" as cf on f."{nameof(FeatureEntity.Id)}" = cf."{nameof(CadastreFeatureEntity.FeatureId)}"
+                where cf."{nameof(CadastreFeatureEntity.IsDeleted)}"
+             )
+             delete from "{FeatureConfiguration.TableName}" f
+             using "DeletingFeatures" df
+             where f."{nameof(FeatureEntity.Id)}" = df."{nameof(FeatureEntity.Id)}"
              ;
              """;
         return Context.Database.ExecuteSqlRawAsync(query, new NpgsqlParameter("now", now));
@@ -282,7 +279,7 @@ public partial class FeatureRepository(VulicyDbContext dbContext)
         return Entities
             .AsTracking()
             .Include(x => x.CadastreFeature)
-            .Where(x => !x.IsDeleted && x.CadastreFeature != null && x.CadastreFeature.Ate == ate)
+            .Where(x => x.CadastreFeature != null && x.CadastreFeature.Ate == ate)
             .ToListAsync();
     }
 
@@ -292,7 +289,7 @@ public partial class FeatureRepository(VulicyDbContext dbContext)
             .AsTracking()
             .Include(x => x.CadastreFeature)
             .Include(x => x.OsmFeatures)
-            .Where(x => !x.IsDeleted && x.CadastreFeature != null && x.CadastreFeature.Ate == ate)
+            .Where(x => x.CadastreFeature != null && x.CadastreFeature.Ate == ate)
             .ToListAsync();
     }
 

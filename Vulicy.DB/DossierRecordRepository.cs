@@ -46,7 +46,7 @@ public class DossierRecordRepository(VulicyDbContext dbContext)
                 {columnsList},
                 count(f."{nameof(FeatureEntity.Id)}") as "{nameof(DossierRecordSearchResult.NumFeatures)}"
             from "{DossierRecordConfiguration.TableName}" dr
-            left outer join "{FeatureConfiguration.TableName}" f on dr."{nameof(DossierRecordEntity.Id)}" = f."{nameof(FeatureEntity.DossierRecordId)}" and not f."{nameof(FeatureEntity.IsDeleted)}"
+            left outer join "{FeatureConfiguration.TableName}" f on dr."{nameof(DossierRecordEntity.Id)}" = f."{nameof(FeatureEntity.DossierRecordId)}"
 
             """;
 
@@ -88,5 +88,30 @@ public class DossierRecordRepository(VulicyDbContext dbContext)
         }
 
         return result.ToListAsync();
+    }
+
+    public Task<bool> HasFeatures(int id)
+    {
+        return Context.Set<FeatureEntity>().AnyAsync(f => f.DossierRecordId == id);
+    }
+
+    public Task RelinkFeatures(int fromDossierRecordId, int toDossierRecordId)
+    {
+        const string command = $"""
+                                update "{FeatureConfiguration.TableName}"
+                                set "{nameof(FeatureEntity.DossierRecordId)}" = @toDossierRecordId
+                                where "{nameof(FeatureEntity.DossierRecordId)}" = @fromDossierRecordId
+                                """;
+
+        return Context.Database.ExecuteSqlRawAsync(
+            command,
+            new NpgsqlParameter("fromDossierRecordId", fromDossierRecordId),
+            new NpgsqlParameter("toDossierRecordId", toDossierRecordId)
+            );
+    }
+
+    public void Delete(DossierRecordEntity entity)
+    {
+        Context.Remove(entity);
     }
 }

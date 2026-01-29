@@ -27,7 +27,7 @@ public class CadastreFeatureRepository(VulicyDbContext context)
     public Task<List<int>> GetAllAtes()
     {
         return Entities
-            .Where(x => x.Feature != null && !x.Feature.IsDeleted)
+            .Where(x => x.Feature != null)
             .Select(x => x.Ate)
             .Distinct()
             .ToListAsync();

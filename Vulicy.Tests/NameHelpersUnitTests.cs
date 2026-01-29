@@ -64,7 +64,7 @@ public class NameHelpersUnitTests
     [Theory]
     [InlineData("названа ў гонар Гагарына", "названа ў гонар Юрыя Гагарына", 0.8, true)]
     [InlineData("названа ў гонар Гагарына", "названа ў гонар Юрыя Гагарына", 0.9, false)]
-    public void IsSimilar_WithThreshold_ShouldReturnExpectedResult(string? s1, string? s2, double threshold, bool expectedResult)
+    public void IsSimilar_WithThreshold_ShouldReturnExpectedResult(string s1, string s2, double threshold, bool expectedResult)
     {
         var actualResult = NameHelpers.IsSimilar(s1, s2, threshold);
 

@@ -8,7 +8,7 @@ namespace Vulicy.Services;
 public partial class CadastreImportService(
     ICadastreFeatureImportRepository cadastreFeatureImportRepository,
     IInitialCadastreFeatureImportRepository initialCadastreFeatureImportRepository,
-    ILogger<CadastreImportService>? logger
+    ILogger<CadastreImportService> logger
 ) : ICadastreImportService
 {
     private static readonly GeometryFactory GeometryFactory = new(new PrecisionModel(), 4326);

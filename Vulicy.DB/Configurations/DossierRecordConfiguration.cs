@@ -16,6 +16,8 @@ internal abstract class DossierRecordBaseConfiguration<T> : IEntityTypeConfigura
 
         builder.Property(x => x.PossibleNamesBeNark).HasJsonColumnType();
         builder.Property(x => x.PossibleNamesRu).HasJsonColumnType();
+        builder.Property(x => x.AlternativeDescriptionsBe).HasJsonColumnType();
+        builder.Property(x => x.AlternativeDescriptionsRu).HasJsonColumnType();
     }
 }
 

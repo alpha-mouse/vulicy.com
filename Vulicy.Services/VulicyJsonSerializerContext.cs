@@ -8,6 +8,8 @@ namespace Vulicy.Services;
 [JsonSerializable(typeof(List<FeatureSearchResult>))]
 [JsonSerializable(typeof(List<DossierRecordSearchResult>))]
 [JsonSerializable(typeof(FeatureEditRequest))]
+[JsonSerializable(typeof(MergeDossierRecordRequest))]
+[JsonSerializable(typeof(EditDossierRecordRequest))]
 public partial class VulicyServicesSerializerContext : JsonSerializerContext
 {
 

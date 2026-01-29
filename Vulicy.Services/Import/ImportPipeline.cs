@@ -8,7 +8,7 @@ namespace Vulicy.Services;
 
 public partial class ImportPipeline(
     IServiceScopeFactory serviceScopeFactory,
-    ILogger<ImportPipeline>? logger
+    ILogger<ImportPipeline> logger
 ) : IImportPipeline
 {
     private static readonly GeometryFactory GeometryFactory = new(new PrecisionModel(), 4326);

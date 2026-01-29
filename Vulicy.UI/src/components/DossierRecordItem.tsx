@@ -1,11 +1,15 @@
+import { Pencil, Trash2 } from 'lucide-react';
 import { getClassificationText } from '../constants/mapConstants';
-import type { DossierRecordSearchResult, NamingCategory } from '../types/feature';
+import type { DossierRecordSearchResult, NamingCategory } from '../types';
 
 interface DossierRecordItemProps {
   record: DossierRecordSearchResult;
   namingCategories: NamingCategory[];
   showFeatureCount?: boolean;
   compact?: boolean;
+  isAdmin?: boolean;
+  onEdit?: (record: DossierRecordSearchResult) => void;
+  onDelete?: (record: DossierRecordSearchResult) => void;
 }
 
 /**
@@ -17,6 +21,9 @@ const DossierRecordItem = ({
   namingCategories,
   showFeatureCount = false,
   compact = false,
+  isAdmin = false,
+  onEdit,
+  onDelete,
 }: DossierRecordItemProps) => {
   const categoryName = record.namingCategoryId
     ? namingCategories.find(c => c.id === record.namingCategoryId)?.name || '...'
@@ -79,6 +86,38 @@ const DossierRecordItem = ({
         <div className="leading-relaxed">
           <span className="text-black/50">Аб'ектаў: </span>
           <span className="text-black">{record.numFeatures}</span>
+        </div>
+      )}
+
+      {/* Admin actions */}
+      {isAdmin && (onEdit || onDelete) && (
+        <div className="flex gap-2 pt-2 border-t border-black/10 mt-1">
+          {onEdit && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(record);
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-black/60 hover:text-primary hover:bg-primary/10 rounded-md transition-colors bg-transparent border-none cursor-pointer"
+              title="Рэдагаваць"
+            >
+              <Pencil size={14} />
+              <span>Рэдагаваць</span>
+            </button>
+          )}
+          {onDelete && record.numFeatures === 0 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(record);
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-black/60 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors bg-transparent border-none cursor-pointer"
+              title="Выдаліць"
+            >
+              <Trash2 size={14} />
+              <span>Выдаліць</span>
+            </button>
+          )}
         </div>
       )}
     </div>

@@ -9,6 +9,8 @@ public abstract class DossierRecordBaseEntity : Entity<int>
     public string? DescriptionRu { get; set; }
     public List<string>? PossibleNamesBeNark { get; set; }
     public List<string>? PossibleNamesRu { get; set; }
+    public List<string>? AlternativeDescriptionsBe { get; set; }
+    public List<string>? AlternativeDescriptionsRu { get; set; }
     public ClassificationGrade Classification { get; set; }
 
     public int LastModifiedById { get; set; }
@@ -39,6 +41,8 @@ public class DossierRecordHistoricEntity : DossierRecordBaseEntity, IHistoricEnt
             DescriptionRu = entity.DescriptionRu,
             PossibleNamesBeNark = entity.PossibleNamesBeNark,
             PossibleNamesRu = entity.PossibleNamesRu,
+            AlternativeDescriptionsBe = entity.AlternativeDescriptionsBe,
+            AlternativeDescriptionsRu = entity.AlternativeDescriptionsRu,
             Classification = entity.Classification,
             LastModifiedById = entity.LastModifiedById,
             NamingCategoryId = entity.NamingCategoryId,

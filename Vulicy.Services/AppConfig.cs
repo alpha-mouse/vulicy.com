@@ -2,6 +2,6 @@
 
 public class AppConfig
 {
-    public string BaseUrl { get; set; }
+    public string BaseUrl { get; set; } = null!;
     public int DefaultZoom { get; set; }
 }

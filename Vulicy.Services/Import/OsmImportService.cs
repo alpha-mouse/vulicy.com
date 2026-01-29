@@ -8,7 +8,7 @@ namespace Vulicy.Services;
 
 public partial class OsmImportService(
     IOsmFeatureImportRepository osmFeatureImportRepository,
-    ILogger<OsmImportService>? logger
+    ILogger<OsmImportService> logger
 ) : IOsmImportService
 {
     private static readonly GeometryFactory GeometryFactory = new(new PrecisionModel(), 4326);
@@ -37,7 +37,7 @@ public partial class OsmImportService(
             {
                 if (node is { Latitude: not null, Longitude: not null })
                 {
-                    nodeCache[node.Id.Value] = new(node.Longitude.Value, node.Latitude.Value);
+                    nodeCache[node.Id!.Value] = new(node.Longitude!.Value, node.Latitude!.Value);
                     nodeCount++;
                     if (nodeCount % 1000000 == 0)
                     {
@@ -58,7 +58,7 @@ public partial class OsmImportService(
 
                 var entity = new OsmFeatureImportEntity
                 {
-                    Id = way.Id.Value,
+                    Id = way.Id!.Value,
                     ImportId = importId,
                     Type = OsmType.Way,
                     Geometry = geometry,

@@ -5,7 +5,7 @@ import {
   FEATURE_TYPE_LABELS,
   getClassificationText,
 } from '../constants/mapConstants';
-import type { FeatureProperties, NamingCategory } from '../types/feature';
+import type { FeatureProperties, NamingCategory } from '../types';
 import { api } from '../utils/api';
 
 interface FeatureInfoViewProps {

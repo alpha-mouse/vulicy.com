@@ -3,7 +3,7 @@ import { LogIn, LogOut, Menu, FileUser } from 'lucide-react';
 import { useClickOutside } from '../hooks/useClickOutside';
 import Button from './Button';
 import Search from './Search';
-import type { User, SearchResult } from '../types/feature';
+import type { SearchResult, User } from '../types';
 
 interface TopBarProps {
   user: User | null;

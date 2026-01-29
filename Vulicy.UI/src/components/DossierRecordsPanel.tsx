@@ -1,15 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, Search as SearchIcon, X, MapPin, ChevronDown, ChevronUp, Loader2, FileUser } from 'lucide-react';
-import type { DossierRecordSearchResult, SearchResult, NamingCategory } from '../types/feature';
+import type { SearchResult, DossierRecordSearchResult, NamingCategory } from '../types';
 import { api } from '../utils/api';
 import FeatureListItem from './FeatureListItem';
 import DossierRecordItem from './DossierRecordItem';
+import DossierRecordEditForm from './DossierRecordEditForm';
 
 interface DossierRecordsPanelProps {
   isOpen: boolean;
   onClose: () => void;
   onFeatureClick: (feature: SearchResult) => void;
   namingCategories: NamingCategory[];
+  isAdmin?: boolean;
 }
 
 const PAGE_SIZE = 50;
@@ -19,6 +21,7 @@ const DossierRecordsPanel = ({
   onClose,
   onFeatureClick,
   namingCategories,
+  isAdmin = false,
 }: DossierRecordsPanelProps) => {
   const [query, setQuery] = useState('');
   const [records, setRecords] = useState<DossierRecordSearchResult[]>([]);
@@ -27,6 +30,11 @@ const DossierRecordsPanel = ({
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [features, setFeatures] = useState<Record<number, SearchResult[]>>({});
   const [loadingFeatures, setLoadingFeatures] = useState<Record<number, boolean>>({});
+
+  // Edit/delete state
+  const [editingRecord, setEditingRecord] = useState<DossierRecordSearchResult | null>(null);
+  const [deletingRecord, setDeletingRecord] = useState<DossierRecordSearchResult | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -116,6 +124,31 @@ const DossierRecordsPanel = ({
     onFeatureClick(feature);
   };
 
+  // Handle record update after edit
+  const handleRecordUpdated = useCallback((updatedRecord: DossierRecordSearchResult) => {
+    setRecords(prev => prev.map(r => r.id === updatedRecord.id ? updatedRecord : r));
+    setEditingRecord(null);
+  }, []);
+
+  // Handle record deletion
+  const handleConfirmDelete = useCallback(async () => {
+    if (!deletingRecord || isDeleting) return;
+    setIsDeleting(true);
+    try {
+      await api.delete(`/api/dossier-records/${deletingRecord.id}`);
+      setRecords(prev => prev.filter(r => r.id !== deletingRecord.id));
+      setDeletingRecord(null);
+      if (expandedId === deletingRecord.id) {
+        setExpandedId(null);
+      }
+    } catch (error) {
+      console.error('Failed to delete dossier record:', error);
+      alert(error instanceof Error ? error.message : 'Не атрымалася выдаліць запіс');
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [deletingRecord, isDeleting, expandedId]);
+
   if (!isOpen) return null;
 
   return (
@@ -184,7 +217,13 @@ const DossierRecordsPanel = ({
             {expandedId === record.id && (
               <div className="px-4 pb-4 flex flex-col gap-3 bg-black/[0.02]">
                 {/* Record details */}
-                <DossierRecordItem record={record} namingCategories={namingCategories} />
+                <DossierRecordItem
+                  record={record}
+                  namingCategories={namingCategories}
+                  isAdmin={isAdmin}
+                  onEdit={setEditingRecord}
+                  onDelete={setDeletingRecord}
+                />
 
                 {/* Features */}
                 {loadingFeatures[record.id] ? (
@@ -235,6 +274,43 @@ const DossierRecordsPanel = ({
           </div>
         )}
       </div>
+
+      {/* Edit Form Modal */}
+      {editingRecord && (
+        <DossierRecordEditForm
+          record={editingRecord}
+          onClose={() => setEditingRecord(null)}
+          onRecordUpdated={handleRecordUpdated}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {deletingRecord && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" style={{ animation: 'fadeIn 150ms ease-out' }}>
+          <div className="w-80 glass p-6 flex flex-col gap-4 animate-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-bold m-0">Выдаліць запіс?</h3>
+            <p className="text-sm text-black/70 m-0">
+              Вы ўпэўненыя, што жадаеце выдаліць запіс "{deletingRecord.nameBeTarask || deletingRecord.nameBeNark || deletingRecord.nameRu}"?
+            </p>
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => setDeletingRecord(null)}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2 text-sm rounded-lg border border-black/20 bg-white/50 hover:bg-white/80 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Скасаваць
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2 text-sm rounded-lg border-none bg-red-500 text-white hover:bg-red-600 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {isDeleting ? 'Выдаленьне...' : 'Выдаліць'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

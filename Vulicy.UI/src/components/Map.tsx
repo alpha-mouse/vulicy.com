@@ -8,7 +8,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useConfig } from '../hooks/useConfig';
 import { useUrlParams } from '../hooks/useUrlParams';
 import { useMapStore } from '../store/mapStore';
-import type { FeatureProperties, NamingCategory, SearchResult } from '../types/feature';
+import type { FeatureProperties, SearchResult, NamingCategory } from '../types';
 import { api } from '../utils/api';
 
 const MapComponent = () => {
@@ -184,6 +184,7 @@ const MapComponent = () => {
           onClose={() => setDossierPanelOpen(false)}
           onFeatureClick={handleResultClick}
           namingCategories={namingCategories}
+          isAdmin={isAdmin}
         />
       </div>
     </div>

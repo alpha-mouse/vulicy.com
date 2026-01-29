@@ -14,7 +14,6 @@ public abstract class FeatureBaseEntity : Entity<int>
     public string? Comment { get; set; }
     public bool HistoricPossible { get; set; }
     public string? YearNamed { get; set; }
-    public bool IsDeleted { get; set; }
     public string? ForumRelativeLink { get; set; }
 
     public Geometry Geometry { get; set; } = null!;
@@ -54,7 +53,6 @@ public class FeatureHistoricEntity : FeatureBaseEntity, IHistoricEntity<int>
             Comment = entity.Comment,
             HistoricPossible = entity.HistoricPossible,
             YearNamed = entity.YearNamed,
-            IsDeleted = entity.IsDeleted,
             ForumRelativeLink = entity.ForumRelativeLink,
             Geometry = entity.Geometry,
             NamingCategoryId = entity.NamingCategoryId,

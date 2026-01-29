@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import maplibregl, { Map as MapLibreMap, MapMouseEvent, MapSourceDataEvent } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { CLASSIFICATION_COLORS } from '../constants/mapConstants';
-import type { FeatureProperties, Viewport } from '../types/feature';
+import type { FeatureProperties, Viewport } from '../types';
 import { useConfig } from './useConfig';
 
 // Extend Window interface for global state

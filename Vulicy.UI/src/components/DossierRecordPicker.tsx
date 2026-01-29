@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Search as SearchIcon, X, Loader2 } from 'lucide-react';
-import type { DossierRecordSearchResult, NamingCategory } from '../types/feature';
+import type { DossierRecordSearchResult, NamingCategory } from '../types';
 import { api } from '../utils/api';
 import DossierRecordItem from './DossierRecordItem';
 

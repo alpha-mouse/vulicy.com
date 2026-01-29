@@ -53,4 +53,11 @@ export const api = {
     });
     return handleResponse(response);
   },
+
+  delete: async <T>(url: string): Promise<T> => {
+    const response = await fetch(url, {
+      method: 'DELETE',
+    });
+    return handleResponse(response);
+  },
 };

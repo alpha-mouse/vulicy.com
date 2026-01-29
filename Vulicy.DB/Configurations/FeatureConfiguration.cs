@@ -18,7 +18,6 @@ internal abstract class FeatureBaseConfiguration<T> : IEntityTypeConfiguration<T
         builder.Property(x => x.Comment).HasMaxLength(512);
         builder.Property(x => x.YearNamed).HasMaxLength(64);
         builder.Property(x => x.ForumRelativeLink).HasMaxLength(512);
-        builder.Property(x => x.IsDeleted);
 
         builder.Property(x => x.Geometry).HasGeometryColumnType();
     }
