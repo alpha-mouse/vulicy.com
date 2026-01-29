@@ -4,18 +4,18 @@ namespace Vulicy.Services;
 
 public interface INamingCategoryService
 {
-    Task<List<NamingCategoryDto>> GetAll();
+    Task<List<NamingCategory>> GetAll();
 }
 
 public class NamingCategoryService(INamingCategoryRepository namingCategoryRepository) : INamingCategoryService
 {
-    public async Task<List<NamingCategoryDto>> GetAll()
+    public async Task<List<NamingCategory>> GetAll()
     {
         var entities = await namingCategoryRepository.GetAll();
         return entities
-            .Select(x => new NamingCategoryDto(x.Id, x.Name))
+            .Select(x => new NamingCategory(x.Id, x.Name))
             .ToList();
     }
 }
 
-public record NamingCategoryDto(int Id, string Name);
+public record NamingCategory(int Id, string Name);

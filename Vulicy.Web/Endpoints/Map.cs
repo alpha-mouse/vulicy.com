@@ -47,7 +47,7 @@ public static class Map
         return Results.NoContent();
     }
 
-    private static Task<List<NamingCategoryDto>> GetNamingCategories(INamingCategoryService namingCategoryService)
+    private static Task<List<NamingCategory>> GetNamingCategories(INamingCategoryService namingCategoryService)
     {
         return namingCategoryService.GetAll();
     }
