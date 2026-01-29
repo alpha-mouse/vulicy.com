@@ -4,6 +4,7 @@ interface TextFieldProps {
   onChange: (value: string) => void;
   maxLength: number;
   multiline?: boolean;
+  error?: string;
 }
 
 /**
@@ -15,6 +16,7 @@ export const TextField = ({
   onChange,
   maxLength,
   multiline = false,
+  error,
 }: TextFieldProps) => (
   <div className="flex flex-col gap-1">
     <label className="text-xs text-black/50">{label}</label>
@@ -24,7 +26,7 @@ export const TextField = ({
         onChange={(e) => onChange(e.target.value)}
         maxLength={maxLength}
         rows={3}
-        className="text-sm p-2 border border-black/20 rounded-lg bg-white/50 outline-none focus:border-primary resize-none"
+        className={`text-sm p-2 border rounded-lg bg-white/50 outline-none focus:border-primary resize-none ${error ? 'border-red-400' : 'border-black/20'}`}
       />
     ) : (
       <input
@@ -32,9 +34,10 @@ export const TextField = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         maxLength={maxLength}
-        className="text-sm p-2 border border-black/20 rounded-lg bg-white/50 outline-none focus:border-primary"
+        className={`text-sm p-2 border rounded-lg bg-white/50 outline-none focus:border-primary ${error ? 'border-red-400' : 'border-black/20'}`}
       />
     )}
+    {error && <span className="text-xs text-red-500">{error}</span>}
   </div>
 );
 

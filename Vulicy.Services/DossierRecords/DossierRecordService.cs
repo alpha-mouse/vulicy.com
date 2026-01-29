@@ -5,6 +5,7 @@ namespace Vulicy.Services;
 public interface IDossierRecordService
 {
     Task<List<DossierRecordSearchResult>> SearchByName(string? query, int? skip = null, int? take = null);
+    Task<int> CreateRecord(EditDossierRecordRequest request, int userId);
     Task MergeDossierRecord(int id, MergeDossierRecordRequest request, int userId);
     Task EditRecord(int id, EditDossierRecordRequest request, int userId);
     Task DeleteDossierRecord(int id, int userId);
@@ -18,6 +19,25 @@ public class DossierRecordService(
     {
         if (skip < 0 || take < 0 || 1000 < take) throw new InvalidOperationException("Bad paging parameters");
         return dossierRecordRepository.SearchByName(query, skip ?? 0, take ?? 100);
+    }
+
+    public async Task<int> CreateRecord(EditDossierRecordRequest request, int userId)
+    {
+        var record = new DossierRecordEntity
+        {
+            NameBeTarask = request.NameBeTarask,
+            NameBeNark = request.NameBeNark,
+            NameRu = request.NameRu,
+            DescriptionBe = request.DescriptionBe,
+            DescriptionRu = request.DescriptionRu,
+            Classification = request.Classification,
+            LastModifiedById = userId,
+        };
+
+        dossierRecordRepository.Add(record);
+        await dossierRecordRepository.SaveChanges();
+
+        return record.Id;
     }
 
     public async Task MergeDossierRecord(int id, MergeDossierRecordRequest request, int userId)

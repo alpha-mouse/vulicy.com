@@ -17,8 +17,9 @@ public class EditDossierRecordRequestValidator : AbstractValidator<EditDossierRe
 {
     public EditDossierRecordRequestValidator()
     {
-        RuleFor(x => x.NameBeTarask).NotEmpty();
-        RuleFor(x => x.NameBeNark).NotEmpty();
+        RuleFor(x => x.NameBeTarask).NotEmpty().MaximumLength(128);
+        RuleFor(x => x.NameBeNark).NotEmpty().MaximumLength(128);
+        RuleFor(x => x.NameRu).MaximumLength(128);
         RuleFor(x => x.Classification).IsInEnum();
     }
 }

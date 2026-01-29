@@ -11,6 +11,7 @@ public static class DossierRecords
         var group = builder.MapGroup("/api/dossier-records");
         group.MapGet("/search", Search);
         group.MapGet("/{id:int}/features", GetFeatures);
+        group.MapPost("", CreateRecord).RequireAuthorization().Validate<EditDossierRecordRequest>();
         group.MapPut("/{id:int}", EditRecord).RequireAuthorization().Validate<EditDossierRecordRequest>();
         group.MapPut("/{id:int}/merge-other", MergeOtherRecord).RequireAuthorization().Validate<MergeDossierRecordRequest>();
         group.MapDelete("/{id:int}", DeleteRecord).RequireAuthorization();
@@ -24,6 +25,13 @@ public static class DossierRecords
     private static Task<List<FeatureSearchResult>> GetFeatures(int id, IFeatureService featureService)
     {
         return featureService.GetByDossierRecord(id);
+    }
+
+    private static async Task<IResult> CreateRecord(EditDossierRecordRequest request, IDossierRecordService dossierRecordService, HttpContext context)
+    {
+        var userId = context.User.GetUserId();
+        var newId = await dossierRecordService.CreateRecord(request, userId);
+        return Results.Created($"/api/dossier-records/{newId}", new IdResponse(newId));
     }
 
     private static Task EditRecord(int id, EditDossierRecordRequest request, IDossierRecordService dossierRecordService, HttpContext context)

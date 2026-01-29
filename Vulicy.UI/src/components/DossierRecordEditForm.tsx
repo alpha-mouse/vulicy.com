@@ -15,7 +15,7 @@ const DOSSIER_CLASSIFICATION_OPTIONS = [
 ];
 
 interface DossierRecordEditFormProps {
-  record: DossierRecordSearchResult;
+  record?: DossierRecordSearchResult;
   onClose: () => void;
   onRecordUpdated: (record: DossierRecordSearchResult) => void;
 }
@@ -29,39 +29,88 @@ const DossierRecordEditForm = ({
   onClose,
   onRecordUpdated,
 }: DossierRecordEditFormProps) => {
+  const isCreateMode = !record;
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   // Edit form state
   const [editForm, setEditForm] = useState<DossierRecordEditRequest>({
-    nameBeTarask: record.nameBeTarask || '',
-    nameBeNark: record.nameBeNark || '',
-    nameRu: record.nameRu || null,
-    descriptionBe: record.descriptionBe || null,
-    descriptionRu: record.descriptionRu || null,
-    classification: record.classification || 1,
+    nameBeTarask: record?.nameBeTarask || '',
+    nameBeNark: record?.nameBeNark || '',
+    nameRu: record?.nameRu || null,
+    descriptionBe: record?.descriptionBe || null,
+    descriptionRu: record?.descriptionRu || null,
+    classification: record?.classification || 1,
   });
+
+  // Validation matching backend EditDossierRecordRequestValidator
+  const validate = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    if (!editForm.nameBeTarask.trim()) {
+      errors.nameBeTarask = 'Поле абавязковае';
+    } else if (editForm.nameBeTarask.length > 128) {
+      errors.nameBeTarask = 'Максымум 128 сымбаляў';
+    }
+
+    if (!editForm.nameBeNark.trim()) {
+      errors.nameBeNark = 'Поле абавязковае';
+    } else if (editForm.nameBeNark.length > 128) {
+      errors.nameBeNark = 'Максымум 128 сымбаляў';
+    }
+
+    if (editForm.nameRu && editForm.nameRu.length > 128) {
+      errors.nameRu = 'Максымум 128 сымбаляў';
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleSave = async () => {
     if (isSaving) return;
+
+    if (!validate()) {
+      return;
+    }
+
     setIsSaving(true);
     setError(null);
 
     try {
-      await api.put(`/api/dossier-records/${record.id}`, editForm);
+      if (isCreateMode) {
+        // Create mode: POST to create new record
+        const response = await api.post<{ id: number }>('/api/dossier-records', editForm);
 
-      // Update local record with new values
-      const updatedRecord: DossierRecordSearchResult = {
-        ...record,
-        nameBeTarask: editForm.nameBeTarask || undefined,
-        nameBeNark: editForm.nameBeNark || undefined,
-        nameRu: editForm.nameRu ?? undefined,
-        descriptionBe: editForm.descriptionBe ?? undefined,
-        descriptionRu: editForm.descriptionRu ?? undefined,
-        classification: editForm.classification,
-      };
+        // Create a new record object with the returned ID
+        const newRecord: DossierRecordSearchResult = {
+          id: response.id,
+          nameBeTarask: editForm.nameBeTarask || undefined,
+          nameBeNark: editForm.nameBeNark || undefined,
+          nameRu: editForm.nameRu ?? undefined,
+          descriptionBe: editForm.descriptionBe ?? undefined,
+          descriptionRu: editForm.descriptionRu ?? undefined,
+          classification: editForm.classification,
+          numFeatures: 0,
+        };
+        onRecordUpdated(newRecord);
+      } else {
+        // Edit mode: PUT to update existing record
+        await api.put(`/api/dossier-records/${record.id}`, editForm);
 
-      onRecordUpdated(updatedRecord);
+        // Update local record with new values
+        const updatedRecord: DossierRecordSearchResult = {
+          ...record,
+          nameBeTarask: editForm.nameBeTarask || undefined,
+          nameBeNark: editForm.nameBeNark || undefined,
+          nameRu: editForm.nameRu ?? undefined,
+          descriptionBe: editForm.descriptionBe ?? undefined,
+          descriptionRu: editForm.descriptionRu ?? undefined,
+          classification: editForm.classification,
+        };
+        onRecordUpdated(updatedRecord);
+      }
       onClose();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Не атрымалася захаваць змены';
@@ -74,6 +123,14 @@ const DossierRecordEditForm = ({
 
   const updateField = <K extends keyof DossierRecordEditRequest>(key: K, value: DossierRecordEditRequest[K]) => {
     setEditForm(prev => ({ ...prev, [key]: value }));
+    // Clear validation error for this field when user starts typing
+    if (validationErrors[key]) {
+      setValidationErrors(prev => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+    }
   };
 
   return (
@@ -81,7 +138,7 @@ const DossierRecordEditForm = ({
       <div className="w-96 max-h-[80vh] glass overflow-y-auto p-6 flex flex-col gap-4 animate-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex justify-between items-start">
-          <h2 className="text-lg font-bold m-0">Рэдагаваньне імені</h2>
+          <h2 className="text-lg font-bold m-0">{isCreateMode ? 'Новае імя' : 'Рэдагаваньне імені'}</h2>
           <button
             onClick={onClose}
             className="text-black/30 hover:text-black/60 transition-colors p-0 appearance-none bg-transparent border-none cursor-pointer outline-none"
@@ -97,18 +154,21 @@ const DossierRecordEditForm = ({
             value={editForm.nameBeTarask}
             onChange={(v) => updateField('nameBeTarask', v)}
             maxLength={128}
+            error={validationErrors.nameBeTarask}
           />
           <TextField
             label="Назва (акадэмічны)"
             value={editForm.nameBeNark}
             onChange={(v) => updateField('nameBeNark', v)}
             maxLength={128}
+            error={validationErrors.nameBeNark}
           />
           <TextField
             label="Назва (расейская)"
             value={editForm.nameRu || ''}
             onChange={(v) => updateField('nameRu', v || null)}
             maxLength={128}
+            error={validationErrors.nameRu}
           />
 
           <TextField
@@ -159,7 +219,7 @@ const DossierRecordEditForm = ({
             icon={isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
             className="flex-1"
           >
-            {isSaving ? 'Захаваньне...' : 'Захаваць'}
+            {isSaving ? 'Захаваньне...' : (isCreateMode ? 'Стварыць' : 'Захаваць')}
           </Button>
         </div>
       </div>

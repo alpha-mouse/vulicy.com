@@ -22,8 +22,8 @@ public class FeatureEditRequestValidator : AbstractValidator<FeatureEditRequest>
 {
     public FeatureEditRequestValidator()
     {
-        RuleFor(x => x.NameBeTarask).MaximumLength(128);
-        RuleFor(x => x.NameBeNark).MaximumLength(128);
+        RuleFor(x => x.NameBeTarask).NotEmpty().MaximumLength(128);
+        RuleFor(x => x.NameBeNark).NotEmpty().MaximumLength(128);
         RuleFor(x => x.NameRu).MaximumLength(128);
         RuleFor(x => x.RenamingReason).MaximumLength(1024);
         RuleFor(x => x.HistoricNames).MaximumLength(256);

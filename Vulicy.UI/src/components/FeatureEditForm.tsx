@@ -30,6 +30,7 @@ const FeatureEditForm = ({
   const [isSaving, setIsSaving] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   // Edit form state
   const [editForm, setEditForm] = useState<FeatureEditRequest>({
@@ -53,8 +54,53 @@ const FeatureEditForm = ({
   );
   const [selectedDossierRecord, setSelectedDossierRecord] = useState<DossierRecordSearchResult | null>(null);
 
+  // Validation matching backend FeatureEditRequestValidator
+  const validate = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    if (!editForm.nameBeTarask.trim()) {
+      errors.nameBeTarask = 'Поле абавязковае';
+    } else if (editForm.nameBeTarask.length > 128) {
+      errors.nameBeTarask = 'Максымум 128 сымбаляў';
+    }
+
+    if (!editForm.nameBeNark.trim()) {
+      errors.nameBeNark = 'Поле абавязковае';
+    } else if (editForm.nameBeNark.length > 128) {
+      errors.nameBeNark = 'Максымум 128 сымбаляў';
+    }
+
+    if (editForm.nameRu && editForm.nameRu.length > 128) {
+      errors.nameRu = 'Максымум 128 сымбаляў';
+    }
+
+    if (editForm.renamingReason && editForm.renamingReason.length > 1024) {
+      errors.renamingReason = 'Максымум 1024 сымбалі';
+    }
+
+    if (editForm.historicNames && editForm.historicNames.length > 256) {
+      errors.historicNames = 'Максымум 256 сымбаляў';
+    }
+
+    if (editForm.comment && editForm.comment.length > 512) {
+      errors.comment = 'Максымум 512 сымбаляў';
+    }
+
+    if (editForm.yearNamed && editForm.yearNamed.length > 64) {
+      errors.yearNamed = 'Максымум 64 сымбалі';
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSave = async () => {
     if (isSaving) return;
+
+    if (!validate()) {
+      return;
+    }
+
     setIsSaving(true);
     setError(null);
 
@@ -123,6 +169,14 @@ const FeatureEditForm = ({
 
   const updateField = <K extends keyof FeatureEditRequest>(key: K, value: FeatureEditRequest[K]) => {
     setEditForm(prev => ({ ...prev, [key]: value }));
+    // Clear validation error for this field when user starts typing
+    if (validationErrors[key]) {
+      setValidationErrors(prev => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+    }
   };
 
   // Naming category options with "з прывязанага імені" for null
@@ -151,18 +205,21 @@ const FeatureEditForm = ({
           value={editForm.nameBeTarask}
           onChange={(v) => updateField('nameBeTarask', v)}
           maxLength={128}
+          error={validationErrors.nameBeTarask}
         />
         <TextField
           label="Назва (акадэмічны)"
           value={editForm.nameBeNark}
           onChange={(v) => updateField('nameBeNark', v)}
           maxLength={128}
+          error={validationErrors.nameBeNark}
         />
         <TextField
           label="Назва (расейская)"
           value={editForm.nameRu}
           onChange={(v) => updateField('nameRu', v)}
           maxLength={128}
+          error={validationErrors.nameRu}
         />
 
         <SelectField
@@ -185,6 +242,7 @@ const FeatureEditForm = ({
           onChange={(v) => updateField('renamingReason', v || null)}
           maxLength={1024}
           multiline
+          error={validationErrors.renamingReason}
         />
 
         <TextField
@@ -192,6 +250,7 @@ const FeatureEditForm = ({
           value={editForm.historicNames || ''}
           onChange={(v) => updateField('historicNames', v || null)}
           maxLength={256}
+          error={validationErrors.historicNames}
         />
 
         <div className="flex items-center gap-2">
@@ -212,6 +271,7 @@ const FeatureEditForm = ({
           value={editForm.yearNamed || ''}
           onChange={(v) => updateField('yearNamed', v || null)}
           maxLength={64}
+          error={validationErrors.yearNamed}
         />
 
         <TextField
@@ -220,6 +280,7 @@ const FeatureEditForm = ({
           onChange={(v) => updateField('comment', v || null)}
           maxLength={512}
           multiline
+          error={validationErrors.comment}
         />
 
         <SelectField

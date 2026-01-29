@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ChevronLeft, Search as SearchIcon, X, MapPin, ChevronDown, ChevronUp, Loader2, FileUser } from 'lucide-react';
+import { ChevronLeft, Search as SearchIcon, X, MapPin, ChevronDown, ChevronUp, Loader2, FileUser, Plus } from 'lucide-react';
 import type { SearchResult, DossierRecordSearchResult, NamingCategory } from '../types';
 import { api } from '../utils/api';
 import FeatureListItem from './FeatureListItem';
@@ -31,8 +31,9 @@ const DossierRecordsPanel = ({
   const [features, setFeatures] = useState<Record<number, SearchResult[]>>({});
   const [loadingFeatures, setLoadingFeatures] = useState<Record<number, boolean>>({});
 
-  // Edit/delete state
+  // Edit/delete/create state
   const [editingRecord, setEditingRecord] = useState<DossierRecordSearchResult | null>(null);
+  const [isCreatingRecord, setIsCreatingRecord] = useState(false);
   const [deletingRecord, setDeletingRecord] = useState<DossierRecordSearchResult | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -130,6 +131,12 @@ const DossierRecordsPanel = ({
     setEditingRecord(null);
   }, []);
 
+  // Handle newly created record
+  const handleRecordCreated = useCallback((newRecord: DossierRecordSearchResult) => {
+    setRecords(prev => [newRecord, ...prev]);
+    setIsCreatingRecord(false);
+  }, []);
+
   // Handle record deletion
   const handleConfirmDelete = useCallback(async () => {
     if (!deletingRecord || isDeleting) return;
@@ -166,6 +173,15 @@ const DossierRecordsPanel = ({
           <FileUser size={20} className="text-black/60" />
           <h2 className="text-lg font-semibold m-0">Імёны</h2>
         </div>
+        {isAdmin && (
+          <button
+            onClick={() => setIsCreatingRecord(true)}
+            className="ml-auto p-1.5 hover:bg-black/5 rounded-lg transition-colors bg-transparent border-none cursor-pointer outline-none"
+            title="Дадаць новае імя"
+          >
+            <Plus size={20} className="text-black/60" />
+          </button>
+        )}
       </div>
 
       {/* Search bar */}
@@ -274,6 +290,14 @@ const DossierRecordsPanel = ({
           </div>
         )}
       </div>
+
+      {/* Create Form Modal */}
+      {isCreatingRecord && (
+        <DossierRecordEditForm
+          onClose={() => setIsCreatingRecord(false)}
+          onRecordUpdated={handleRecordCreated}
+        />
+      )}
 
       {/* Edit Form Modal */}
       {editingRecord && (
