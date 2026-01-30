@@ -11,12 +11,12 @@ public static class DossierRecords
         var group = builder.MapGroup("/api/dossier-records");
         group.MapGet("/search", Search);
         group.MapGet("/{id:int}/features", GetFeatures);
-        group.MapPost("", CreateRecord).RequireAuthorization().Validate<EditDossierRecordRequest>();
-        group.MapPut("/{id:int}", EditRecord).RequireAuthorization().Validate<EditDossierRecordRequest>();
-        group.MapPut("/{id:int}/merge-other", MergeOtherRecord).RequireAuthorization().Validate<MergeDossierRecordRequest>();
-        group.MapDelete("/{id:int}", DeleteRecord).RequireAuthorization();
+        group.MapPost("", CreateRecord).RequireAdmin().Validate<EditDossierRecordRequest>();
+        group.MapPut("/{id:int}", EditRecord).RequireAdmin().Validate<EditDossierRecordRequest>();
+        group.MapPut("/{id:int}/merge-other", MergeOtherRecord).RequireAdmin().Validate<MergeDossierRecordRequest>();
+        group.MapDelete("/{id:int}", DeleteRecord).RequireAdmin();
         group.MapGet("/merge-suggestions/next", GetNextMergeSuggestion);
-        group.MapDelete("/merge-suggestions/{id:int}", IgnoreMergeSuggestion).RequireAuthorization();
+        group.MapDelete("/merge-suggestions/{id:int}", IgnoreMergeSuggestion).RequireAdmin();
     }
 
     private static Task<List<DossierRecordSearchResult>> Search(string? query, int? skip, int? take, IDossierRecordService dossierRecordService)

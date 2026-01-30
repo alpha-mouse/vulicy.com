@@ -41,7 +41,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
             return Task.CompletedTask;
         };
     });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy(AuthorizationExtensions.RequireAdminPolicy, policy => policy.RequireRole(Auth.AdminRole));
 
 builder.Services.AddValidatorsFromAssemblyContaining<FeatureEditRequest>();
 

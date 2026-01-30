@@ -20,7 +20,7 @@ public static partial class Forum
     public static void MapForum(this IEndpointRouteBuilder builder)
     {
         var group = builder.MapGroup("/api/forum");
-        group.MapPost("/create-topic", CreateTopic).RequireAuthorization();
+        group.MapPost("/create-topic", CreateTopic).RequireAdmin();
         // AllowAnonymous: This webhook uses HMAC signature verification instead of cookie auth
         group.MapPost("/discourse-webhook", DiscourseWebhook).AllowAnonymous();
     }

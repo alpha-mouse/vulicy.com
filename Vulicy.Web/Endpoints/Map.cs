@@ -1,5 +1,6 @@
 ﻿using Vulicy.Domain;
 using Vulicy.Services;
+using Vulicy.Web.Infrastructure;
 using Microsoft.Extensions.Caching.Memory;
 
 
@@ -13,7 +14,7 @@ public static class Map
         group.MapGet("/tile/{z}/{x}/{y}.mvt", GetTile);
         group.MapGet("/naming-categories", GetNamingCategories);
 
-        group.MapGet("/tile-details/{z}/{x}/{y}.mvt", GetTileDetails).RequireAuthorization(policy => policy.RequireRole(Auth.AdminRole));
+        group.MapGet("/tile-details/{z}/{x}/{y}.mvt", GetTileDetails).RequireAdmin();
     }
 
     private static async Task<IResult> GetTile(int z, int x, int y, IFeatureRepository featureRepository, IMemoryCache cache)
