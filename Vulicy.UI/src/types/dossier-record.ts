@@ -27,3 +27,20 @@ export interface DossierRecordEditRequest {
   descriptionRu: string | null;
   classification: number;
 }
+
+export interface MergeSuggestion {
+  id: number;
+  leftRecord: DossierRecordSearchResult;
+  rightRecord: DossierRecordSearchResult;
+}
+
+export interface MergeDossierRecordRequest {
+  otherId: number;
+  nameBeTarask: string;
+  nameBeNark: string;
+  nameRu: string | null;
+  descriptionBe: string | null;
+  descriptionRu: string | null;
+  classification: number;
+  namingCategoryId: number | null;
+}

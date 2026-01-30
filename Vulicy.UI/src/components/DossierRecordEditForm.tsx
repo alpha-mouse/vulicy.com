@@ -3,16 +3,8 @@ import { X, Loader2, Save, AlertCircle } from 'lucide-react';
 import { TextField, SelectField } from './FormFields';
 import Button from './Button';
 import type { DossierRecordSearchResult, DossierRecordEditRequest } from '../types';
+import { DOSSIER_CLASSIFICATION_OPTIONS } from '../constants/mapConstants';
 import { api } from '../utils/api';
-
-// Classification options for dossier records (exclude 0 - records need explicit classification)
-const DOSSIER_CLASSIFICATION_OPTIONS = [
-  { value: 1, label: 'Перайменаваньне неабходнае ў прыярытэтным парадку' },
-  { value: 2, label: 'Перайменаваньне неабходнае' },
-  { value: 3, label: 'Перайменаваньне пажаданае' },
-  { value: 4, label: 'Перайменаваньне магчымае' },
-  { value: 5, label: 'Перайменаваньне не патрэбнае' },
-];
 
 interface DossierRecordEditFormProps {
   record?: DossierRecordSearchResult;

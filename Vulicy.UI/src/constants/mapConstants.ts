@@ -49,6 +49,9 @@ export const CLASSIFICATION_OPTIONS = [
   { value: 5, label: 'Перайменаваньне не патрэбнае' },
 ];
 
+// Dropdown options for dossier records (excludes 0 - records need explicit classification)
+export const DOSSIER_CLASSIFICATION_OPTIONS = CLASSIFICATION_OPTIONS.filter(o => o.value !== 0);
+
 export const FEATURE_TYPE_OPTIONS = [
   { value: 11, label: 'вуліца' },
   { value: 12, label: 'праспэкт' },

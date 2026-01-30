@@ -4,14 +4,31 @@ import TopBar from './TopBar';
 import FeatureInfoPanel from './FeatureInfoPanel';
 import DossierRecordsPanel from './DossierRecordsPanel';
 import { useMapInitialization } from '../hooks/useMapInitialization';
-import { useAuth } from '../hooks/useAuth';
 import { useConfig } from '../hooks/useConfig';
 import { useUrlParams } from '../hooks/useUrlParams';
 import { useMapStore } from '../store/mapStore';
-import type { FeatureProperties, SearchResult, NamingCategory } from '../types';
+import type { FeatureProperties, SearchResult, NamingCategory, User } from '../types';
 import { api } from '../utils/api';
 
-const MapComponent = () => {
+interface MapComponentProps {
+  user: User | null;
+  isLoading: boolean;
+  isAdmin: boolean;
+  login: (returnUrl?: string) => void;
+  logout: () => Promise<void>;
+  clearAuthState: () => void;
+  onNavigateToMerge: () => void;
+}
+
+const MapComponent = ({
+  user,
+  isLoading: authLoading,
+  isAdmin,
+  login,
+  logout,
+  clearAuthState,
+  onNavigateToMerge,
+}: MapComponentProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const selectedFeatureRef = useRef<FeatureProperties | null>(null);
 
@@ -34,7 +51,6 @@ const MapComponent = () => {
   const [namingCategories, setNamingCategories] = useState<NamingCategory[]>([]);
 
   // Hooks
-  const { user, isLoading: authLoading, isAdmin, login, logout, clearAuthState } = useAuth();
   const { config } = useConfig();
   const { updateParams } = useUrlParams();
 
@@ -158,6 +174,7 @@ const MapComponent = () => {
         onResultClick={handleResultClick}
         isAdmin={isAdmin}
         onOpenDossierPanel={() => setDossierPanelOpen(true)}
+        onNavigateToMerge={onNavigateToMerge}
       />
 
       <div className="map-container-with-topbar">

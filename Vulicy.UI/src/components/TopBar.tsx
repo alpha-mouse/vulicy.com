@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { LogIn, LogOut, Menu, FileUser } from 'lucide-react';
+import { LogIn, LogOut, Menu, FileUser, GitMerge } from 'lucide-react';
 import { useClickOutside } from '../hooks/useClickOutside';
 import Button from './Button';
 import Search from './Search';
@@ -15,6 +15,7 @@ interface TopBarProps {
   onResultClick: (result: SearchResult) => void;
   isAdmin?: boolean;
   onOpenDossierPanel?: () => void;
+  onNavigateToMerge?: () => void;
 }
 
 const TopBar = ({
@@ -27,6 +28,7 @@ const TopBar = ({
   onResultClick,
   isAdmin = false,
   onOpenDossierPanel,
+  onNavigateToMerge,
 }: TopBarProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -61,6 +63,13 @@ const TopBar = ({
               >
                 <FileUser size={18} className="text-black/60" />
                 <span>Імёны</span>
+              </button>
+              <button
+                onClick={() => handleMenuItemClick(() => onNavigateToMerge?.())}
+                className="w-full px-4 py-2.5 text-left text-sm font-medium text-black hover:bg-black/5 transition-colors bg-transparent border-none cursor-pointer outline-none flex items-center gap-2"
+              >
+                <GitMerge size={18} className="text-black/60" />
+                <span>Аб'яднаньне імёнаў</span>
               </button>
             </div>
           )}

@@ -72,6 +72,7 @@ public class DossierRecordService(
         canonical.DescriptionBe = request.DescriptionBe;
         canonical.DescriptionRu = request.DescriptionRu;
         canonical.Classification = request.Classification;
+        canonical.NamingCategoryId = request.NamingCategoryId;
         canonical.LastModifiedById = userId;
 
         // 4. Union PossibleNamesBeNark and PossibleNamesRu

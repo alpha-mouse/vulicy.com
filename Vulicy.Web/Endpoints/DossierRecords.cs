@@ -15,8 +15,8 @@ public static class DossierRecords
         group.MapPut("/{id:int}", EditRecord).RequireAuthorization().Validate<EditDossierRecordRequest>();
         group.MapPut("/{id:int}/merge-other", MergeOtherRecord).RequireAuthorization().Validate<MergeDossierRecordRequest>();
         group.MapDelete("/{id:int}", DeleteRecord).RequireAuthorization();
-        group.MapGet("/merge-suggestion", GetNextMergeSuggestion);
-        group.MapPut("/merge-suggestions/{id:int}/ignore", IgnoreMergeSuggestion).RequireAuthorization();
+        group.MapGet("/merge-suggestions/next", GetNextMergeSuggestion);
+        group.MapDelete("/merge-suggestions/{id:int}", IgnoreMergeSuggestion).RequireAuthorization();
     }
 
     private static Task<List<DossierRecordSearchResult>> Search(string? query, int? skip, int? take, IDossierRecordService dossierRecordService)
