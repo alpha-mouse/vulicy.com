@@ -28,6 +28,7 @@ builder.Services.AddConventionalServices(typeof(IImportingService).Assembly);
 builder.Services.AddHttpClient();
 builder.Services.AddMemoryCache();
 
+builder.Services.AddSingleton<ILinksService, LinksService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>

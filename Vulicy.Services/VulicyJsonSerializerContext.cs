@@ -11,6 +11,7 @@ namespace Vulicy.Services;
 [JsonSerializable(typeof(MergeDossierRecordRequest))]
 [JsonSerializable(typeof(EditDossierRecordRequest))]
 [JsonSerializable(typeof(DossierRecordMergeSuggestion))]
+[JsonSerializable(typeof(DiscourseWebhookResult))]
 public partial class VulicyServicesSerializerContext : JsonSerializerContext
 {
 
