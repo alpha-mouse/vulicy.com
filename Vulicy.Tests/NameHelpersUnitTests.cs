@@ -8,6 +8,7 @@ public class NameHelpersUnitTests
     [Theory]
     [InlineData("вуліца Камароўскае Кальцо", FeatureType.Street, "Камароўскае Кальцо")]
     [InlineData("улица Комаровское Кольцо", FeatureType.Street, "Комаровское Кольцо")]
+    [InlineData("2-я вуліца Пржавальскага", FeatureType.Street, "2-я Пржавальскага")]
     [InlineData("праспект Незалежнасці", FeatureType.Avenue, "Незалежнасці")]
     [InlineData("праспэкт Незалежнасьці", FeatureType.Avenue, "Незалежнасьці")]
     [InlineData("проспект Независимости", FeatureType.Avenue, "Независимости")]
@@ -23,11 +24,14 @@ public class NameHelpersUnitTests
     [InlineData("Музыкальный переулок", FeatureType.Alley, "Музыкальный")]
     [InlineData("завулак Кузьмы Чорнага", FeatureType.Alley, "Кузьмы Чорнага")]
     [InlineData("переулок Кузьмы Чорного", FeatureType.Alley, "Кузьмы Чорного")]
+    [InlineData("2-і завулак Баграціёна", FeatureType.Alley, "2-і Баграціёна")]
+    [InlineData("4-ы Арлоўскі завулак", FeatureType.Alley, "4-ы Арлоўскі")]
     [InlineData("Каралінскі праезд", FeatureType.Driveway, "Каралінскі")]
     [InlineData("Каролинский проезд", FeatureType.Driveway, "Каролинский")]
     [InlineData("Брылеўскі тупік", FeatureType.DeadEnd, "Брылеўскі")]
     [InlineData("Брилевский тупик", FeatureType.DeadEnd, "Брилевский")]
     [InlineData("2-і Заходні тупік", FeatureType.DeadEnd, "2-і Заходні")]
+    [InlineData("2-і Веласіпедны завулак", FeatureType.Alley, "2-і Веласіпедны")]
     [InlineData("Дняпроўскі спуск", FeatureType.Descent, "Дняпроўскі")]
     [InlineData("Аляксандраўскі сквер", FeatureType.PublicGarden, "Аляксандраўскі")]
     public void ParseOsmCyrillicName_ShouldReturnExpectedTypeAndName(string fullName, FeatureType expectedType, string expectedName)
@@ -67,6 +71,21 @@ public class NameHelpersUnitTests
     public void IsSimilar_WithThreshold_ShouldReturnExpectedResult(string s1, string s2, double threshold, bool expectedResult)
     {
         var actualResult = NameHelpers.IsSimilar(s1, s2, threshold);
+
+        Assert.Equal(expectedResult, actualResult);
+    }
+
+    [Theory]
+    [InlineData("Цнянская", null)]
+    [InlineData("2-і Веласіпедны", "Веласіпедны 2-і")]
+    [InlineData("2-й Велосипедный", "Велосипедный 2-й")]
+    [InlineData("2-я Шостая Лінія", "Шостая Лінія 2-я")]
+    [InlineData("2-я Шестая Линия", "Шестая Линия 2-я")]
+    [InlineData("1-я Радыятарная", "Радыятарная 1-я")]
+    [InlineData("4-ы Арлоўскі", "Арлоўскі 4-ы")]
+    public void NamesMatch_Test(string name, string? expectedResult)
+    {
+        var actualResult = NameHelpers.TryGetAlternativeName(name);
 
         Assert.Equal(expectedResult, actualResult);
     }

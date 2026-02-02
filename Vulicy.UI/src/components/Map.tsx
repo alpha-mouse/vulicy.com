@@ -18,6 +18,7 @@ interface MapComponentProps {
   logout: () => Promise<void>;
   clearAuthState: () => void;
   onNavigateToMerge: () => void;
+  onToggleSourcesMode: () => void;
 }
 
 const MapComponent = ({
@@ -28,6 +29,7 @@ const MapComponent = ({
   logout,
   clearAuthState,
   onNavigateToMerge,
+  onToggleSourcesMode,
 }: MapComponentProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const selectedFeatureRef = useRef<FeatureProperties | null>(null);
@@ -175,6 +177,8 @@ const MapComponent = ({
         isAdmin={isAdmin}
         onOpenDossierPanel={() => setDossierPanelOpen(true)}
         onNavigateToMerge={onNavigateToMerge}
+        isSourcesMode={false}
+        onToggleSourcesMode={onToggleSourcesMode}
       />
 
       <div className="map-container-with-topbar">

@@ -12,6 +12,8 @@ public static class Map
     {
         var group = builder.MapGroup("/api/map");
         group.MapGet("/tile/{z}/{x}/{y}.mvt", GetTile);
+        group.MapGet("/cadastre-tile/{z}/{x}/{y}.mvt", GetCadastreTile).RequireAdmin();
+        group.MapGet("/osm-tile/{z}/{x}/{y}.mvt", GetOsmTile).RequireAdmin();
         group.MapGet("/naming-categories", GetNamingCategories);
 
         group.MapGet("/tile-details/{z}/{x}/{y}.mvt", GetTileDetails).RequireAdmin();
@@ -30,6 +32,30 @@ public static class Map
         if (result is byte[] { Length: > 0 } newBytes)
         {
             cache.Set(cacheKey, newBytes, TimeSpan.FromMinutes(10));
+            return Results.File(newBytes, "application/x-protobuf");
+        }
+
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> GetCadastreTile(int z, int x, int y, ICadastreFeatureRepository cadastreFeatureRepository)
+    {
+        var result = await cadastreFeatureRepository.GetTile(z, x, y);
+
+        if (result is byte[] { Length: > 0 } newBytes)
+        {
+            return Results.File(newBytes, "application/x-protobuf");
+        }
+
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> GetOsmTile(int z, int x, int y, IOsmFeatureRepository osmFeatureRepository)
+    {
+        var result = await osmFeatureRepository.GetTile(z, x, y);
+
+        if (result is byte[] { Length: > 0 } newBytes)
+        {
             return Results.File(newBytes, "application/x-protobuf");
         }
 

@@ -1,18 +1,59 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Map from './components/Map'
+import SourcesMap from './components/SourcesMap'
 import MergePage from './components/MergePage'
 import { ConfigProvider } from './hooks/useConfig'
 import { useAuth } from './hooks/useAuth'
+import { useMapStore } from './store/mapStore'
 import * as Sentry from "@sentry/react";
 
 type Page = 'map' | 'merge';
 
 function AppContent() {
-  const [currentPage, setCurrentPage] = useState<Page>('map');
+  const [currentPage, setCurrentPage] = useState<Page>(window.location.pathname === '/dossier-deduplication' ? 'merge' : 'map');
   const { user, isLoading, isAdmin, login, logout, clearAuthState } = useAuth();
+  const { isSourcesMode, setSourcesMode } = useMapStore();
 
-  const handleNavigateToMerge = () => setCurrentPage('merge');
-  const handleNavigateToMap = () => setCurrentPage('map');
+  // Sync state with URL path
+  useEffect(() => {
+    const handleLocationChange = () => {
+      const path = window.location.pathname;
+      if (path === '/sources') {
+        setCurrentPage('map');
+        setSourcesMode(true);
+      } else if (path === '/dossier-deduplication') {
+        setCurrentPage('merge');
+        setSourcesMode(false);
+      } else {
+        setCurrentPage('map');
+        setSourcesMode(false);
+      }
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    handleLocationChange(); // Initial check
+
+    return () => window.removeEventListener('popstate', handleLocationChange);
+  }, [setSourcesMode]);
+
+  const navigateTo = (path: string) => {
+    window.history.pushState(null, '', path);
+    // Manually trigger popstate or just call state updates
+    if (path === '/sources') {
+      setCurrentPage('map');
+      setSourcesMode(true);
+    } else if (path === '/dossier-deduplication') {
+      setCurrentPage('merge');
+      setSourcesMode(false);
+    } else {
+      setCurrentPage('map');
+      setSourcesMode(false);
+    }
+  };
+
+  const handleNavigateToMerge = () => navigateTo('/dossier-deduplication');
+  const handleNavigateToMap = () => navigateTo('/');
+  const handleToggleSources = () => navigateTo(isSourcesMode ? '/' : '/sources');
 
   if (currentPage === 'merge' && isAdmin) {
     return (
@@ -21,6 +62,20 @@ function AppContent() {
         isLoading={isLoading}
         onLogout={logout}
         onBack={handleNavigateToMap}
+      />
+    );
+  }
+
+  // Sources mode is admin-only
+  if (isSourcesMode && isAdmin) {
+    return (
+      <SourcesMap
+        user={user}
+        isLoading={isLoading}
+        isAdmin={isAdmin}
+        login={login}
+        logout={logout}
+        onToggleSourcesMode={handleToggleSources}
       />
     );
   }
@@ -34,6 +89,7 @@ function AppContent() {
       logout={logout}
       clearAuthState={clearAuthState}
       onNavigateToMerge={handleNavigateToMerge}
+      onToggleSourcesMode={handleToggleSources}
     />
   );
 }

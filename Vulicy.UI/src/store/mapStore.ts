@@ -25,6 +25,10 @@ interface MapState {
   // Copy link state
   isCopied: boolean;
   setIsCopied: (copied: boolean) => void;
+
+  // Sources mode (admin-only view of cadastre/OSM data)
+  isSourcesMode: boolean;
+  setSourcesMode: (mode: boolean) => void;
 }
 
 export const useMapStore = create<MapState>((set, get) => ({
@@ -57,4 +61,8 @@ export const useMapStore = create<MapState>((set, get) => ({
   // Copy state
   isCopied: false,
   setIsCopied: (copied) => set({ isCopied: copied }),
+
+  // Sources mode
+  isSourcesMode: window.location.pathname === '/sources',
+  setSourcesMode: (mode) => set({ isSourcesMode: mode }),
 }));

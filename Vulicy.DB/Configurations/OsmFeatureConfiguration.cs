@@ -10,7 +10,6 @@ internal abstract class OsmFeatureBaseConfiguration<T> : IEntityTypeConfiguratio
     public virtual void Configure(EntityTypeBuilder<T> builder)
     {
         builder.Property(x => x.Geometry).HasGeometryColumnType();
-        builder.HasIndex(x => x.Geometry).HasMethod("gist");
         builder.Property(x => x.Tags).HasJsonbColumnType();
         builder.Property(x => x.IsDeleted);
     }
@@ -25,6 +24,7 @@ internal class OsmFeatureConfiguration : OsmFeatureBaseConfiguration<OsmFeatureE
         builder.ToTable(TableName);
         builder.UseTpcMappingStrategy();
         builder.HasKey(x => new { x.Id, x.Type });
+        builder.HasIndex(x => x.Geometry).HasMethod("gist");
         base.Configure(builder);
     }
 }

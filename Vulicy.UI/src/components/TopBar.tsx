@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { LogIn, LogOut, Menu, FileUser, GitMerge } from 'lucide-react';
+import { LogIn, LogOut, Menu, FileUser, GitMerge, Database, MapPin } from 'lucide-react';
 import { useClickOutside } from '../hooks/useClickOutside';
 import Button from './Button';
 import Search from './Search';
@@ -16,6 +16,8 @@ interface TopBarProps {
   isAdmin?: boolean;
   onOpenDossierPanel?: () => void;
   onNavigateToMerge?: () => void;
+  isSourcesMode?: boolean;
+  onToggleSourcesMode?: () => void;
 }
 
 const TopBar = ({
@@ -29,6 +31,8 @@ const TopBar = ({
   isAdmin = false,
   onOpenDossierPanel,
   onNavigateToMerge,
+  isSourcesMode = false,
+  onToggleSourcesMode,
 }: TopBarProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -56,31 +60,51 @@ const TopBar = ({
           </button>
 
           {isMenuOpen && (
-            <div className="absolute top-full left-0 mt-1 bg-white dark:bg-slate-800 rounded-lg shadow-2xl border border-black/10 dark:border-white/10 overflow-hidden z-50 min-w-40">
+            <div className="absolute top-full left-0 mt-1 bg-white dark:bg-slate-800 rounded-lg shadow-2xl border border-black/10 dark:border-white/10 overflow-hidden z-50 min-w-60">
+              {!isSourcesMode && (
+                <>
+                  <button
+                    onClick={() => handleMenuItemClick(() => onOpenDossierPanel?.())}
+                    className="w-full px-4 py-2.5 text-left text-sm font-medium text-black hover:bg-black/5 transition-colors bg-transparent border-none cursor-pointer outline-none flex items-center gap-2"
+                  >
+                    <FileUser size={18} className="text-black/60" />
+                    <span>Імёны</span>
+                  </button>
+                  <button
+                    onClick={() => handleMenuItemClick(() => onNavigateToMerge?.())}
+                    className="w-full px-4 py-2.5 text-left text-sm font-medium text-black hover:bg-black/5 transition-colors bg-transparent border-none cursor-pointer outline-none flex items-center gap-2"
+                  >
+                    <GitMerge size={18} className="text-black/60" />
+                    <span>Аб'яднаньне імёнаў</span>
+                  </button>
+                </>
+              )}
               <button
-                onClick={() => handleMenuItemClick(() => onOpenDossierPanel?.())}
+                onClick={() => handleMenuItemClick(() => onToggleSourcesMode?.())}
                 className="w-full px-4 py-2.5 text-left text-sm font-medium text-black hover:bg-black/5 transition-colors bg-transparent border-none cursor-pointer outline-none flex items-center gap-2"
               >
-                <FileUser size={18} className="text-black/60" />
-                <span>Імёны</span>
-              </button>
-              <button
-                onClick={() => handleMenuItemClick(() => onNavigateToMerge?.())}
-                className="w-full px-4 py-2.5 text-left text-sm font-medium text-black hover:bg-black/5 transition-colors bg-transparent border-none cursor-pointer outline-none flex items-center gap-2"
-              >
-                <GitMerge size={18} className="text-black/60" />
-                <span>Аб'яднаньне імёнаў</span>
+                {isSourcesMode ? (
+                  <>
+                    <MapPin size={18} className="text-black/60" />
+                    <span>Вуліцы</span>
+                  </>
+                ) : (
+                  <>
+                    <Database size={18} className="text-black/60" />
+                    <span>Крыніцы</span>
+                  </>
+                )}
               </button>
             </div>
           )}
         </div>
 
-        <Search
+        {!isSourcesMode && <Search
           currentLat={currentLat}
           currentLng={currentLng}
           onResultClick={onResultClick}
           embedded
-        />
+        />}
       </div>
 
       <div className="flex items-center gap-3">

@@ -7,12 +7,19 @@ public static partial class NameHelpers
 {
     public static (FeatureType Type, string Name) ParseOsmCyrillicName(string fullName)
     {
-        var match = GetOsmNameRegex().Match(fullName);
-        if (!match.Success)
+        var match = GetPrefixOsmNameRegex().Match(fullName);
+        string? name;
+        if (match.Success)
+            name = match.Groups["name"].Value;
+        else if ((match = GetPostfixOsmNameRegex().Match(fullName)).Success)
+            name = match.Groups["name"].Value;
+        else if ((match = GetInfixOsmNameRegex().Match(fullName)).Success)
+            name = match.Groups["number"] + " " + match.Groups["name"].Value;
+        else
             return (FeatureType.Unknown, fullName);
+
         var typeGroup = match.Groups["type"];
         var type = ToFeatureType(typeGroup.Value);
-        var name = match.Groups["name"].Value;
         return (type, name);
     }
 
@@ -118,6 +125,22 @@ public static partial class NameHelpers
           + @"парк|"
           + @"сквер|сквэр"
           + ")";
-    [GeneratedRegex($@"^(?:{TypePattern} (?<name>.*)|(?<name>.*) {TypePattern})$")]
-    private static partial Regex GetOsmNameRegex();
+    [GeneratedRegex($"^{TypePattern} (?<name>.*)$")]
+    private static partial Regex GetPrefixOsmNameRegex();
+
+    [GeneratedRegex($@"^(?<name>.*) {TypePattern}$")]
+    private static partial Regex GetPostfixOsmNameRegex();
+
+    [GeneratedRegex($@"^(?<number>^\d+-[іыйя]) {TypePattern} (?<name>.+)$")]
+    private static partial Regex GetInfixOsmNameRegex();
+
+    [GeneratedRegex($@"(?<number>^\d+-[іыйя]) (?<name>.+)$")]
+    private static partial Regex GetAlternativeNameRegex();
+
+    public static string TryGetAlternativeName(string name)
+    {
+        var match = GetAlternativeNameRegex().Match(name);
+        if (!match.Success) return null;
+        return match.Groups["name"].Value + " " + match.Groups["number"].Value;
+    }
 }

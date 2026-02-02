@@ -285,8 +285,8 @@ public partial class ImportPipeline(
                         if (candidate.Feature.Feature != null) continue;
 
                         if (candidate.Type == cadastreFeatureType &&
-                            (candidate.NameBe != null && string.Equals(candidate.NameBe, cadastre.ElementNameBel, StringComparison.OrdinalIgnoreCase)
-                             || candidate.NameRu != null && string.Equals(candidate.NameRu, cadastre.ElementName, StringComparison.OrdinalIgnoreCase)))
+                            (candidate.NamesBe.Any(name => string.Equals(name, cadastre.ElementNameBel, StringComparison.OrdinalIgnoreCase))
+                            || candidate.NamesRu.Any(name => string.Equals(name, cadastre.ElementName, StringComparison.OrdinalIgnoreCase))))
                         {
 
                             if (cadastre.Geometry != null && (candidate.Feature.Geometry.Intersects(cadastre.Geometry) || candidate.Feature.Geometry.Distance(cadastre.Geometry) < geometryDelta))
@@ -372,8 +372,8 @@ public partial class ImportPipeline(
                         if (candidate.Feature.Feature != null) continue;
 
                         if (candidate.Type == feature.Type &&
-                            (candidate.NameBe != null && string.Equals(candidate.NameBe, feature.NameBeNark, StringComparison.OrdinalIgnoreCase)
-                             || candidate.NameRu != null && string.Equals(candidate.NameRu, feature.NameRu, StringComparison.OrdinalIgnoreCase)))
+                            (candidate.NamesBe.Any(name => string.Equals(name, feature.NameBeNark, StringComparison.OrdinalIgnoreCase))
+                             || candidate.NamesRu.Any(name => string.Equals(name, feature.NameRu, StringComparison.OrdinalIgnoreCase))))
                         {
                             if (feature.Geometry != null && (candidate.Feature.Geometry.Intersects(feature.Geometry) || candidate.Feature.Geometry.Distance(feature.Geometry) < geometryDelta))
                             {
@@ -613,7 +613,7 @@ public partial class ImportPipeline(
         };
     }
 
-    private record OsmFeatureMatchCandidate(OsmFeatureEntity Feature, FeatureType Type, string? NameBe, string? NameRu, string? NameBeTarask);
+    private record OsmFeatureMatchCandidate(OsmFeatureEntity Feature, FeatureType Type, IList<string> NamesBe, IList<string> NamesRu, string? NameBeTarask);
 
     private static OsmFeatureMatchCandidate? TryParseOsmFeatureName(OsmFeatureEntity osmFeature)
     {
@@ -659,7 +659,27 @@ public partial class ImportPipeline(
 
         if (type == null) return null;
 
-        return new OsmFeatureMatchCandidate(osmFeature, type.Value, nameBe, nameRu, nameBeTarask);
+        var namesBe = Array.Empty<string>();
+        if (nameBe != null)
+        {
+            var alternativeNameBe = NameHelpers.TryGetAlternativeName(nameBe);
+            if (alternativeNameBe == null)
+                namesBe = [nameBe];
+            else
+                namesBe = [nameBe, alternativeNameBe];
+        }
+
+        var namesRu = Array.Empty<string>();
+        if (nameRu != null)
+        {
+            var alternativeNameRu = NameHelpers.TryGetAlternativeName(nameRu);
+            if (alternativeNameRu == null)
+                namesRu = [nameRu];
+            else
+                namesRu = [nameRu, alternativeNameRu];
+        }
+
+        return new OsmFeatureMatchCandidate(osmFeature, type.Value, namesBe, namesRu, nameBeTarask);
     }
 
 
