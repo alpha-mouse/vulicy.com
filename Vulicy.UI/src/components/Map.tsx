@@ -9,6 +9,7 @@ import { useUrlParams } from '../hooks/useUrlParams';
 import { useMapStore } from '../store/mapStore';
 import type { FeatureProperties, SearchResult, NamingCategory, User } from '../types';
 import { api } from '../utils/api';
+import { computeCentroid } from '../utils/geometry';
 
 interface MapComponentProps {
   user: User | null;
@@ -114,7 +115,8 @@ const MapComponent = ({
 
   const handleResultClick = useCallback((result: SearchResult) => {
     setFeatureLoading(true);
-    flyTo(result.longitude, result.latitude);
+    const [longitude, latitude] = computeCentroid(result.geometry);
+    flyTo(longitude, latitude);
     updateParams({ featureId: result.id });
     window._selectFeature?.(result.id);
   }, [flyTo, setFeatureLoading, updateParams]);

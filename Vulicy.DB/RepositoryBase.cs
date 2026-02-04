@@ -50,16 +50,6 @@ public partial class RepositoryBase<T, TKey>(VulicyDbContext dbContext) : IRepos
         return new Transaction(await Context.Database.BeginTransactionAsync());
     }
 
-    protected string CleanQuery(string? query)
-    {
-        return SearchQueryCleanupRegex()
-            .Replace(query ?? "", m => m.Value == "*" ? "%" : "")
-            .Trim();
-    }
-
-    [System.Text.RegularExpressions.GeneratedRegex("[%_*]")]
-    private static partial System.Text.RegularExpressions.Regex SearchQueryCleanupRegex();
-
     private record Transaction(IDbContextTransaction DbContextTransaction) : ITransaction
     {
         public Task Commit() => DbContextTransaction.CommitAsync();

@@ -1,3 +1,5 @@
+import type { GeoJSONGeometry } from '../utils/geometry';
+
 export interface FeatureProperties {
   Id: number;
   Type: number;
@@ -29,8 +31,7 @@ export interface SearchResult {
   nameBeNark?: string;
   nameRu?: string;
   location?: string;
-  latitude: number;
-  longitude: number;
+  geometry: GeoJSONGeometry;
 }
 
 export interface Viewport {

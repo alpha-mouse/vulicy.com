@@ -5,7 +5,7 @@ using Vulicy.Domain;
 
 namespace Vulicy.DB;
 
-public partial class FeatureRepository(VulicyDbContext dbContext)
+public class FeatureRepository(VulicyDbContext dbContext)
     : RepositoryBase<FeatureEntity, int>(dbContext)
         , IFeatureRepository
 {
@@ -44,7 +44,7 @@ public partial class FeatureRepository(VulicyDbContext dbContext)
 
     public Task<List<FeatureSearchResult>> SearchByName(string query, double? lat = null, double? lng = null)
     {
-        var cleanedQuery = CleanQuery(query);
+        var cleanedQuery = DatabaseHelpers.CleanQuery(query);
 
         if (string.IsNullOrWhiteSpace(cleanedQuery))
             return Task.FromResult(new List<FeatureSearchResult>());
@@ -57,8 +57,7 @@ public partial class FeatureRepository(VulicyDbContext dbContext)
                  f."{nameof(FeatureEntity.NameRu)}",
                  f."{nameof(FeatureEntity.Type)}",
                  cf."{nameof(CadastreFeatureEntity.AteNameBel)}" as "{nameof(FeatureSearchResult.Location)}",
-                 ST_Y(ST_Centroid(f."{nameof(FeatureEntity.Geometry)}")) as "{nameof(FeatureSearchResult.Latitude)}",
-                 ST_X(ST_Centroid(f."{nameof(FeatureEntity.Geometry)}")) as "{nameof(FeatureSearchResult.Longitude)}"
+                 f."{nameof(FeatureEntity.Geometry)}"
              from "{FeatureConfiguration.TableName}" f
              left outer join "{CadastreFeatureConfiguration.TableName}" cf on f."{nameof(FeatureEntity.Id)}" = cf."{nameof(CadastreFeatureEntity.FeatureId)}"
              where (
@@ -147,8 +146,7 @@ public partial class FeatureRepository(VulicyDbContext dbContext)
                 x.NameRu,
                 x.CadastreFeature == null ? null : x.CadastreFeature.AteNameBel,
                 x.Type,
-                x.Geometry.Centroid.Y,
-                x.Geometry.Centroid.X
+                x.Geometry
             ))
             .ToListAsync();
     }

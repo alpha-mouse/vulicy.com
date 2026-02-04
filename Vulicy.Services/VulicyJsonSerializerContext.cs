@@ -6,6 +6,8 @@ namespace Vulicy.Services;
 [JsonSerializable(typeof(List<NamingCategory>))]
 [JsonSerializable(typeof(UserDto))]
 [JsonSerializable(typeof(List<FeatureSearchResult>))]
+[JsonSerializable(typeof(List<OsmFeatureSearchResult>))]
+[JsonSerializable(typeof(List<CadastreFeatureSearchResult>))]
 [JsonSerializable(typeof(List<DossierRecordSearchResult>))]
 [JsonSerializable(typeof(FeatureEditRequest))]
 [JsonSerializable(typeof(MergeDossierRecordRequest))]

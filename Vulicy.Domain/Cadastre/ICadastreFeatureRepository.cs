@@ -1,5 +1,3 @@
-using System.Collections;
-
 namespace Vulicy.Domain;
 
 public interface ICadastreFeatureRepository : IRepository<CadastreFeatureEntity, string>
@@ -8,4 +6,5 @@ public interface ICadastreFeatureRepository : IRepository<CadastreFeatureEntity,
     Task<List<int>> GetUnmatchedAtes();
     Task<List<CadastreFeatureEntity>> GetUnmatchedByAteTracking(int ate);
     Task<List<int>> GetAllAtes();
+    Task<List<CadastreFeatureSearchResult>> SearchUnmatchedByName(string query, double? lat = null, double? lng = null);
 }

@@ -59,4 +59,57 @@ public class CadastreFeatureRepository(VulicyDbContext context)
             .Distinct()
             .ToListAsync();
     }
+
+    public Task<List<CadastreFeatureSearchResult>> SearchUnmatchedByName(string query, double? lat = null, double? lng = null)
+    {
+        var cleanedQuery = DatabaseHelpers.CleanQuery(query);
+
+        if (string.IsNullOrWhiteSpace(cleanedQuery))
+            return Task.FromResult(new List<CadastreFeatureSearchResult>());
+
+        const string baseSearchSql = 
+            $"""
+             select
+                 cf."{nameof(CadastreFeatureEntity.Id)}",
+                 cf."{nameof(CadastreFeatureEntity.ElementNameBel)}",
+                 cf."{nameof(CadastreFeatureEntity.ElementName)}",
+                 cf."{nameof(CadastreFeatureEntity.AteNameBel)}" as {nameof(CadastreFeatureSearchResult.Location)},
+                 cf."{nameof(CadastreFeatureEntity.ElementTypeNameBel)}",
+                 cf."{nameof(CadastreFeatureEntity.Geometry)}"
+             from "{CadastreFeatureConfiguration.TableName}" cf
+             where (
+                   cf."{nameof(CadastreFeatureEntity.ElementNameBel)}" ilike @query
+                   or cf."{nameof(CadastreFeatureEntity.ElementName)}" ilike @query
+               )
+             and cf."{nameof(CadastreFeatureEntity.FeatureId)}" is null
+
+             """;
+
+        const string searchWithoutCoordinates = baseSearchSql + "limit 20";
+        const string searchWithCoordinates = baseSearchSql +
+                                             $"""
+                                              order by cf."{nameof(OsmFeatureEntity.Geometry)}" <-> ST_SetSRID(ST_MakePoint(@lng, @lat), 4326)
+                                              limit 20
+                                              """;
+
+        IQueryable<CadastreFeatureSearchResult> result;
+        if (lat.HasValue && lng.HasValue)
+        {
+            result = Context.Database
+                .SqlQueryRaw<CadastreFeatureSearchResult>(searchWithCoordinates,
+                    new NpgsqlParameter("query", $"%{cleanedQuery}%"),
+                    new NpgsqlParameter("lat", lat.Value),
+                    new NpgsqlParameter("lng", lng.Value)
+                );
+        }
+        else
+        {
+            result = Context.Database
+                .SqlQueryRaw<CadastreFeatureSearchResult>(searchWithoutCoordinates,
+                    new NpgsqlParameter("query", $"%{cleanedQuery}%")
+                );
+        }
+
+        return result.ToListAsync();
+    }
 }

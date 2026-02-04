@@ -26,7 +26,7 @@ public class DossierRecordRepository(VulicyDbContext dbContext)
 
     public Task<List<DossierRecordSearchResult>> SearchByName(string? query, int skip, int take)
     {
-        var cleanedQuery = CleanQuery(query);
+        var cleanedQuery = DatabaseHelpers.CleanQuery(query);
 
         const string columnsList =
             $"""

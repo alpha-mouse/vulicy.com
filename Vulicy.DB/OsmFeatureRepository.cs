@@ -41,4 +41,57 @@ public class OsmFeatureRepository(VulicyDbContext context) : IOsmFeatureReposito
             .Where(x => x.FeatureId == null && !x.IsDeleted && x.Geometry.Intersects(geometry))
             .ToListAsync();
     }
+
+    public Task<List<OsmFeatureSearchResult>> SearchUnmatchedByName(string query, double? lat = null, double? lng = null)
+    {
+        var cleanedQuery = DatabaseHelpers.CleanQuery(query);
+
+        if (string.IsNullOrWhiteSpace(cleanedQuery))
+            return Task.FromResult(new List<OsmFeatureSearchResult>());
+
+        const string baseSearchSql = 
+            $"""
+             select
+                 of."{nameof(OsmFeatureEntity.Id)}",
+                 of."{nameof(OsmFeatureEntity.Tags)}",
+                 of."{nameof(OsmFeatureEntity.Type)}",
+                 of."{nameof(OsmFeatureEntity.Geometry)}"
+             from "{OsmFeatureConfiguration.TableName}" of
+             where (
+                   of."{nameof(OsmFeatureEntity.Tags)}"->>'name' ilike @query
+                   or of."{nameof(OsmFeatureEntity.Tags)}"->>'name:be' ilike @query
+                   or of."{nameof(OsmFeatureEntity.Tags)}"->>'name:be-tarask' ilike @query
+                   or of."{nameof(OsmFeatureEntity.Tags)}"->>'name:ru' ilike @query
+               )
+             and of."{nameof(OsmFeatureEntity.FeatureId)}" is null
+
+             """;
+
+        const string searchWithoutCoordinates = baseSearchSql + "limit 20";
+        const string searchWithCoordinates = baseSearchSql +
+                                             $"""
+                                              order by of."{nameof(OsmFeatureEntity.Geometry)}" <-> ST_SetSRID(ST_MakePoint(@lng, @lat), 4326)
+                                              limit 20
+                                              """;
+
+        IQueryable<OsmFeatureSearchResult> result;
+        if (lat.HasValue && lng.HasValue)
+        {
+            result = Context.Database
+                .SqlQueryRaw<OsmFeatureSearchResult>(searchWithCoordinates,
+                    new NpgsqlParameter("query", $"%{cleanedQuery}%"),
+                    new NpgsqlParameter("lat", lat.Value),
+                    new NpgsqlParameter("lng", lng.Value)
+                );
+        }
+        else
+        {
+            result = Context.Database
+                .SqlQueryRaw<OsmFeatureSearchResult>(searchWithoutCoordinates,
+                    new NpgsqlParameter("query", $"%{cleanedQuery}%")
+                );
+        }
+
+        return result.ToListAsync();
+    }
 }

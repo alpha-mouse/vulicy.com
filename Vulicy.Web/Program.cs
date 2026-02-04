@@ -18,6 +18,9 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.TypeInfoResolverChain.Add(VulicyWebSerializerContext.Default);
     options.SerializerOptions.TypeInfoResolverChain.Add(DiscourseJsonSerializerContext.Default);
     options.SerializerOptions.TypeInfoResolverChain.Add(VulicyServicesSerializerContext.Default);
+    
+    // Add NTS GeoJSON converter for proper geometry serialization
+    options.SerializerOptions.Converters.Add(new NetTopologySuite.IO.Converters.GeoJsonConverterFactory());
 });
 
 builder.Services.AddConfigs(builder.Configuration, typeof(DiscourseConfig).Assembly);
