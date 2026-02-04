@@ -42,7 +42,7 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, []);
 
   useEffect(() => {
-    if (config?.sentryFeDsn) {
+    if (config?.sentryFeDsn && config.environment !== 'development') {
       Sentry.init({
         dsn: config.sentryFeDsn,
         environment: config.environment,

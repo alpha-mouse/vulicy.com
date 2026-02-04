@@ -6,11 +6,12 @@ using Vulicy.Web.Infrastructure;
 var builder = WebApplication.CreateSlimBuilder(args);
 
 var sentryDsn = builder.Configuration.GetValue<string>("AppConfig:SentryBeDsn");
-builder.WebHost.UseSentry(o =>
-{
-    o.Dsn = sentryDsn;
-    o.Environment = builder.Environment.IsProduction() ? "production" : "development";
-});
+if (!builder.Environment.IsDevelopment())
+    builder.WebHost.UseSentry(o =>
+    {
+        o.Dsn = sentryDsn;
+        o.Environment = builder.Environment.EnvironmentName.ToLowerInvariant();
+    });
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {

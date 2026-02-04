@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import Map from './components/Map'
 import SourcesMap from './components/SourcesMap'
 import MergePage from './components/MergePage'
-import { ConfigProvider } from './hooks/useConfig'
+import { ConfigProvider, useConfig } from './hooks/useConfig'
 import { useAuth } from './hooks/useAuth'
 import { useMapStore } from './store/mapStore'
 import * as Sentry from "@sentry/react";
@@ -94,14 +94,30 @@ function AppContent() {
   );
 }
 
+function AppContainer() {
+  const { config } = useConfig();
+
+  if (config?.environment === 'development') {
+    return (
+      <div className="w-full h-full relative">
+        <AppContent />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full h-full relative">
+      <Sentry.ErrorBoundary fallback={<p>An error occurred</p>}>
+        <AppContent />
+      </Sentry.ErrorBoundary>
+    </div>
+  );
+}
+
 function App() {
   return (
     <ConfigProvider>
-      <div className="w-full h-full relative">
-        <Sentry.ErrorBoundary fallback={<p>An error occurred</p>}>
-          <AppContent />
-        </Sentry.ErrorBoundary>
-      </div>
+      <AppContainer />
     </ConfigProvider>
   )
 }
