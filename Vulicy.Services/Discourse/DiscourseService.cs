@@ -21,6 +21,9 @@ public partial class DiscourseService(
         if (data == null)
             return null;
 
+        if (data.ForumRelativeLink != null)
+            return data.ForumRelativeLink;
+
         var backLink = linksService.CreateFeatureLink(featureId, data);
 
         var topicBody = $"[Глядзець вуліцу на мапе]({backLink})";

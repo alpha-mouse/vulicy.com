@@ -160,7 +160,8 @@ public partial class FeatureRepository(VulicyDbContext dbContext)
                 f."{nameof(FeatureEntity.Type)}",
                 coalesce(f."{nameof(FeatureEntity.NameBeTarask)}", f."{nameof(FeatureEntity.NameBeNark)}", f."{nameof(FeatureEntity.NameRu)}") as "Name",
                 ST_Y(ST_Centroid(f."{nameof(FeatureEntity.Geometry)}")) as "Lat",
-                ST_X(ST_Centroid(f."{nameof(FeatureEntity.Geometry)}")) as "Lng"
+                ST_X(ST_Centroid(f."{nameof(FeatureEntity.Geometry)}")) as "Lng",
+                f."{nameof(FeatureEntity.ForumRelativeLink)}"
             from "{FeatureConfiguration.TableName}" f
             where f."{nameof(FeatureEntity.Id)}" = @id
             """;
