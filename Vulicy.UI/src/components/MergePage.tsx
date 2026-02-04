@@ -170,8 +170,24 @@ const MergePage = ({
       await api.delete(`/api/dossier-records/merge-suggestions/${suggestion.id}`);
       await fetchNextSuggestion();
     } catch (err) {
-      setError('Не ўдалося прапусьціць');
+      setError('Не ўдалося ігнараваць');
       console.error('Failed to skip suggestion:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [suggestion, fetchNextSuggestion]);
+
+  const handlePostpone = useCallback(async () => {
+    if (!suggestion) return;
+
+    setIsSaving(true);
+    setError(null);
+    try {
+      await api.post(`/api/dossier-records/merge-suggestions/${suggestion.id}/postpone`);
+      await fetchNextSuggestion();
+    } catch (err) {
+      setError('Не ўдалося адкласьці');
+      console.error('Failed to postpone suggestion:', err);
     } finally {
       setIsSaving(false);
     }
@@ -231,7 +247,14 @@ const MergePage = ({
                 onClick={handleSkip}
                 disabled={isSaving}
               >
-                Прапусьціць
+                Ігнараваць
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={handlePostpone}
+                disabled={isSaving}
+              >
+                Адкласьці
               </Button>
               <Button
                 variant="primary"

@@ -16,6 +16,7 @@ public static class DossierRecords
         group.MapPut("/{id:int}/merge-other", MergeOtherRecord).RequireAdmin().Validate<MergeDossierRecordRequest>();
         group.MapDelete("/{id:int}", DeleteRecord).RequireAdmin();
         group.MapGet("/merge-suggestions/next", GetNextMergeSuggestion);
+        group.MapPost("/merge-suggestions/{id:int}/postpone", PostponeMergeSuggestion).RequireAdmin();
         group.MapDelete("/merge-suggestions/{id:int}", IgnoreMergeSuggestion).RequireAdmin();
     }
 
@@ -57,6 +58,11 @@ public static class DossierRecords
     private static Task<DossierRecordMergeSuggestion?> GetNextMergeSuggestion(IDossierMergesService dossierMergesService)
     {
         return dossierMergesService.GetNextMergeSuggestion();
+    }
+
+    private static Task PostponeMergeSuggestion(int id, IDossierMergesService dossierMergesService)
+    {
+        return dossierMergesService.PostponeMergeSuggestion(id);
     }
 
     private static Task IgnoreMergeSuggestion(int id, IDossierMergesService dossierMergesService)
