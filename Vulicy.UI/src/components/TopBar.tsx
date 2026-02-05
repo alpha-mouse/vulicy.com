@@ -1,112 +1,24 @@
-import { useState, useRef } from 'react';
-import { LogIn, LogOut, Menu, FileUser, GitMerge, Database, MapPin } from 'lucide-react';
-import { useClickOutside } from '../hooks/useClickOutside';
+import { LogIn, LogOut } from 'lucide-react';
 import Button from './Button';
-import Search from './Search';
-import type { SearchResult, User } from '../types';
+import { useAuth } from '../hooks/useAuth';
 
 interface TopBarProps {
-  user: User | null;
-  isLoading: boolean;
-  onLogin: () => void;
-  onLogout: () => Promise<void>;
-  currentLat: number;
-  currentLng: number;
-  onResultClick: (result: SearchResult) => void;
-  isAdmin?: boolean;
-  onOpenDossierPanel?: () => void;
-  onNavigateToMerge?: () => void;
-  isSourcesMode?: boolean;
-  onToggleSourcesMode?: () => void;
+  leftContent?: React.ReactNode;
 }
 
-const TopBar = ({
-  user,
-  isLoading,
-  onLogin,
-  onLogout,
-  currentLat,
-  currentLng,
-  onResultClick,
-  isAdmin = false,
-  onOpenDossierPanel,
-  onNavigateToMerge,
-  isSourcesMode = false,
-  onToggleSourcesMode,
-}: TopBarProps) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+const TopBar = ({ leftContent }: TopBarProps) => {
+  const { user, isLoading, login, logout } = useAuth();
 
-  // Close menu on click outside
-  useClickOutside(menuRef, () => setIsMenuOpen(false));
-
-  const handleMenuItemClick = (action: () => void) => {
-    action();
-    setIsMenuOpen(false);
-  };
+  const handleLogin = () => login(window.location.href);
 
   return (
     <div className="topbar">
-      {/* Left section: Admin menu + Search */}
+      {/* Left section: passed content */}
       <div className="flex items-center flex-1 max-w-md">
-        {/* Admin menu button - always in DOM to prevent layout shift */}
-        <div className={`relative ${!(isAdmin && user) ? 'invisible' : ''}`} ref={menuRef}>
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="p-2 hover:bg-black/5 rounded-lg transition-colors bg-transparent border-none cursor-pointer outline-none"
-            title="Меню"
-          >
-            <Menu size={20} className="text-black/60" />
-          </button>
-
-          {isMenuOpen && (
-            <div className="absolute top-full left-0 mt-1 bg-white dark:bg-slate-800 rounded-lg shadow-2xl border border-black/10 dark:border-white/10 overflow-hidden z-50 min-w-60">
-              {!isSourcesMode && (
-                <>
-                  <button
-                    onClick={() => handleMenuItemClick(() => onOpenDossierPanel?.())}
-                    className="w-full px-4 py-2.5 text-left text-sm font-medium text-black hover:bg-black/5 transition-colors bg-transparent border-none cursor-pointer outline-none flex items-center gap-2"
-                  >
-                    <FileUser size={18} className="text-black/60" />
-                    <span>Імёны</span>
-                  </button>
-                  <button
-                    onClick={() => handleMenuItemClick(() => onNavigateToMerge?.())}
-                    className="w-full px-4 py-2.5 text-left text-sm font-medium text-black hover:bg-black/5 transition-colors bg-transparent border-none cursor-pointer outline-none flex items-center gap-2"
-                  >
-                    <GitMerge size={18} className="text-black/60" />
-                    <span>Аб'яднаньне імёнаў</span>
-                  </button>
-                </>
-              )}
-              <button
-                onClick={() => handleMenuItemClick(() => onToggleSourcesMode?.())}
-                className="w-full px-4 py-2.5 text-left text-sm font-medium text-black hover:bg-black/5 transition-colors bg-transparent border-none cursor-pointer outline-none flex items-center gap-2"
-              >
-                {isSourcesMode ? (
-                  <>
-                    <MapPin size={18} className="text-black/60" />
-                    <span>Вуліцы</span>
-                  </>
-                ) : (
-                  <>
-                    <Database size={18} className="text-black/60" />
-                    <span>Крыніцы</span>
-                  </>
-                )}
-              </button>
-            </div>
-          )}
-        </div>
-
-        {!isSourcesMode && <Search
-          currentLat={currentLat}
-          currentLng={currentLng}
-          onResultClick={onResultClick}
-          embedded
-        />}
+        {leftContent}
       </div>
 
+      {/* Right section: Login/Logout */}
       <div className="flex items-center gap-3">
         {isLoading ? (
           <div className="text-sm text-black/40">...</div>
@@ -116,7 +28,7 @@ const TopBar = ({
             <Button
               variant="ghost"
               size="sm"
-              onClick={onLogout}
+              onClick={logout}
               icon={<LogOut size={16} />}
               title="Выйсьці"
               className="px-3"
@@ -126,7 +38,7 @@ const TopBar = ({
           <Button
             variant="secondary"
             size="sm"
-            onClick={onLogin}
+            onClick={handleLogin}
             icon={<LogIn size={16} />}
           >
             Увайсьці
@@ -138,4 +50,3 @@ const TopBar = ({
 };
 
 export default TopBar;
-

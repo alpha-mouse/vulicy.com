@@ -1,39 +1,94 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { Menu, FileUser, GitMerge, Database } from 'lucide-react';
 import TopBar from './TopBar';
 import FeatureInfoPanel from './FeatureInfoPanel';
 import DossierRecordsPanel from './DossierRecordsPanel';
+import Search from './Search';
 import { useMapInitialization } from '../hooks/useMapInitialization';
 import { useConfig } from '../hooks/useConfig';
 import { useUrlParams } from '../hooks/useUrlParams';
+import { useClickOutside } from '../hooks/useClickOutside';
+import { useAuth } from '../hooks/useAuth';
+import { useNavigation } from '../hooks/useNavigation';
 import { useMapStore } from '../store/mapStore';
-import type { FeatureProperties, SearchResult, NamingCategory, User } from '../types';
+import type { FeatureProperties, SearchResult, NamingCategory } from '../types';
 import { api } from '../utils/api';
 import { computeCentroid } from '../utils/geometry';
 
 interface MapComponentProps {
-  user: User | null;
-  isLoading: boolean;
-  isAdmin: boolean;
-  login: (returnUrl?: string) => void;
-  logout: () => Promise<void>;
   clearAuthState: () => void;
-  onNavigateToMerge: () => void;
-  onToggleSourcesMode: () => void;
 }
 
+// Menu + Search content for the TopBar left side
+const MapTopBarContent = () => {
+  const { user, isAdmin } = useAuth();
+  const { navigateToMerge, navigateToSources } = useNavigation();
+  const { setDossierPanelOpen } = useMapStore();
+
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useClickOutside(menuRef, () => setIsMenuOpen(false));
+
+  const handleMenuItemClick = (action: () => void) => {
+    action();
+    setIsMenuOpen(false);
+  };
+
+  // We need to get handleResultClick from parent - keep search logic in parent
+  // Actually, let's keep this simple and just handle menu here
+
+  return (
+    <>
+      {/* Admin menu button - always in DOM to prevent layout shift */}
+      <div className={`relative ${!(isAdmin && user) ? 'invisible' : ''}`} ref={menuRef}>
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="p-2 hover:bg-black/5 rounded-lg transition-colors bg-transparent border-none cursor-pointer outline-none"
+          title="Меню"
+        >
+          <Menu size={20} className="text-black/60" />
+        </button>
+
+        {isMenuOpen && (
+          <div className="absolute top-full left-0 mt-1 bg-white dark:bg-slate-800 rounded-lg shadow-2xl border border-black/10 dark:border-white/10 overflow-hidden z-50 min-w-60">
+            <button
+              onClick={() => handleMenuItemClick(() => setDossierPanelOpen(true))}
+              className="w-full px-4 py-2.5 text-left text-sm font-medium text-black hover:bg-black/5 transition-colors bg-transparent border-none cursor-pointer outline-none flex items-center gap-2"
+            >
+              <FileUser size={18} className="text-black/60" />
+              <span>Імёны</span>
+            </button>
+            <button
+              onClick={() => handleMenuItemClick(navigateToMerge)}
+              className="w-full px-4 py-2.5 text-left text-sm font-medium text-black hover:bg-black/5 transition-colors bg-transparent border-none cursor-pointer outline-none flex items-center gap-2"
+            >
+              <GitMerge size={18} className="text-black/60" />
+              <span>Аб'яднаньне імёнаў</span>
+            </button>
+            <button
+              onClick={() => handleMenuItemClick(navigateToSources)}
+              className="w-full px-4 py-2.5 text-left text-sm font-medium text-black hover:bg-black/5 transition-colors bg-transparent border-none cursor-pointer outline-none flex items-center gap-2"
+            >
+              <Database size={18} className="text-black/60" />
+              <span>Крыніцы</span>
+            </button>
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
+
 const MapComponent = ({
-  user,
-  isLoading: authLoading,
-  isAdmin,
-  login,
-  logout,
   clearAuthState,
-  onNavigateToMerge,
-  onToggleSourcesMode,
 }: MapComponentProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const selectedFeatureRef = useRef<FeatureProperties | null>(null);
+
+  // Auth from hook
+  const { user, isAdmin } = useAuth();
 
   // Zustand store
   const {
@@ -162,25 +217,20 @@ const MapComponent = ({
     }
   }, [cacheFeature, selectedFeature, setSelectedFeature, setFeatureClassification]);
 
-  const handleLogin = useCallback(() => {
-    login(window.location.href);
-  }, [login]);
-
   return (
     <div className="flex flex-col h-full w-full">
       <TopBar
-        user={user}
-        isLoading={authLoading}
-        onLogin={handleLogin}
-        onLogout={logout}
-        currentLat={viewport.lat}
-        currentLng={viewport.lng}
-        onResultClick={handleResultClick}
-        isAdmin={isAdmin}
-        onOpenDossierPanel={() => setDossierPanelOpen(true)}
-        onNavigateToMerge={onNavigateToMerge}
-        isSourcesMode={false}
-        onToggleSourcesMode={onToggleSourcesMode}
+        leftContent={
+          <>
+            <MapTopBarContent />
+            <Search
+              currentLat={viewport.lat}
+              currentLng={viewport.lng}
+              onResultClick={handleResultClick}
+              embedded
+            />
+          </>
+        }
       />
 
       <div className="map-container-with-topbar">

@@ -1,16 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import MergeTopBar from './MergeTopBar';
+import { ArrowLeft } from 'lucide-react';
+import TopBar from './TopBar';
 import MergeComparisonTable, { type Selections, type FieldKey, type Side } from './MergeComparisonTable';
 import Button from './Button';
+import { useNavigation } from '../hooks/useNavigation';
 import { api } from '../utils/api';
-import type { User, MergeSuggestion, MergeDossierRecordRequest, DossierRecordSearchResult, NamingCategory } from '../types';
-
-interface MergePageProps {
-  user: User | null;
-  isLoading: boolean;
-  onLogout: () => Promise<void>;
-  onBack: () => void;
-}
+import type { MergeSuggestion, MergeDossierRecordRequest, DossierRecordSearchResult, NamingCategory } from '../types';
 
 type FieldValue = string | number | null | undefined;
 
@@ -71,12 +66,24 @@ function computeInitialSelections(
   return selections as Selections;
 }
 
-const MergePage = ({
-  user,
-  isLoading,
-  onLogout,
-  onBack,
-}: MergePageProps) => {
+// Back button for the TopBar left side
+const BackButton = () => {
+  const { navigateToMap } = useNavigation();
+
+  return (
+    <button
+      onClick={navigateToMap}
+      className="p-2 hover:bg-black/5 rounded-lg transition-colors bg-transparent border-none cursor-pointer outline-none"
+      title="Вярнуцца да мапы"
+    >
+      <ArrowLeft size={20} className="text-black/60" />
+    </button>
+  );
+};
+
+const MergePage = () => {
+  const { navigateToMap } = useNavigation();
+
   const [suggestion, setSuggestion] = useState<MergeSuggestion | null>(null);
   const [selections, setSelections] = useState<Selections | null>(null);
   const [namingCategories, setNamingCategories] = useState<NamingCategory[]>([]);
@@ -195,12 +202,7 @@ const MergePage = ({
 
   return (
     <div className="flex flex-col h-full w-full">
-      <MergeTopBar
-        user={user}
-        isLoading={isLoading}
-        onLogout={onLogout}
-        onBack={onBack}
-      />
+      <TopBar leftContent={<BackButton />} />
 
       <div className="flex-1 overflow-auto p-6 bg-slate-50 dark:bg-slate-900">
         {loading ? (
@@ -210,7 +212,7 @@ const MergePage = ({
         ) : completed || !suggestion ? (
           <div className="flex flex-col items-center justify-center h-full gap-4">
             <div className="text-xl font-medium text-black/70">Няма прапановаў для аб'яднаньня</div>
-            <Button variant="secondary" onClick={onBack}>
+            <Button variant="secondary" onClick={navigateToMap}>
               Вярнуцца да мапы
             </Button>
           </div>

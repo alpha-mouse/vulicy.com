@@ -1,5 +1,5 @@
 import centroid from '@turf/centroid';
-import type { Geometry } from '@turf/helpers';
+import type { Geometry } from 'geojson';
 
 export type GeoJSONGeometry = Geometry;
 
