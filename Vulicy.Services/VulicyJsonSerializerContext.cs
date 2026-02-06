@@ -11,6 +11,8 @@ namespace Vulicy.Services;
 [JsonSerializable(typeof(List<OsmFeatureSearchResult>))]
 [JsonSerializable(typeof(List<CadastreFeatureSearchResult>))]
 
+[JsonSerializable(typeof(OsmId))]
+
 [JsonSerializable(typeof(GetFeaturePreviewRequest))]
 [JsonSerializable(typeof(FeatureCreateFromSourcesRequest))]
 [JsonSerializable(typeof(FeatureEditRequest))]

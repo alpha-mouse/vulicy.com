@@ -1,12 +1,14 @@
+using NetTopologySuite.Geometries;
+using NetTopologySuite.Operation.Linemerge;
 using Vulicy.Domain;
 
 namespace Vulicy.Services;
 
 public interface IFeatureService
 {
-    Task<List<FeatureSearchResult>> SearchByName(string query, double? lat = null, double? lng = null);
     Task<List<FeatureSearchResult>> GetByDossierRecord(int dossierRecordId);
     Task<FeatureSearchResult> CreateFeatureFromSources(FeatureCreateFromSourcesRequest featureEditRequest, int userId);
+    Task<Geometry> LinkOsmFeature(int id, OsmId osmId, int userId);
     Task EditFeature(int id, FeatureEditRequest featureEditRequest, int userId);
     Task<FeatureTileMinimalDetails> GetFeaturePreview(GetFeaturePreviewRequest request);
 }
@@ -20,11 +22,6 @@ public class FeatureService(
     IDossierRecordRepository dossierRecordRepository
     ) : IFeatureService
 {
-    public Task<List<FeatureSearchResult>> SearchByName(string query, double? lat = null, double? lng = null)
-    {
-        return featureRepository.SearchByName(query, lat, lng);
-    }
-
     public Task<List<FeatureSearchResult>> GetByDossierRecord(int dossierRecordId)
     {
         return featureRepository.GetByDossierRecord(dossierRecordId);
@@ -36,7 +33,8 @@ public class FeatureService(
         var osmFeature = await osmFeatureRepository.GetByIdTracked(featureEditRequest.OsmType, featureEditRequest.OsmId);
         var cadastreFeature = await cadastreFeatureRepository.GetByIdTracked(featureEditRequest.CadastreId);
 
-        CheckForLinking(osmFeature, cadastreFeature);
+        CheckForLinking(osmFeature);
+        CheckForLinking(cadastreFeature);
 
         var feature = new FeatureEntity();
 
@@ -59,6 +57,29 @@ public class FeatureService(
             feature.Type,
             feature.Geometry
         );
+    }
+
+    public async Task<Geometry> LinkOsmFeature(int id, OsmId osmId, int userId)
+    {
+        await using var transaction = await featureRepository.BeginTransaction();
+        var feature = await featureRepository.GetByIdTracked(id);
+        if (feature == null)
+            throw new InvalidOperationException("Feature not found");
+
+        var osmFeature = await osmFeatureRepository.GetByIdTracked(osmId.Type, osmId.Id);
+        CheckForLinking(osmFeature);
+
+        var lineMerger = new LineMerger();
+        lineMerger.Add(feature.Geometry);
+        lineMerger.Add(osmFeature.Geometry);
+
+        feature.Geometry = lineMerger.ToMerged();
+        feature.LastModifiedById = userId;
+        osmFeature.Feature = feature;
+        await featureRepository.SaveChanges();
+        await transaction.Commit();
+
+        return feature.Geometry;
     }
 
     public async Task EditFeature(int id, FeatureEditRequest featureEditRequest, int userId)
@@ -85,7 +106,8 @@ public class FeatureService(
         var osmFeature = await osmFeatureRepository.GetById(request.OsmType, request.OsmId);
         var cadastreFeature = await cadastreFeatureRepository.GetById(request.CadastreId);
 
-        CheckForLinking(osmFeature, cadastreFeature);
+        CheckForLinking(osmFeature);
+        CheckForLinking(cadastreFeature);
 
         var initialCadastre = await initialCadastreFeatureImportRepository.GetById(request.CadastreId);
         var dossierRecords = string.IsNullOrEmpty(initialCadastre?.Reason) && string.IsNullOrEmpty(cadastreFeature.ShortInfo)
@@ -114,14 +136,18 @@ public class FeatureService(
         );
     }
 
-    private static void CheckForLinking(OsmFeatureEntity? osmFeature, CadastreFeatureEntity? cadastreFeature)
+    private static void CheckForLinking(OsmFeatureEntity? osmFeature)
     {
         if (osmFeature == null)
             throw new InvalidOperationException("OSM feature not found");
-        if (cadastreFeature == null)
-            throw new InvalidOperationException("Cadastre feature not found");
         if (osmFeature.FeatureId != null)
             throw new InvalidOperationException("OSM feature already linked");
+    }
+
+    private static void CheckForLinking(CadastreFeatureEntity? cadastreFeature)
+    {
+        if (cadastreFeature == null)
+            throw new InvalidOperationException("Cadastre feature not found");
         if (cadastreFeature.FeatureId != null)
             throw new InvalidOperationException("Cadastre feature already linked");
     }

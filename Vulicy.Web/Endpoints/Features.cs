@@ -1,3 +1,4 @@
+using NetTopologySuite.Geometries;
 using Vulicy.Domain;
 using Vulicy.Services;
 using Vulicy.Web.Infrastructure;
@@ -12,6 +13,7 @@ public static class Features
         features.MapGet("/search", Search);
         features.MapPost("/from-sources", CreateFeatureFromSources).RequireAdmin().Validate<FeatureCreateFromSourcesRequest>();
         features.MapPut("/{id:int}", EditFeature).RequireAdmin().Validate<FeatureEditRequest>();
+        features.MapPost("/{id:int}/link-osm", LinkOsmFeature).RequireAdmin().Validate<OsmId>();
         features.MapPost("/preview", GetFeaturePreview).RequireAdmin().Validate<GetFeaturePreviewRequest>();
 
         var osmFeatures = builder.MapGroup("/api/osm-features").RequireAdmin();
@@ -21,9 +23,9 @@ public static class Features
         cadastreFeatures.MapGet("/search-unmatched", CadastreSearch);
     }
 
-    private static Task<List<FeatureSearchResult>> Search(string query, double? lat, double? lng, IFeatureService featureService)
+    private static Task<List<FeatureSearchResult>> Search(string query, double? lat, double? lng, IFeatureRepository featureRepository)
     {
-        return featureService.SearchByName(query, lat, lng);
+        return featureRepository.SearchByName(query, lat, lng);
     }
 
     private static Task<FeatureSearchResult> CreateFeatureFromSources(FeatureCreateFromSourcesRequest feature, IFeatureService featureService, HttpContext context)
@@ -36,6 +38,12 @@ public static class Features
     {
         var userId = context.User.GetUserId();
         return featureService.EditFeature(id, feature, userId);
+    }
+
+    private static Task<Geometry> LinkOsmFeature(int id, OsmId feature, IFeatureService featureService, HttpContext context)
+    {
+        var userId = context.User.GetUserId();
+        return featureService.LinkOsmFeature(id, feature, userId);
     }
 
     private static Task<FeatureTileMinimalDetails> GetFeaturePreview(GetFeaturePreviewRequest request, IFeatureService featureService)

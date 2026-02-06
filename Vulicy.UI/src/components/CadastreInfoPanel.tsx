@@ -1,6 +1,6 @@
 import { X } from 'lucide-react';
 import type { CadastreFeature } from '../types/source-feature';
-import { SOURCES_CADASTRE_COLOR } from '../constants/mapConstants';
+import { SOURCES_CADASTRE_COLOR, getClassificationText } from '../constants/mapConstants';
 
 interface CadastreInfoPanelProps {
   feature: CadastreFeature;
@@ -59,6 +59,62 @@ const CadastreInfoPanel = ({ feature, onClose }: CadastreInfoPanelProps) => {
             <label className="text-xs text-black/50 uppercase tracking-wide">Дадатковая інфармацыя</label>
             <p className="text-sm font-medium text-black">{feature.shortInfo}</p>
           </div>
+        )}
+
+        {/* Additional fields separator - only show if any extended fields are present */}
+        {(feature.reason || feature.classification != null || feature.comment || feature.historicName || feature.historicPossible || feature.yearNamed || feature.nameCategory) && (
+          <>
+            <hr className="border-black/10 my-3" />
+
+            {feature.reason && (
+              <div>
+                <label className="text-xs text-black/50 uppercase tracking-wide">Прычына наймення</label>
+                <p className="text-sm font-medium text-black">{feature.reason}</p>
+              </div>
+            )}
+
+            {feature.classification != null && (
+              <div>
+                <label className="text-xs text-black/50 uppercase tracking-wide">Класіфікацыя</label>
+                <p className="text-sm font-medium text-black">{getClassificationText(feature.classification)}</p>
+              </div>
+            )}
+
+            {feature.comment && (
+              <div>
+                <label className="text-xs text-black/50 uppercase tracking-wide">Каментар</label>
+                <p className="text-sm font-medium text-black">{feature.comment}</p>
+              </div>
+            )}
+
+            {feature.historicName && (
+              <div>
+                <label className="text-xs text-black/50 uppercase tracking-wide">Гістарычная назва</label>
+                <p className="text-sm font-medium text-black">{feature.historicName}</p>
+              </div>
+            )}
+
+            {feature.historicPossible && (
+              <div>
+                <label className="text-xs text-black/50 uppercase tracking-wide">Гістарычнасць магчыма</label>
+                <p className="text-sm font-medium text-black">Так</p>
+              </div>
+            )}
+
+            {feature.yearNamed && (
+              <div>
+                <label className="text-xs text-black/50 uppercase tracking-wide">Год наймення</label>
+                <p className="text-sm font-medium text-black">{feature.yearNamed}</p>
+              </div>
+            )}
+
+            {feature.nameCategory && (
+              <div>
+                <label className="text-xs text-black/50 uppercase tracking-wide">Катэгорыя назвы</label>
+                <p className="text-sm font-medium text-black">{feature.nameCategory}</p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

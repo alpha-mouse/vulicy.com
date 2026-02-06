@@ -4,10 +4,18 @@ namespace Vulicy.Domain;
 
 public record CadastreFeatureSearchResult(
     string Id,
-    Geometry Geometry,
+    Geometry? Geometry,
     string? ElementNameBel,
     string ElementName,
     int? FeatureId,
     string? ElementTypeShortNameBel,
     string? ShortInfo,
-    string? Location);
+    string? Location,
+    string? Reason,
+    int? Classification,
+    string? Comment,
+    string? HistoricName,
+    bool HistoricPossible,
+    string? YearNamed,
+    string? NameCategory
+    );

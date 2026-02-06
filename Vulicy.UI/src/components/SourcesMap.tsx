@@ -1,7 +1,7 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useState } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './SourcesMap.css';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, Loader2 } from 'lucide-react';
 import TopBar from './TopBar';
 import CadastreInfoPanel from './CadastreInfoPanel';
 import OsmInfoPanel from './OsmInfoPanel';
@@ -47,6 +47,8 @@ interface SourcesMapSearchControlsProps {
   onCadastreSelect: (result: CadastreFeature) => void;
   onCadastreClear: () => void;
   onCreateClick: () => void;
+  onLinkClick: () => void;
+  isLinking: boolean;
 }
 
 const SourcesMapSearchControls = ({
@@ -62,9 +64,13 @@ const SourcesMapSearchControls = ({
   onCadastreSelect,
   onCadastreClear,
   onCreateClick,
+  onLinkClick,
+  isLinking,
 }: SourcesMapSearchControlsProps) => {
   // Show "Add Street" button when OSM and Cadastre are selected but Vulicy feature is not
   const showCreateButton = selectedOsm && selectedCadastre && !selectedFeature;
+  // Show "Link OSM" button when OSM and Vulicy are selected but Cadastre is not
+  const showLinkButton = selectedOsm && selectedFeature && !selectedCadastre;
   return (
     <div className="flex-1 flex items-center justify-center gap-2">
       {/* OSM Feature Search */}
@@ -86,6 +92,17 @@ const SourcesMapSearchControls = ({
           <span className="text-orange-600 font-medium">{getOsmName(result)}</span>
         )}
       />
+
+      {/* Link OSM to Feature button - always takes space, hidden when inapplicable */}
+      <button
+        onClick={onLinkClick}
+        disabled={isLinking}
+        className="w-8 h-8 flex items-center justify-center bg-primary text-white hover:bg-primary/90 transition-colors cursor-pointer border-none rounded-lg disabled:cursor-wait"
+        style={{ visibility: showLinkButton ? 'visible' : 'hidden' }}
+        title="Прыяднаць OSM да вуліцы"
+      >
+        {isLinking ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
+      </button>
 
       {/* Feature Search or Create Button */}
       {showCreateButton ? (
@@ -144,6 +161,7 @@ const SourcesMapSearchControls = ({
 
 const SourcesMap = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
+  const [isLinking, setIsLinking] = useState(false);
 
   // Get state from Zustand stores
   const { viewport, setViewport } = useMapStore();
@@ -231,6 +249,40 @@ const SourcesMap = () => {
     clearCadastreSelection();
   }, [clearCadastreSelection]);
 
+  // Handle linking OSM feature to existing Vulicy feature
+  const handleLinkOsm = useCallback(async () => {
+    const osmFeature = selectedOsmFeature;
+    const vulicyFeature = selectedFeatureSearch;
+    if (!osmFeature || !vulicyFeature) return;
+
+    setIsLinking(true);
+    try {
+      const response = await fetch(`/api/features/${vulicyFeature.id}/link-osm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: osmFeature.id, type: osmFeature.type }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to link OSM feature');
+      }
+
+      const updatedGeometry = await response.json();
+
+      // Update the Vulicy feature with the new geometry
+      setSelectedFeatureSearch({ ...vulicyFeature, geometry: updatedGeometry });
+
+      // Hide the OSM feature from the map and clear selection
+      useSourcesStore.getState().hideFeatures(osmFeature.id, undefined);
+      clearOsmSelection();
+    } catch (error) {
+      console.error('Error linking OSM feature:', error);
+      // TODO: Show error toast
+    } finally {
+      setIsLinking(false);
+    }
+  }, [selectedOsmFeature, selectedFeatureSearch, setSelectedFeatureSearch, clearOsmSelection]);
+
   // Handle feature creation success
   const handleFeatureCreated = useCallback((feature: SearchResult) => {
     // Set the new feature as selected
@@ -270,6 +322,8 @@ const SourcesMap = () => {
             onCadastreSelect={handleCadastreSearchSelect}
             onCadastreClear={handleCadastreClear}
             onCreateClick={openCreateDialog}
+            onLinkClick={handleLinkOsm}
+            isLinking={isLinking}
           />
         }
       />

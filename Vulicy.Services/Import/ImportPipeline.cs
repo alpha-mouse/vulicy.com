@@ -11,8 +11,6 @@ public partial class ImportPipeline(
     ILogger<ImportPipeline> logger
 ) : IImportPipeline
 {
-    private static readonly GeometryFactory GeometryFactory = new(new PrecisionModel(), 4326);
-
     public void StartRunning(int importId, ImportType importType, CancellationToken cancellationToken)
     {
         _ = Run(importId, importType, cancellationToken);
@@ -258,7 +256,7 @@ public partial class ImportPipeline(
 
                 if (bbox.IsNull) continue;
 
-                var osmFeatures = await osmFeatureRepository.GetUnmatchedIntersectingTracking(GeometryFactory.ToGeometry(bbox));
+                var osmFeatures = await osmFeatureRepository.GetUnmatchedIntersectingTracking(bbox.ToGeometry());
 
                 var osmCandidates = new List<OsmFeatureMatchCandidate>(osmFeatures.Count);
                 foreach (var osm in osmFeatures)
@@ -351,7 +349,7 @@ public partial class ImportPipeline(
 
                 if (bbox.IsNull) continue;
 
-                var osmFeatures = await osmFeatureRepository.GetUnmatchedIntersectingTracking(GeometryFactory.ToGeometry(bbox));
+                var osmFeatures = await osmFeatureRepository.GetUnmatchedIntersectingTracking(bbox.ToGeometry());
                 var osmCandidates = new List<OsmFeatureMatchCandidate>(osmFeatures.Count);
                 foreach (var osm in osmFeatures)
                 {
@@ -604,13 +602,7 @@ public partial class ImportPipeline(
         foreach (var osm in matchingOsm)
             lineMerger.Add(osm.Geometry);
 
-        var mergedLines = lineMerger.GetMergedLineStrings();
-        return mergedLines.Count switch
-        {
-            0 => GeometryFactory.CreateLineString(Array.Empty<Coordinate>()),
-            1 => mergedLines[0],
-            _ => GeometryFactory.CreateMultiLineString(mergedLines.Cast<LineString>().ToArray()),
-        };
+        return lineMerger.ToMerged();
     }
 
     private record OsmFeatureMatchCandidate(OsmFeatureEntity Feature, FeatureType Type, IList<string> NamesBe, IList<string> NamesRu, string? NameBeTarask);

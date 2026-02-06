@@ -21,8 +21,16 @@ public class CadastreFeatureRepository(VulicyDbContext context)
                 cf."{nameof(CadastreFeatureEntity.FeatureId)}" as "featureId",
                 cf."{nameof(CadastreFeatureEntity.ElementTypeShortNameBel)}" as "elementTypeShortNameBel",
                 cf."{nameof(CadastreFeatureEntity.ShortInfo)}" as "shortInfo",
-                cf."{nameof(CadastreFeatureEntity.AteNameBel)}"as "location"
+                cf."{nameof(CadastreFeatureEntity.AteNameBel)}"as "location",
+                icfi."{nameof(InitialCadastreFeatureImportEntity.Reason)}" as "reason",
+                icfi."{nameof(InitialCadastreFeatureImportEntity.Classification)}" as "classification",
+                icfi."{nameof(InitialCadastreFeatureImportEntity.Comment)}" as "comment",
+                icfi."{nameof(InitialCadastreFeatureImportEntity.HistoricName)}" as "historicName",
+                COALESCE(icfi."{nameof(InitialCadastreFeatureImportEntity.HistoricPossible)}", false) as "historicPossible",
+                icfi."{nameof(InitialCadastreFeatureImportEntity.YearNamed)}" as "yearNamed",
+                icfi."{nameof(InitialCadastreFeatureImportEntity.NameCategory)}" as "nameCategory"
               from "{CadastreFeatureConfiguration.TableName}" cf
+              left outer join "{InitialCadastreFeatureImportConfiguration.TableName}" icfi on cf."{nameof(CadastreFeatureEntity.Id)}" = icfi."{nameof(InitialCadastreFeatureImportEntity.Id)}"
               where cf."{nameof(CadastreFeatureEntity.Geometry)}" && ST_Transform(ST_TileEnvelope(@z, @x, @y), 4326)
                 and cf."{nameof(CadastreFeatureEntity.FeatureId)}" is null
             ) AS tile
@@ -79,8 +87,16 @@ public class CadastreFeatureRepository(VulicyDbContext context)
                  null as "{nameof(CadastreFeatureEntity.FeatureId)}",
                  cf."{nameof(CadastreFeatureEntity.ElementTypeShortNameBel)}",
                  cf."{nameof(CadastreFeatureEntity.ShortInfo)}",
-                 cf."{nameof(CadastreFeatureEntity.AteNameBel)}" as {nameof(CadastreFeatureSearchResult.Location)}
+                 cf."{nameof(CadastreFeatureEntity.AteNameBel)}" as {nameof(CadastreFeatureSearchResult.Location)},
+                 icfi."{nameof(InitialCadastreFeatureImportEntity.Reason)}",
+                 icfi."{nameof(InitialCadastreFeatureImportEntity.Classification)}",
+                 icfi."{nameof(InitialCadastreFeatureImportEntity.Comment)}",
+                 icfi."{nameof(InitialCadastreFeatureImportEntity.HistoricName)}",
+                 COALESCE(icfi."{nameof(InitialCadastreFeatureImportEntity.HistoricPossible)}", false) as "{nameof(InitialCadastreFeatureImportEntity.HistoricPossible)}",
+                 icfi."{nameof(InitialCadastreFeatureImportEntity.YearNamed)}",
+                 icfi."{nameof(InitialCadastreFeatureImportEntity.NameCategory)}"
              from "{CadastreFeatureConfiguration.TableName}" cf
+             left outer join "{InitialCadastreFeatureImportConfiguration.TableName}" icfi on cf."{nameof(CadastreFeatureEntity.Id)}" = icfi."{nameof(InitialCadastreFeatureImportEntity.Id)}"
              where (
                    cf."{nameof(CadastreFeatureEntity.ElementNameBel)}" ilike @query
                    or cf."{nameof(CadastreFeatureEntity.ElementName)}" ilike @query

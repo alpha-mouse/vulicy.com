@@ -21,6 +21,13 @@ export interface CadastreFeature {
   elementTypeShortNameBel: string;
   shortInfo: string | null;
   location: string | null;
+  reason: string | null;
+  classification: number | null;
+  comment: string | null;
+  historicName: string | null;
+  historicPossible: boolean;
+  yearNamed: string | null;
+  nameCategory: string | null;
 }
 
 // Helper functions for display names
