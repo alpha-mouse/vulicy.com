@@ -101,19 +101,19 @@ const MergeComparisonTable = ({
                   <button
                     onClick={() => !selection.locked && onSelect(field, 'left')}
                     disabled={selection.locked || leftEmpty}
-                    className={`w-full text-left py-2 px-3 rounded-lg transition-all text-sm ${bothSelected
-                      ? 'bg-green-100 border-2 border-green-400 cursor-default'
+                    className={`relative w-full text-left py-2 pl-3 pr-8 rounded-lg transition-all text-sm border-2 ${bothSelected
+                      ? 'bg-green-100 border-green-400 dark:bg-green-900/30 dark:border-green-500/50 dark:text-green-100 cursor-default'
                       : isLeftSelected
-                        ? 'bg-primary/10 border-2 border-primary cursor-default'
+                        ? 'bg-primary/10 border-primary dark:bg-primary/20 dark:border-primary/50 dark:text-blue-100 cursor-default'
                         : leftEmpty
-                          ? 'bg-black/5 text-black/30 cursor-not-allowed border-2 border-transparent'
-                          : 'bg-black/5 hover:bg-black/10 cursor-pointer border-2 border-transparent hover:border-black/20'
+                          ? 'bg-black/5 text-black/30 dark:bg-white/5 dark:text-white/20 cursor-not-allowed border-transparent'
+                          : 'bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 cursor-pointer border-transparent hover:border-black/20 dark:hover:border-white/20'
                       }`}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="break-words">{getDisplayValue(leftValue, field, namingCategories)}</span>
                       {(isLeftSelected || bothSelected) && !leftEmpty && (
-                        <Check size={16} className={bothSelected ? 'text-green-600 flex-shrink-0' : 'text-primary flex-shrink-0'} />
+                        <Check size={16} className={`absolute right-2 top-1/2 -translate-y-1/2 flex-shrink-0 ${bothSelected ? 'text-green-600 dark:text-green-400' : 'text-primary dark:text-primary'}`} />
                       )}
                     </div>
                   </button>
@@ -122,19 +122,19 @@ const MergeComparisonTable = ({
                   <button
                     onClick={() => !selection.locked && onSelect(field, 'right')}
                     disabled={selection.locked || rightEmpty}
-                    className={`w-full text-left py-2 px-3 rounded-lg transition-all text-sm ${bothSelected
-                      ? 'bg-green-100 border-2 border-green-400 cursor-default'
+                    className={`relative w-full text-left py-2 pl-3 pr-8 rounded-lg transition-all text-sm border-2 ${bothSelected
+                      ? 'bg-green-100 border-green-400 dark:bg-green-900/30 dark:border-green-500/50 dark:text-green-100 cursor-default'
                       : isRightSelected
-                        ? 'bg-primary/10 border-2 border-primary cursor-default'
+                        ? 'bg-primary/10 border-primary dark:bg-primary/20 dark:border-primary/50 dark:text-blue-100 cursor-default'
                         : rightEmpty
-                          ? 'bg-black/5 text-black/30 cursor-not-allowed border-2 border-transparent'
-                          : 'bg-black/5 hover:bg-black/10 cursor-pointer border-2 border-transparent hover:border-black/20'
+                          ? 'bg-black/5 text-black/30 dark:bg-white/5 dark:text-white/20 cursor-not-allowed border-transparent'
+                          : 'bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 cursor-pointer border-transparent hover:border-black/20 dark:hover:border-white/20'
                       }`}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="break-words">{getDisplayValue(rightValue, field, namingCategories)}</span>
                       {(isRightSelected || bothSelected) && !rightEmpty && (
-                        <Check size={16} className={bothSelected ? 'text-green-600 flex-shrink-0' : 'text-primary flex-shrink-0'} />
+                        <Check size={16} className={`absolute right-2 top-1/2 -translate-y-1/2 flex-shrink-0 ${bothSelected ? 'text-green-600 dark:text-green-400' : 'text-primary dark:text-primary'}`} />
                       )}
                     </div>
                   </button>

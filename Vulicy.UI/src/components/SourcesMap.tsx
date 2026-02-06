@@ -111,7 +111,7 @@ const SourcesMapSearchControls = ({
           className="flex-1 max-w-[22rem] h-8 flex items-center justify-center gap-2 bg-primary text-white hover:bg-primary/90 transition-colors cursor-pointer border-none rounded-lg font-medium"
         >
           <Plus size={18} />
-          <span>Дадаць вуліцу</span>
+          <span>Дадаць вуліцу...</span>
         </button>
       ) : (
         <SourceFeatureSearch<SearchResult>
