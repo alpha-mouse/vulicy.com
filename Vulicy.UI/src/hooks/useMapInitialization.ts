@@ -4,11 +4,12 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { CLASSIFICATION_COLORS } from '../constants/mapConstants';
 import type { FeatureProperties, Viewport } from '../types';
 import { useConfig } from './useConfig';
+import { useMapStore } from '../store/mapStore';
+import { createPulseAnimation, PulseLayerConfig } from '../utils/mapAnimations';
 
-// Extend Window interface for global state
+// Extend Window interface for _selectFeature function
 declare global {
   interface Window {
-    _selectedFeatureRef?: React.MutableRefObject<FeatureProperties | null>;
     _selectFeature?: (id: string | number) => boolean;
   }
 }
@@ -23,63 +24,20 @@ interface UseMapInitializationOptions {
   onAdminFallback?: () => void;
 }
 
-// Helper function for color interpolation
-const interpolateHex = (hex1: string, hex2: string, factor: number): string => {
-  const r1 = parseInt(hex1.substring(1, 3), 16);
-  const g1 = parseInt(hex1.substring(3, 5), 16);
-  const b1 = parseInt(hex1.substring(5, 7), 16);
-
-  const r2 = parseInt(hex2.substring(1, 3), 16);
-  const g2 = parseInt(hex2.substring(3, 5), 16);
-  const b2 = parseInt(hex2.substring(5, 7), 16);
-
-  const r = Math.round(r1 + factor * (r2 - r1));
-  const g = Math.round(g1 + factor * (g2 - g1));
-  const b = Math.round(b1 + factor * (b2 - b1));
-
-  return `rgb(${r}, ${g}, ${b})`;
-};
-
 /**
- * Creates a pulse animation function for the selected feature glow effect.
- * The animation automatically stops when no feature is selected.
+ * Returns layer configs for pulse animation based on current selection.
+ * Uses Zustand store.getState() to access current selection without stale closures.
  */
-const createPulseAnimation = (
-  mapRef: React.MutableRefObject<MapLibreMap | null>,
-  animationFrameId: React.MutableRefObject<number | null>
-) => {
-  const startTime = Date.now();
+const getSelectionLayerConfigs = (): PulseLayerConfig[] | null => {
+  const selected = useMapStore.getState().selectedFeature;
+  if (!selected) return null;
 
-  const pulse = (): void => {
-    if (!mapRef.current) return;
+  const classification = (selected.classification !== undefined && selected.classification !== 0)
+    ? selected.classification
+    : (selected.dossierRecordClassification ?? 0);
+  const baseColor = CLASSIFICATION_COLORS[classification] || CLASSIFICATION_COLORS[0];
 
-    const selected = window._selectedFeatureRef?.current;
-    if (!selected) {
-      // No selection - stop animation loop
-      animationFrameId.current = null;
-      return;
-    }
-
-    const duration = 1500;
-    const time = (Date.now() - startTime) % duration;
-    const t = (Math.sin((time / duration) * Math.PI * 2) + 1) / 2;
-
-    const classification = (selected.Classification !== undefined && selected.Classification !== 0)
-      ? selected.Classification
-      : (selected.DossierRecordClassification ?? 0);
-    const baseColor = CLASSIFICATION_COLORS[classification] || CLASSIFICATION_COLORS[0];
-    const interpolatedColor = interpolateHex(baseColor, '#ffffff', t);
-
-    if (mapRef.current.getLayer('streets-selection-glow')) {
-      mapRef.current.setPaintProperty('streets-selection-glow', 'line-color', interpolatedColor);
-      mapRef.current.setPaintProperty('streets-selection-glow', 'line-opacity', 0.4 + t * 0.4);
-      mapRef.current.setPaintProperty('streets-selection-glow', 'line-blur', 2 + t * 8);
-    }
-
-    animationFrameId.current = requestAnimationFrame(pulse);
-  };
-
-  return pulse;
+  return [{ layerId: 'streets-selection-glow', baseColor }];
 };
 
 export const useMapInitialization = ({
@@ -176,13 +134,13 @@ export const useMapInitialization = ({
       if (!map.current) return;
 
       // Add vector tile source - use admin tiles if admin
-      // promoteId tells MapLibre to use the 'Id' property as the feature id for setFeatureState
+      // promoteId tells MapLibre to use the 'id' property as the feature id for setFeatureState
       map.current.addSource('vulicy-streets', {
         type: 'vector',
         tiles: [getTileUrl(isAdmin)],
         minzoom: 0,
         maxzoom: 20,
-        promoteId: { 'streets': 'Id' }
+        promoteId: { 'streets': 'id' }
       });
 
       // Main streets layer - uses feature-state for classification override
@@ -200,9 +158,9 @@ export const useMapInitialization = ({
                 ['!=', ['feature-state', 'classification'], null],
                 ['feature-state', 'classification'],
                 ['case',
-                  ['all', ['has', 'Classification'], ['>', ['get', 'Classification'], 0]],
-                  ['get', 'Classification'],
-                  ['coalesce', ['get', 'DossierRecordClassification'], 0]
+                  ['all', ['has', 'classification'], ['>', ['get', 'classification'], 0]],
+                  ['get', 'classification'],
+                  ['coalesce', ['get', 'dossierRecordClassification'], 0]
                 ]
               ]
             ],
@@ -229,7 +187,7 @@ export const useMapInitialization = ({
           'line-width': ['interpolate', ['linear'], ['zoom'], 10, 2, 14, 5, 18, 10],
           'line-opacity': 0.6
         },
-        filter: ['==', ['get', 'Id'], -1]
+        filter: ['==', ['get', 'id'], -1]
       });
 
       // Selection glow layer
@@ -244,25 +202,25 @@ export const useMapInitialization = ({
           'line-opacity': 0.4,
           'line-blur': 5
         },
-        filter: ['==', ['get', 'Id'], -1]
+        filter: ['==', ['get', 'id'], -1]
       });
 
       // Start pulse animation - will auto-stop when no feature is selected
-      const pulse = createPulseAnimation(map, animationFrameId);
+      const pulse = createPulseAnimation(map, animationFrameId, getSelectionLayerConfigs);
       animationFrameId.current = requestAnimationFrame(pulse);
 
       // Mouse events
       map.current.on('mousemove', 'streets-layer', (e: any) => {
         if (!map.current || !e.features || e.features.length === 0) return;
         map.current.getCanvas().style.cursor = 'pointer';
-        const id = (e.features[0].properties as FeatureProperties).Id;
-        map.current.setFilter('streets-highlight', ['==', ['get', 'Id'], id]);
+        const id = (e.features[0].properties as FeatureProperties).id;
+        map.current.setFilter('streets-highlight', ['==', ['get', 'id'], id]);
       });
 
       map.current.on('mouseleave', 'streets-layer', () => {
         if (!map.current) return;
         map.current.getCanvas().style.cursor = '';
-        map.current.setFilter('streets-highlight', ['==', ['get', 'Id'], -1]);
+        map.current.setFilter('streets-highlight', ['==', ['get', 'id'], -1]);
       });
 
       map.current.on('click', 'streets-layer', (e: any) => {
@@ -270,7 +228,7 @@ export const useMapInitialization = ({
         console.log(e.features[0]);
         const props = e.features[0].properties as FeatureProperties;
         onFeatureSelect(props);
-        updateUrl({ featureId: props.Id });
+        updateUrl({ featureId: props.id });
       });
 
       // Feature selection function
@@ -278,7 +236,7 @@ export const useMapInitialization = ({
         if (!map.current) return false;
         const features = map.current.querySourceFeatures('vulicy-streets', {
           sourceLayer: 'streets',
-          filter: ['==', ['get', 'Id'], typeof id === 'string' ? parseInt(id) : id]
+          filter: ['==', ['get', 'id'], typeof id === 'string' ? parseInt(id) : id]
         });
 
         if (features.length > 0) {
@@ -341,14 +299,14 @@ export const useMapInitialization = ({
   // Update selection glow filter when selection changes and restart animation
   useEffect(() => {
     if (!map.current) return;
-    const id = selectedFeatureRef.current?.Id ?? -1;
+    const id = selectedFeatureRef.current?.id ?? -1;
     if (map.current.getLayer('streets-selection-glow')) {
-      map.current.setFilter('streets-selection-glow', ['==', ['get', 'Id'], id]);
+      map.current.setFilter('streets-selection-glow', ['==', ['get', 'id'], id]);
     }
 
     // Restart animation loop when feature is selected
     if (selectedFeatureRef.current && !animationFrameId.current) {
-      const pulse = createPulseAnimation(map, animationFrameId);
+      const pulse = createPulseAnimation(map, animationFrameId, getSelectionLayerConfigs);
       animationFrameId.current = requestAnimationFrame(pulse);
     }
   });

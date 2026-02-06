@@ -1,0 +1,30 @@
+/* Map container - fills remaining space below TopBar */
+.map-container-with-topbar {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.map-container {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Custom utilities for panels */
+.max-h-panel {
+  max-height: calc(100% - var(--topbar-height) - 2rem);
+}
+
+/* MapLibre Controls Overrides */
+.maplibregl-ctrl-group {
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow) !important;
+  background: var(--bg-panel) !important;
+  backdrop-filter: blur(8px);
+}
+
+.maplibregl-ctrl-group button {
+  background: transparent !important;
+}

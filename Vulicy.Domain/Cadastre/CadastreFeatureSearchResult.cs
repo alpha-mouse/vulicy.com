@@ -2,4 +2,12 @@ using NetTopologySuite.Geometries;
 
 namespace Vulicy.Domain;
 
-public record CadastreFeatureSearchResult(string Id, string ElementNameBel, string ElementName, string? Location, string ElementTypeNameBel, Geometry Geometry);
+public record CadastreFeatureSearchResult(
+    string Id,
+    Geometry Geometry,
+    string? ElementNameBel,
+    string ElementName,
+    int? FeatureId,
+    string? ElementTypeShortNameBel,
+    string? ShortInfo,
+    string? Location);

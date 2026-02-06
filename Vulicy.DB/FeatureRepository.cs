@@ -14,20 +14,20 @@ public class FeatureRepository(VulicyDbContext dbContext)
         const string query = $"""
             select ST_AsMVT(tile, 'streets') as "Value" from (
               select
-                f."{nameof(FeatureEntity.Id)}",
-                ST_AsMVTGeom(ST_Transform(f."{nameof(FeatureEntity.Geometry)}", 3857), ST_TileEnvelope(@z, @x, @y), 4096, 64, true) AS geom,
-                f."{nameof(FeatureEntity.NameBeTarask)}",
-                f."{nameof(FeatureEntity.NameBeNark)}",
-                f."{nameof(FeatureEntity.NameRu)}",
-                case when f."{nameof(FeatureEntity.Classification)}" = 0 then dr."{nameof(DossierRecordEntity.Classification)}" else f."{nameof(FeatureEntity.Classification)}" end as "{nameof(FeatureEntity.Classification)}",
-                f."{nameof(FeatureEntity.Type)}",
-                coalesce(f."{nameof(FeatureEntity.RenamingReason)}", dr."{nameof(DossierRecordEntity.DescriptionBe)}") as "{nameof(FeatureEntity.RenamingReason)}",
-                dr."{nameof(DossierRecordEntity.NameBeTarask)}" as "EtymologyBeTarask",
-                f."{nameof(FeatureEntity.HistoricNames)}",
-                f."{nameof(FeatureEntity.HistoricPossible)}",
-                f."{nameof(FeatureEntity.YearNamed)}",
-                f."{nameof(FeatureEntity.ForumRelativeLink)}",
-                coalesce (f."{nameof(FeatureEntity.NamingCategoryId)}", dr."{nameof(DossierRecordEntity.NamingCategoryId)}") as "{nameof(FeatureEntity.NamingCategoryId)}"
+                f."{nameof(FeatureEntity.Id)}" as "id",
+                ST_AsMVTGeom(ST_Transform(f."{nameof(FeatureEntity.Geometry)}", 3857), ST_TileEnvelope(@z, @x, @y), 4096, 64, true) as "geom",
+                f."{nameof(FeatureEntity.NameBeTarask)}" as "nameBeTarask",
+                f."{nameof(FeatureEntity.NameBeNark)}" as "nameBeNark",
+                f."{nameof(FeatureEntity.NameRu)}" as "nameRu",
+                case when f."{nameof(FeatureEntity.Classification)}" = 0 then dr."{nameof(DossierRecordEntity.Classification)}" else f."{nameof(FeatureEntity.Classification)}" end as "classification",
+                f."{nameof(FeatureEntity.Type)}" as "type",
+                coalesce(f."{nameof(FeatureEntity.RenamingReason)}", dr."{nameof(DossierRecordEntity.DescriptionBe)}") as "renamingReason",
+                dr."{nameof(DossierRecordEntity.NameBeTarask)}" as "dossierRecordNameBeTarask",
+                f."{nameof(FeatureEntity.HistoricNames)}" as "historicNames",
+                f."{nameof(FeatureEntity.HistoricPossible)}" as "historicPossible",
+                f."{nameof(FeatureEntity.YearNamed)}" as "yearNamed",
+                f."{nameof(FeatureEntity.ForumRelativeLink)}" as "forumRelativeLink",
+                coalesce (f."{nameof(FeatureEntity.NamingCategoryId)}", dr."{nameof(DossierRecordEntity.NamingCategoryId)}") as "namingCategoryId"
               from "{FeatureConfiguration.TableName}" f
               left outer join "{DossierRecordConfiguration.TableName}" dr on f."{nameof(FeatureEntity.DossierRecordId)}" = dr."{nameof(DossierRecordEntity.Id)}"
               where f."{nameof(FeatureEntity.Geometry)}" && ST_Transform(ST_TileEnvelope(@z, @x, @y), 4326)
@@ -101,26 +101,26 @@ public class FeatureRepository(VulicyDbContext dbContext)
         const string query = $"""
             select ST_AsMVT(tile, 'streets') as "Value" from (
               select
-                f."{nameof(FeatureEntity.Id)}",
-                ST_AsMVTGeom(ST_Transform(f."{nameof(FeatureEntity.Geometry)}", 3857), ST_TileEnvelope(@z, @x, @y), 4096, 64, true) AS geom,
-                f."{nameof(FeatureEntity.NameBeTarask)}",
-                f."{nameof(FeatureEntity.NameBeNark)}",
-                f."{nameof(FeatureEntity.NameRu)}",
-                f."{nameof(FeatureEntity.Classification)}",
-                f."{nameof(FeatureEntity.Type)}",
-                f."{nameof(FeatureEntity.RenamingReason)}",
-                f."{nameof(FeatureEntity.HistoricNames)}",
-                f."{nameof(FeatureEntity.HistoricPossible)}",
-                f."{nameof(FeatureEntity.Comment)}",
-                dr."{nameof(DossierRecordEntity.Id)}" as "DossierRecordId",
-                dr."{nameof(DossierRecordEntity.NameBeTarask)}" as "DossierRecordNameBeTarask",
-                dr."{nameof(DossierRecordEntity.Classification)}" as "DossierRecordClassification",
-                dr."{nameof(DossierRecordEntity.DescriptionBe)}" as "DossierRecordDescriptionBe",
-                dr."{nameof(DossierRecordEntity.DescriptionRu)}" as "DossierRecordDescriptionRu",
-                dr."{nameof(DossierRecordEntity.NamingCategoryId)}" as "DossierRecordNamingCategoryId",
-                f."{nameof(FeatureEntity.YearNamed)}",
-                f."{nameof(FeatureEntity.ForumRelativeLink)}",
-                f."{nameof(FeatureEntity.NamingCategoryId)}"
+                f."{nameof(FeatureEntity.Id)}" as "id",
+                ST_AsMVTGeom(ST_Transform(f."{nameof(FeatureEntity.Geometry)}", 3857), ST_TileEnvelope(@z, @x, @y), 4096, 64, true) as "geom",
+                f."{nameof(FeatureEntity.NameBeTarask)}" as "nameBeTarask",
+                f."{nameof(FeatureEntity.NameBeNark)}" as "nameBeNard",
+                f."{nameof(FeatureEntity.NameRu)}" as "nameRu",
+                f."{nameof(FeatureEntity.Classification)}" as "classification",
+                f."{nameof(FeatureEntity.Type)}" as "type",
+                f."{nameof(FeatureEntity.RenamingReason)}" as "renamingReason",
+                f."{nameof(FeatureEntity.HistoricNames)}" as "historicNames",
+                f."{nameof(FeatureEntity.HistoricPossible)}" as "historicPossible",
+                f."{nameof(FeatureEntity.YearNamed)}" as "yearNamed",
+                f."{nameof(FeatureEntity.Comment)}" as "comment",
+                dr."{nameof(DossierRecordEntity.Id)}" as "dossierRecordId",
+                dr."{nameof(DossierRecordEntity.NameBeTarask)}" as "dossierRecordNameBeTarask",
+                dr."{nameof(DossierRecordEntity.Classification)}" as "dossierRecordClassification",
+                dr."{nameof(DossierRecordEntity.DescriptionBe)}" as "dossierRecordDescriptionBe",
+                dr."{nameof(DossierRecordEntity.DescriptionRu)}" as "dossierRecordDescriptionRu",
+                dr."{nameof(DossierRecordEntity.NamingCategoryId)}" as "dossierRecordNamingCategoryId",
+                f."{nameof(FeatureEntity.ForumRelativeLink)}" as "forumRelativeLink",
+                f."{nameof(FeatureEntity.NamingCategoryId)}" as "namingCategoryId"
               from "{FeatureConfiguration.TableName}" f
               left outer join "{DossierRecordConfiguration.TableName}" dr on f."{nameof(FeatureEntity.DossierRecordId)}" = dr."{nameof(DossierRecordEntity.Id)}"
               where f."{nameof(FeatureEntity.Geometry)}" && ST_Transform(ST_TileEnvelope(@z, @x, @y), 4326)

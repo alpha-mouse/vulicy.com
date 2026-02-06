@@ -1,9 +1,9 @@
 import { X } from 'lucide-react';
-import type { CadastreFeatureProperties } from '../types/source-feature';
+import type { CadastreFeature } from '../types/source-feature';
 import { SOURCES_CADASTRE_COLOR } from '../constants/mapConstants';
 
 interface CadastreInfoPanelProps {
-  feature: CadastreFeatureProperties;
+  feature: CadastreFeature;
   onClose: () => void;
 }
 
@@ -30,34 +30,34 @@ const CadastreInfoPanel = ({ feature, onClose }: CadastreInfoPanelProps) => {
       <div className="space-y-3">
         <div>
           <label className="text-xs text-black/50 uppercase tracking-wide">ID</label>
-          <p className="text-sm font-medium text-black">{feature.Id}</p>
+          <p className="text-sm font-medium text-black">{feature.id}</p>
         </div>
 
-        {feature.ElementNameBel && (
+        {feature.elementNameBel && (
           <div>
             <label className="text-xs text-black/50 uppercase tracking-wide">Назва (бел.)</label>
-            <p className="text-sm font-medium text-black">{feature.ElementNameBel}</p>
+            <p className="text-sm font-medium text-black">{feature.elementNameBel}</p>
           </div>
         )}
 
-        {feature.ElementName && (
+        {feature.elementName && (
           <div>
             <label className="text-xs text-black/50 uppercase tracking-wide">Назва (рас.)</label>
-            <p className="text-sm font-medium text-black">{feature.ElementName}</p>
+            <p className="text-sm font-medium text-black">{feature.elementName}</p>
           </div>
         )}
 
-        {feature.ElementTypeShortNameBel && (
+        {feature.elementTypeShortNameBel && (
           <div>
             <label className="text-xs text-black/50 uppercase tracking-wide">Тып</label>
-            <p className="text-sm font-medium text-black">{feature.ElementTypeShortNameBel}</p>
+            <p className="text-sm font-medium text-black">{feature.elementTypeShortNameBel}</p>
           </div>
         )}
 
-        {feature.ShortInfo && (
+        {feature.shortInfo && (
           <div>
             <label className="text-xs text-black/50 uppercase tracking-wide">Дадатковая інфармацыя</label>
-            <p className="text-sm font-medium text-black">{feature.ShortInfo}</p>
+            <p className="text-sm font-medium text-black">{feature.shortInfo}</p>
           </div>
         )}
       </div>

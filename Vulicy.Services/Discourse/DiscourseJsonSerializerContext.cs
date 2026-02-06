@@ -6,6 +6,7 @@ namespace Vulicy.Services;
 [JsonSerializable(typeof(DiscourseWebhookPayload))]
 [JsonSerializable(typeof(DiscourseTopicResponse))]
 [JsonSerializable(typeof(DiscoursePost))]
+[JsonSerializable(typeof(DiscourseWebhookResult))]
 public partial class DiscourseJsonSerializerContext : JsonSerializerContext
 {
 }

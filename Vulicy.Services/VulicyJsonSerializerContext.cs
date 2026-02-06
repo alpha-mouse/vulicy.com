@@ -3,18 +3,23 @@ using Vulicy.Domain;
 
 namespace Vulicy.Services;
 
-[JsonSerializable(typeof(List<NamingCategory>))]
 [JsonSerializable(typeof(UserDto))]
+
+[JsonSerializable(typeof(List<NamingCategory>))]
+
 [JsonSerializable(typeof(List<FeatureSearchResult>))]
 [JsonSerializable(typeof(List<OsmFeatureSearchResult>))]
 [JsonSerializable(typeof(List<CadastreFeatureSearchResult>))]
-[JsonSerializable(typeof(List<DossierRecordSearchResult>))]
+
+[JsonSerializable(typeof(GetFeaturePreviewRequest))]
+[JsonSerializable(typeof(FeatureCreateFromSourcesRequest))]
 [JsonSerializable(typeof(FeatureEditRequest))]
-[JsonSerializable(typeof(MergeDossierRecordRequest))]
+[JsonSerializable(typeof(FeatureTileMinimalDetails))]
+
+[JsonSerializable(typeof(List<DossierRecordSearchResult>))]
 [JsonSerializable(typeof(EditDossierRecordRequest))]
 [JsonSerializable(typeof(DossierRecordMergeSuggestion))]
-[JsonSerializable(typeof(DiscourseWebhookResult))]
+[JsonSerializable(typeof(MergeDossierRecordRequest))]
 public partial class VulicyServicesSerializerContext : JsonSerializerContext
 {
-
 }

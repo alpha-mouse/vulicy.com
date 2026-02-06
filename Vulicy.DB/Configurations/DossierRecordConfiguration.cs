@@ -14,10 +14,10 @@ internal abstract class DossierRecordBaseConfiguration<T> : IEntityTypeConfigura
         builder.Property(x => x.NameBeNark).HasMaxLength(128);
         builder.Property(x => x.NameRu).HasMaxLength(128);
 
-        builder.Property(x => x.PossibleNamesBeNark).HasJsonColumnType();
-        builder.Property(x => x.PossibleNamesRu).HasJsonColumnType();
-        builder.Property(x => x.AlternativeDescriptionsBe).HasJsonColumnType();
-        builder.Property(x => x.AlternativeDescriptionsRu).HasJsonColumnType();
+        builder.Property(x => x.PossibleNamesBeNark).HasJsonbColumnType();
+        builder.Property(x => x.PossibleNamesRu).HasJsonbColumnType();
+        builder.Property(x => x.AlternativeDescriptionsBe).HasJsonbColumnType();
+        builder.Property(x => x.AlternativeDescriptionsRu).HasJsonbColumnType();
     }
 }
 

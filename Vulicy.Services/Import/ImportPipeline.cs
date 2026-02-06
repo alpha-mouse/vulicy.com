@@ -265,7 +265,7 @@ public partial class ImportPipeline(
                 {
                     if (osm.Feature != null || osm.Tags == null) continue;
 
-                    var matchResult = TryParseOsmFeatureName(osm);
+                    var matchResult = GetMatchCandidate(osm);
                     if (matchResult != null)
                     {
                         osmCandidates.Add(matchResult);
@@ -356,7 +356,7 @@ public partial class ImportPipeline(
                 foreach (var osm in osmFeatures)
                 {
                     if (osm.Feature != null || osm.Tags == null) continue;
-                    var matchResult = TryParseOsmFeatureName(osm);
+                    var matchResult = GetMatchCandidate(osm);
                     if (matchResult != null) osmCandidates.Add(matchResult);
                 }
 
@@ -615,7 +615,14 @@ public partial class ImportPipeline(
 
     private record OsmFeatureMatchCandidate(OsmFeatureEntity Feature, FeatureType Type, IList<string> NamesBe, IList<string> NamesRu, string? NameBeTarask);
 
-    private static OsmFeatureMatchCandidate? TryParseOsmFeatureName(OsmFeatureEntity osmFeature)
+    private static OsmFeatureMatchCandidate? GetMatchCandidate(OsmFeatureEntity osmFeature)
+    {
+        var (type, namesBe, namesRu, nameBeTarask) = TryParseOsmFeatureName(osmFeature);
+        if (type == null) return null;
+        return new OsmFeatureMatchCandidate(osmFeature, type.Value, namesBe!, namesRu!, nameBeTarask);
+    }
+
+    public static (FeatureType? type, IList<string>? namesBe, IList<string>? namesRu, string? nameBeTarask) TryParseOsmFeatureName(OsmFeatureEntity osmFeature)
     {
         string? nameBe = null;
         string? nameRu = null;
@@ -657,7 +664,7 @@ public partial class ImportPipeline(
                 nameRu = fullNameRu;
         }
 
-        if (type == null) return null;
+        if (type == null) return (null, null, null, null);
 
         var namesBe = Array.Empty<string>();
         if (nameBe != null)
@@ -679,7 +686,7 @@ public partial class ImportPipeline(
                 namesRu = [nameRu, alternativeNameRu];
         }
 
-        return new OsmFeatureMatchCandidate(osmFeature, type.Value, namesBe, namesRu, nameBeTarask);
+        return (type, namesBe, namesRu, nameBeTarask);
     }
 
 

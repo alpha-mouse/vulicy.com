@@ -10,13 +10,15 @@ public static class Features
     {
         var features = builder.MapGroup("/api/features");
         features.MapGet("/search", Search);
+        features.MapPost("/from-sources", CreateFeatureFromSources).RequireAdmin().Validate<FeatureCreateFromSourcesRequest>();
         features.MapPut("/{id:int}", EditFeature).RequireAdmin().Validate<FeatureEditRequest>();
+        features.MapPost("/preview", GetFeaturePreview).RequireAdmin().Validate<GetFeaturePreviewRequest>();
 
-        var osmFeatures = builder.MapGroup("/api/osm-features");
-        osmFeatures.MapGet("/search", OsmSearch);
+        var osmFeatures = builder.MapGroup("/api/osm-features").RequireAdmin();
+        osmFeatures.MapGet("/search-unmatched", OsmSearch);
 
-        var cadastreFeatures = builder.MapGroup("/api/cadastre-features");
-        cadastreFeatures.MapGet("/search", CadastreSearch);
+        var cadastreFeatures = builder.MapGroup("/api/cadastre-features").RequireAdmin();
+        cadastreFeatures.MapGet("/search-unmatched", CadastreSearch);
     }
 
     private static Task<List<FeatureSearchResult>> Search(string query, double? lat, double? lng, IFeatureService featureService)
@@ -24,10 +26,21 @@ public static class Features
         return featureService.SearchByName(query, lat, lng);
     }
 
+    private static Task<FeatureSearchResult> CreateFeatureFromSources(FeatureCreateFromSourcesRequest feature, IFeatureService featureService, HttpContext context)
+    {
+        var userId = context.User.GetUserId();
+        return featureService.CreateFeatureFromSources(feature, userId);
+    }
+
     private static Task EditFeature(int id, FeatureEditRequest feature, IFeatureService featureService, HttpContext context)
     {
         var userId = context.User.GetUserId();
         return featureService.EditFeature(id, feature, userId);
+    }
+
+    private static Task<FeatureTileMinimalDetails> GetFeaturePreview(GetFeaturePreviewRequest request, IFeatureService featureService)
+    {
+        return featureService.GetFeaturePreview(request);
     }
 
     private static Task<List<OsmFeatureSearchResult>> OsmSearch(string query, double? lat, double? lng, IOsmFeatureRepository osmFeatureRepository)

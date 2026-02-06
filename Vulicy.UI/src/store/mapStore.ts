@@ -45,7 +45,7 @@ export const useMapStore = create<MapState>((set, get) => ({
   featureCache: new Map(),
   cacheFeature: (feature) => {
     const cache = new Map(get().featureCache);
-    cache.set(feature.Id, feature);
+    cache.set(feature.id, feature);
     set({ featureCache: cache });
   },
   getCachedFeature: (featureId) => get().featureCache.get(featureId),

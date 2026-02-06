@@ -1,15 +1,20 @@
 import { X } from 'lucide-react';
-import type { OsmFeatureProperties } from '../types/source-feature';
+import type { OsmFeature } from '../types/source-feature';
 import { SOURCES_OSM_COLOR } from '../constants/mapConstants';
 
 interface OsmInfoPanelProps {
-  feature: OsmFeatureProperties;
+  feature: OsmFeature;
   onClose: () => void;
 }
 
 const OsmInfoPanel = ({ feature, onClose }: OsmInfoPanelProps) => {
+  const tags = feature.tags;
+
   // Get display name - prefer Belarusian, then general, then Russian
-  const displayName = feature['name:be'] || feature.name || feature['name:ru'] || '—';
+  const displayName = tags['name:be'] || tags['name'] || tags['name:ru'] || '—';
+  const generalName = tags['name'];
+  const russianName = tags['name:ru'];
+  const highway = tags['highway'];
 
   return (
     <div className="absolute left-4 top-4 w-80 glass z-20 p-4 animate-slide-in-left">
@@ -33,7 +38,7 @@ const OsmInfoPanel = ({ feature, onClose }: OsmInfoPanelProps) => {
       <div className="space-y-3">
         <div>
           <label className="text-xs text-black/50 uppercase tracking-wide">ID</label>
-          <p className="text-sm font-medium text-black">{feature.Type}/{feature.Id}</p>
+          <p className="text-sm font-medium text-black">{feature.type}/{feature.id}</p>
         </div>
 
         <div>
@@ -41,31 +46,31 @@ const OsmInfoPanel = ({ feature, onClose }: OsmInfoPanelProps) => {
           <p className="text-sm font-medium text-black">{displayName}</p>
         </div>
 
-        {feature['name:be'] && feature.name && feature['name:be'] !== feature.name && (
+        {tags['name:be'] && generalName && tags['name:be'] !== generalName && (
           <div>
             <label className="text-xs text-black/50 uppercase tracking-wide">Назва (агульная)</label>
-            <p className="text-sm font-medium text-black">{feature.name}</p>
+            <p className="text-sm font-medium text-black">{generalName}</p>
           </div>
         )}
 
-        {feature['name:ru'] && (
+        {russianName && (
           <div>
             <label className="text-xs text-black/50 uppercase tracking-wide">Назва (рас.)</label>
-            <p className="text-sm font-medium text-black">{feature['name:ru']}</p>
+            <p className="text-sm font-medium text-black">{russianName}</p>
           </div>
         )}
 
-        {feature.highway && (
+        {highway && (
           <div>
             <label className="text-xs text-black/50 uppercase tracking-wide">Тып дарогі</label>
-            <p className="text-sm font-medium text-black">{feature.highway}</p>
+            <p className="text-sm font-medium text-black">{highway}</p>
           </div>
         )}
 
-        {feature.Type && (
+        {feature.type && (
           <div>
             <label className="text-xs text-black/50 uppercase tracking-wide">Тып OSM</label>
-            <p className="text-sm font-medium text-black">{feature.Type}</p>
+            <p className="text-sm font-medium text-black">{feature.type}</p>
           </div>
         )}
       </div>

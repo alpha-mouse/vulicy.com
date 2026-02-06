@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import './SourcesMap.css';
 import { Menu, FileUser, GitMerge, Database } from 'lucide-react';
 import TopBar from './TopBar';
 import FeatureInfoPanel from './FeatureInfoPanel';
@@ -115,7 +116,6 @@ const MapComponent = ({
   // Sync ref with state for animation loop access
   useEffect(() => {
     selectedFeatureRef.current = selectedFeature;
-    window._selectedFeatureRef = selectedFeatureRef;
     setIsCopied(false);
   }, [selectedFeature]);
 
@@ -124,7 +124,7 @@ const MapComponent = ({
     setFeatureLoading(false);
     if (feature) {
       // Use cached feature data if available (contains recent edits/forum links)
-      const cached = getCachedFeature(feature.Id);
+      const cached = getCachedFeature(feature.id);
       setSelectedFeature(cached ?? feature);
     } else {
       setSelectedFeature(null);
@@ -191,8 +191,8 @@ const MapComponent = ({
   // Handler for when a forum topic is created
   const handleForumLinkCreated = useCallback((featureId: number, forumLink: string) => {
     // Update current feature and cache it
-    if (selectedFeature && selectedFeature.Id === featureId) {
-      const updated = { ...selectedFeature, ForumRelativeLink: forumLink };
+    if (selectedFeature && selectedFeature.id === featureId) {
+      const updated = { ...selectedFeature, forumRelativeLink: forumLink };
       setSelectedFeature(updated);
       cacheFeature(updated);
     }
@@ -200,18 +200,18 @@ const MapComponent = ({
 
   // Handler for when a feature is updated
   const handleFeatureUpdated = useCallback((featureId: number, updatedData?: Partial<FeatureProperties>) => {
-    if (updatedData && selectedFeature && selectedFeature.Id === featureId) {
+    if (updatedData && selectedFeature && selectedFeature.id === featureId) {
       // Merge updates and cache the result
       const updated = Object.assign({}, selectedFeature, updatedData) as FeatureProperties;
       setSelectedFeature(updated);
       cacheFeature(updated);
 
       // Update map color if classification or dossier record changed
-      // Use same logic as paint: if own Classification is 0, use DossierRecordClassification
-      if (updatedData.Classification !== undefined || updatedData.DossierRecordClassification !== undefined) {
-        const effectiveClassification = (updated.Classification && updated.Classification > 0)
-          ? updated.Classification
-          : (updated.DossierRecordClassification ?? 0);
+      // Use same logic as paint: if own classification is 0, use dossierRecordClassification
+      if (updatedData.classification !== undefined || updatedData.dossierRecordClassification !== undefined) {
+        const effectiveClassification = (updated.classification && updated.classification > 0)
+          ? updated.classification
+          : (updated.dossierRecordClassification ?? 0);
         setFeatureClassification(featureId, effectiveClassification);
       }
     }

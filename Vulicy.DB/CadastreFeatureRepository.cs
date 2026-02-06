@@ -9,20 +9,22 @@ public class CadastreFeatureRepository(VulicyDbContext context)
     : RepositoryBase<CadastreFeatureEntity, string>(context)
         , ICadastreFeatureRepository
 {
-    public Task<byte[]?> GetTile(int z, int x, int y)
+    public Task<byte[]?> GetUnmatchedTile(int z, int x, int y)
     {
         const string query = $"""
             select ST_AsMVT(tile, 'streets') as "Value" from (
               select
-                cf."{nameof(CadastreFeatureEntity.Id)}",
-                ST_AsMVTGeom(ST_Transform(cf."{nameof(CadastreFeatureEntity.Geometry)}", 3857), ST_TileEnvelope(@z, @x, @y), 4096, 64, true) AS geom,
-                cf."{nameof(CadastreFeatureEntity.ElementNameBel)}",
-                cf."{nameof(CadastreFeatureEntity.ElementName)}",
-                cf."{nameof(CadastreFeatureEntity.FeatureId)}",
-                cf."{nameof(CadastreFeatureEntity.ElementTypeShortNameBel)}",
-                cf."{nameof(CadastreFeatureEntity.ShortInfo)}"
+                cf."{nameof(CadastreFeatureEntity.Id)}" as "id",
+                ST_AsMVTGeom(ST_Transform(cf."{nameof(CadastreFeatureEntity.Geometry)}", 3857), ST_TileEnvelope(@z, @x, @y), 4096, 64, true) as "geom",
+                cf."{nameof(CadastreFeatureEntity.ElementNameBel)}" as "elementNameBel",
+                cf."{nameof(CadastreFeatureEntity.ElementName)}" as "elementName",
+                cf."{nameof(CadastreFeatureEntity.FeatureId)}" as "featureId",
+                cf."{nameof(CadastreFeatureEntity.ElementTypeShortNameBel)}" as "elementTypeShortNameBel",
+                cf."{nameof(CadastreFeatureEntity.ShortInfo)}" as "shortInfo",
+                cf."{nameof(CadastreFeatureEntity.AteNameBel)}"as "location"
               from "{CadastreFeatureConfiguration.TableName}" cf
               where cf."{nameof(CadastreFeatureEntity.Geometry)}" && ST_Transform(ST_TileEnvelope(@z, @x, @y), 4326)
+                and cf."{nameof(CadastreFeatureEntity.FeatureId)}" is null
             ) AS tile
             """;
 
@@ -71,11 +73,13 @@ public class CadastreFeatureRepository(VulicyDbContext context)
             $"""
              select
                  cf."{nameof(CadastreFeatureEntity.Id)}",
+                 cf."{nameof(CadastreFeatureEntity.Geometry)}",
                  cf."{nameof(CadastreFeatureEntity.ElementNameBel)}",
                  cf."{nameof(CadastreFeatureEntity.ElementName)}",
-                 cf."{nameof(CadastreFeatureEntity.AteNameBel)}" as {nameof(CadastreFeatureSearchResult.Location)},
-                 cf."{nameof(CadastreFeatureEntity.ElementTypeNameBel)}",
-                 cf."{nameof(CadastreFeatureEntity.Geometry)}"
+                 null as "{nameof(CadastreFeatureEntity.FeatureId)}",
+                 cf."{nameof(CadastreFeatureEntity.ElementTypeShortNameBel)}",
+                 cf."{nameof(CadastreFeatureEntity.ShortInfo)}",
+                 cf."{nameof(CadastreFeatureEntity.AteNameBel)}" as {nameof(CadastreFeatureSearchResult.Location)}
              from "{CadastreFeatureConfiguration.TableName}" cf
              where (
                    cf."{nameof(CadastreFeatureEntity.ElementNameBel)}" ilike @query

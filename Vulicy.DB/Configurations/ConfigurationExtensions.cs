@@ -13,9 +13,6 @@ public static class ConfigurationExtensions
 
         public PropertyBuilder<T> HasJsonbColumnType()
             => propertyBuilder.HasColumnType("jsonb");
-
-        public PropertyBuilder<T> HasJsonColumnType()
-            => propertyBuilder.HasColumnType("json");
     }
 
     extension<T>(EntityTypeBuilder<T> entityBuilder) where T : class

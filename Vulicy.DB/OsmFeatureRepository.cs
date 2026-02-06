@@ -11,18 +11,20 @@ public class OsmFeatureRepository(VulicyDbContext context) : IOsmFeatureReposito
     public VulicyDbContext Context { get; } = context;
     protected IQueryable<OsmFeatureEntity> Entities => Context.Set<OsmFeatureEntity>();
 
-    public Task<byte[]?> GetTile(int z, int x, int y)
+    public Task<byte[]?> GetUnmatchedTile(int z, int x, int y)
     {
         const string query = $"""
             select ST_AsMVT(tile, 'streets') as "Value" from (
               select
-                of."{nameof(OsmFeatureEntity.Id)}",
-                ST_AsMVTGeom(ST_Transform(of."{nameof(OsmFeatureEntity.Geometry)}", 3857), ST_TileEnvelope(@z, @x, @y), 4096, 64, true) AS geom,
-                of."{nameof(OsmFeatureEntity.Type)}",
-                of."{nameof(OsmFeatureEntity.FeatureId)}",
-                of."{nameof(OsmFeatureEntity.Tags)}"
+                of."{nameof(OsmFeatureEntity.Id)}" as "id",
+                of."{nameof(OsmFeatureEntity.Type)}" as "type",
+                of."{nameof(OsmFeatureEntity.Tags)}"::text as "tags",
+                of."{nameof(OsmFeatureEntity.Tags)}"->>'highway' as "highway",
+                ST_AsMVTGeom(ST_Transform(of."{nameof(OsmFeatureEntity.Geometry)}", 3857), ST_TileEnvelope(@z, @x, @y), 4096, 64, true) as "geom",
+                of."{nameof(OsmFeatureEntity.FeatureId)}" as "featureId"
               from "{OsmFeatureConfiguration.TableName}" of
               where of."{nameof(OsmFeatureEntity.Geometry)}" && ST_Transform(ST_TileEnvelope(@z, @x, @y), 4326)
+                and of."{nameof(OsmFeatureEntity.FeatureId)}" is null
             ) AS tile
             """;
 
@@ -53,9 +55,11 @@ public class OsmFeatureRepository(VulicyDbContext context) : IOsmFeatureReposito
             $"""
              select
                  of."{nameof(OsmFeatureEntity.Id)}",
-                 of."{nameof(OsmFeatureEntity.Tags)}",
                  of."{nameof(OsmFeatureEntity.Type)}",
-                 of."{nameof(OsmFeatureEntity.Geometry)}"
+                 of."{nameof(OsmFeatureEntity.Tags)}",
+                 of."{nameof(OsmFeatureEntity.Tags)}"->>'highway' as "{nameof(OsmFeatureSearchResult.Highway)}",
+                 of."{nameof(OsmFeatureEntity.Geometry)}",
+                 null as "{nameof(OsmFeatureEntity.FeatureId)}"
              from "{OsmFeatureConfiguration.TableName}" of
              where (
                    of."{nameof(OsmFeatureEntity.Tags)}"->>'name' ilike @query
@@ -93,5 +97,18 @@ public class OsmFeatureRepository(VulicyDbContext context) : IOsmFeatureReposito
         }
 
         return result.ToListAsync();
+    }
+
+    public Task<OsmFeatureEntity?> GetById(OsmType type, long id)
+    {
+        return Entities
+            .FirstOrDefaultAsync(x => x.Type == type && x.Id == id);
+    }
+
+    public Task<OsmFeatureEntity?> GetByIdTracked(OsmType type, long id)
+    {
+        return Entities
+            .AsTracking()
+            .FirstOrDefaultAsync(x => x.Type == type && x.Id == id);
     }
 }

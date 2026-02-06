@@ -5,6 +5,7 @@ interface TextFieldProps {
   maxLength: number;
   multiline?: boolean;
   error?: string;
+  required?: boolean;
 }
 
 /**
@@ -17,9 +18,13 @@ export const TextField = ({
   maxLength,
   multiline = false,
   error,
+  required,
 }: TextFieldProps) => (
   <div className="flex flex-col gap-1">
-    <label className="text-xs text-black/50">{label}</label>
+    <label className="text-xs text-black/50">
+      {label}
+      {required && <span className="text-red-500 ml-1">*</span>}
+    </label>
     {multiline ? (
       <textarea
         value={value}
@@ -46,6 +51,7 @@ interface SelectFieldProps {
   value: number | null;
   onChange: (value: number | null) => void;
   options: { value: number; label: string }[];
+  required?: boolean;
 }
 
 /**
@@ -56,9 +62,13 @@ export const SelectField = ({
   value,
   onChange,
   options,
+  required,
 }: SelectFieldProps) => (
   <div className="flex flex-col gap-1">
-    <label className="text-xs text-black/50">{label}</label>
+    <label className="text-xs text-black/50">
+      {label}
+      {required && <span className="text-red-500 ml-1">*</span>}
+    </label>
     <select
       value={value ?? ''}
       onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}

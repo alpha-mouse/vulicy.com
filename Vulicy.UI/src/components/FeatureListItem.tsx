@@ -1,5 +1,5 @@
 import { FEATURE_TYPE_LABELS } from '../constants/mapConstants';
-import type { SearchResult } from '../types/feature';
+import { SearchResult, getFeatureName } from '../types/feature';
 
 interface FeatureListItemProps {
   feature: SearchResult;
@@ -19,7 +19,7 @@ const FeatureListItem = ({ feature, truncate = false }: FeatureListItemProps) =>
         {FEATURE_TYPE_LABELS[feature.type] && (
           <span className="text-black/40 font-medium">{FEATURE_TYPE_LABELS[feature.type]} </span>
         )}
-        {feature.nameBeTarask || feature.nameBeNark || feature.nameRu}
+        {getFeatureName(feature)}
       </span>
       {feature.location && (
         <span className={`text-xs text-black/50 ${truncateClass}`}>{feature.location}</span>

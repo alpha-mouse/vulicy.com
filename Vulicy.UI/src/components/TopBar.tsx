@@ -1,12 +1,14 @@
 import { LogIn, LogOut } from 'lucide-react';
 import Button from './Button';
+import './TopBar.css';
 import { useAuth } from '../hooks/useAuth';
 
 interface TopBarProps {
   leftContent?: React.ReactNode;
+  centerContent?: React.ReactNode;
 }
 
-const TopBar = ({ leftContent }: TopBarProps) => {
+const TopBar = ({ leftContent, centerContent }: TopBarProps) => {
   const { user, isLoading, login, logout } = useAuth();
 
   const handleLogin = () => login(window.location.href);
@@ -14,9 +16,16 @@ const TopBar = ({ leftContent }: TopBarProps) => {
   return (
     <div className="topbar">
       {/* Left section: passed content */}
-      <div className="flex items-center flex-1 max-w-md">
+      <div className="topbar-left">
         {leftContent}
       </div>
+
+      {/* Center section: flexible space for search controls */}
+      {centerContent && (
+        <div className="topbar-center">
+          {centerContent}
+        </div>
+      )}
 
       {/* Right section: Login/Logout */}
       <div className="flex items-center gap-3">

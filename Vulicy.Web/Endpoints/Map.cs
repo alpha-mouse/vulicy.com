@@ -12,8 +12,8 @@ public static class Map
     {
         var group = builder.MapGroup("/api/map");
         group.MapGet("/tile/{z}/{x}/{y}.mvt", GetTile);
-        group.MapGet("/cadastre-tile/{z}/{x}/{y}.mvt", GetCadastreTile).RequireAdmin();
-        group.MapGet("/osm-tile/{z}/{x}/{y}.mvt", GetOsmTile).RequireAdmin();
+        group.MapGet("/osm-unmatched-tile/{z}/{x}/{y}.mvt", GetOsmUnmatchedTile).RequireAdmin();
+        group.MapGet("/cadastre-unmatched-tile/{z}/{x}/{y}.mvt", GetCadastreUnmatchedTile).RequireAdmin();
         group.MapGet("/naming-categories", GetNamingCategories);
 
         group.MapGet("/tile-details/{z}/{x}/{y}.mvt", GetTileDetails).RequireAdmin();
@@ -38,9 +38,9 @@ public static class Map
         return Results.NoContent();
     }
 
-    private static async Task<IResult> GetCadastreTile(int z, int x, int y, ICadastreFeatureRepository cadastreFeatureRepository)
+    private static async Task<IResult> GetOsmUnmatchedTile(int z, int x, int y, IOsmFeatureRepository osmFeatureRepository)
     {
-        var result = await cadastreFeatureRepository.GetTile(z, x, y);
+        var result = await osmFeatureRepository.GetUnmatchedTile(z, x, y);
 
         if (result is byte[] { Length: > 0 } newBytes)
         {
@@ -50,9 +50,9 @@ public static class Map
         return Results.NoContent();
     }
 
-    private static async Task<IResult> GetOsmTile(int z, int x, int y, IOsmFeatureRepository osmFeatureRepository)
+    private static async Task<IResult> GetCadastreUnmatchedTile(int z, int x, int y, ICadastreFeatureRepository cadastreFeatureRepository)
     {
-        var result = await osmFeatureRepository.GetTile(z, x, y);
+        var result = await cadastreFeatureRepository.GetUnmatchedTile(z, x, y);
 
         if (result is byte[] { Length: > 0 } newBytes)
         {

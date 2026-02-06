@@ -114,4 +114,17 @@ public class DossierRecordRepository(VulicyDbContext dbContext)
     {
         Context.Remove(entity);
     }
+
+    public Task<List<DossierRecordEntity>> FindByDescriptions(string descriptionBe, string descriptionRu)
+    {
+        if (string.IsNullOrEmpty(descriptionBe) && string.IsNullOrEmpty(descriptionRu))
+            return Task.FromResult(new List<DossierRecordEntity>(0));
+
+        var query = Entities;
+        if (!string.IsNullOrEmpty(descriptionBe))
+            query = query.Where(x => x.DescriptionBe == descriptionBe || x.AlternativeDescriptionsBe != null && x.AlternativeDescriptionsBe.Contains(descriptionBe));
+        if (!string.IsNullOrEmpty(descriptionRu))
+            query = query.Where(x => x.DescriptionRu == descriptionRu || x.AlternativeDescriptionsRu != null && x.AlternativeDescriptionsRu.Contains(descriptionRu));
+        return query.ToListAsync();
+    }
 }

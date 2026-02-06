@@ -12,7 +12,7 @@ public static class ValidationExtensions
     {
         var baseInterface = typeof(IValidator);
         var openGenericType = typeof(IValidator<>);
-        foreach (var type in typeof(T).Assembly.GetTypes().Where(x => x.IsAssignableTo(baseInterface)))
+        foreach (var type in typeof(T).Assembly.GetTypes().Where(x => x.IsAssignableTo(baseInterface) && !x.IsAbstract))
         {
             var genericInterface = type.GetInterfaces().FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == openGenericType);
             if (genericInterface != null)

@@ -1,35 +1,36 @@
 import type { GeoJSONGeometry } from '../utils/geometry';
 
-export interface FeatureProperties {
-  Id: number;
-  Type: number;
-  NameBeTarask?: string;
-  NameBeNark?: string;
-  NameRu?: string;
-  Classification: number;
-  EtymologyBeTarask?: string;
-  RenamingReason?: string;
-  NamingCategoryId?: number;
-  HistoricNames?: string;
-  HistoricPossible: boolean;
-  YearNamed?: number;
-  ForumRelativeLink?: string;
-  // Admin-only fields from tile-details endpoint
-  Comment?: string;
-  DossierRecordId?: number;
-  DossierRecordNameBeTarask?: string;
-  DossierRecordClassification?: number;
-  DossierRecordDescriptionBe?: string;
-  DossierRecordDescriptionRu?: string;
-  DossierRecordNamingCategoryId?: number;
+export interface NamedFeature {
+  id: number;
+  nameBeTarask?: string;
+  nameBeNark?: string;
+  nameRu?: string;
 }
 
-export interface SearchResult {
-  id: number;
+export interface FeatureProperties extends NamedFeature {
   type: number;
   nameBeTarask?: string;
   nameBeNark?: string;
   nameRu?: string;
+  classification: number;
+  dossierRecordNameBeTarask?: string;
+  renamingReason?: string;
+  namingCategoryId?: number;
+  historicNames?: string;
+  historicPossible: boolean;
+  yearNamed?: string;
+  forumRelativeLink?: string;
+  // Admin-only fields from tile-details endpoint
+  comment?: string;
+  dossierRecordId?: number;
+  dossierRecordClassification?: number;
+  dossierRecordDescriptionBe?: string;
+  dossierRecordDescriptionRu?: string;
+  dossierRecordNamingCategoryId?: number;
+}
+
+export interface SearchResult extends NamedFeature {
+  type: number;
   location?: string;
   geometry: GeoJSONGeometry;
 }
@@ -52,4 +53,40 @@ export interface FeatureEditRequest {
   yearNamed: string | null;
   namingCategoryId: number | null;
   dossierRecordId: number | null;
+}
+
+export function getFeatureName(result: NamedFeature): string {
+  return result.nameBeTarask || result.nameBeNark || result.nameRu || `#${result.id}`;
+}
+
+// Preview request to POST /api/features/preview
+export interface FeaturePreviewRequest {
+  osmId: number;
+  osmType: number;
+  cadastreId: string;
+}
+
+// Preview response - minimal details for pre-filling form
+export interface FeaturePreviewResponse {
+  geometry: GeoJSONGeometry;
+  nameBeTarask: string;
+  nameBeNark: string;
+  nameRu: string;
+  classification: number;
+  type: number;
+  renamingReason: string | null;
+  historicNames: string | null;
+  historicPossible: boolean;
+  yearNamed: string | null;
+  comment: string | null;
+  dossierRecordId: number | null;
+  dossierRecordNameBeTarask: string | null;
+  namingCategoryId: number | null;
+}
+
+// Create request to POST /api/features/from-sources
+export interface FeatureCreateFromSourcesRequest extends FeatureEditRequest {
+  osmId: number;
+  osmType: number;
+  cadastreId: string;
 }

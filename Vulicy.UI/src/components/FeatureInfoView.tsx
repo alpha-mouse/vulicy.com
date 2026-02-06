@@ -6,6 +6,7 @@ import {
   getClassificationText,
 } from '../constants/mapConstants';
 import type { FeatureProperties, NamingCategory } from '../types';
+import { getFeatureName } from '../types/feature';
 import { api } from '../utils/api';
 
 interface FeatureInfoViewProps {
@@ -37,21 +38,21 @@ const FeatureInfoView = ({
   discourseBaseUrl,
   onForumLinkCreated,
 }: FeatureInfoViewProps) => {
-  const currentIdRef = useRef(feature.Id);
-  currentIdRef.current = feature.Id;
+  const currentIdRef = useRef(feature.id);
+  currentIdRef.current = feature.id;
 
   const [isCreatingTopic, setIsCreatingTopic] = useState(false);
   const [localForumLink, setLocalForumLink] = useState<string | null>(null);
 
-  const effectiveForumLink = localForumLink || feature.ForumRelativeLink;
+  const effectiveForumLink = localForumLink || feature.forumRelativeLink;
   const forumFullUrl = effectiveForumLink && discourseBaseUrl
     ? `${discourseBaseUrl}${effectiveForumLink.startsWith('/') ? '' : '/'}${effectiveForumLink}`
     : null;
-  const hasAdminData = isAdmin && (feature.Comment || feature.DossierRecordId);
+  const hasAdminData = isAdmin && (feature.comment || feature.dossierRecordId);
 
   const handleCreateDiscussion = async () => {
     if (isCreatingTopic) return;
-    const targetFeatureId = feature.Id;
+    const targetFeatureId = feature.id;
     setIsCreatingTopic(true);
 
     try {
@@ -76,10 +77,10 @@ const FeatureInfoView = ({
     <div className="absolute right-4 top-4 h-fit max-h-panel w-96 glass z-20 overflow-y-auto p-6 flex flex-col gap-3 animate-in">
       <div className="flex justify-between items-start">
         <h2 className="text-2xl font-bold leading-tight m-0">
-          {FEATURE_TYPE_LABELS[feature.Type] && (
-            <span className="text-black/40 font-medium">{FEATURE_TYPE_LABELS[feature.Type]} </span>
+          {FEATURE_TYPE_LABELS[feature.type] && (
+            <span className="text-black/40 font-medium">{FEATURE_TYPE_LABELS[feature.type]} </span>
           )}
-          {feature.NameBeTarask || feature.NameBeNark || feature.NameRu}
+          {getFeatureName(feature)}
           <button
             onClick={onCopyLink}
             className="ml-2 p-1 inline-flex items-center justify-center text-black/30 hover:text-black/60 transition-colors bg-transparent border-none cursor-pointer outline-none align-middle"
@@ -109,55 +110,55 @@ const FeatureInfoView = ({
 
       <div className="flex flex-col gap-2">
         {/* Classification - only show if not 0 (None) */}
-        {feature.Classification !== 0 && (
+        {feature.classification !== 0 && (
           <div className="text-sm leading-relaxed">
             <span className="text-black/50">Клясыфікацыя: </span>
-            <span className="font-medium text-black">{getClassificationText(feature.Classification)}</span>
+            <span className="font-medium text-black">{getClassificationText(feature.classification)}</span>
           </div>
         )}
 
-        {feature.EtymologyBeTarask && (
+        {feature.dossierRecordNameBeTarask && (
           <div className="text-sm leading-relaxed">
             <span className="text-black/50">Этымалёгія: </span>
-            <span className="text-black">{feature.EtymologyBeTarask}</span>
+            <span className="text-black">{feature.dossierRecordNameBeTarask}</span>
           </div>
         )}
 
-        {feature.RenamingReason && (
+        {feature.renamingReason && (
           <div className="text-sm leading-relaxed">
             <span className="text-black/50">Абгрунтаваньне: </span>
-            <span className="text-black">{feature.RenamingReason}</span>
+            <span className="text-black">{feature.renamingReason}</span>
           </div>
         )}
 
-        {feature.NamingCategoryId && (
+        {feature.namingCategoryId && (
           <div className="text-sm leading-relaxed">
             <span className="text-black/50">Катэгорыя: </span>
             <span className="text-black">
-              {namingCategories.find(c => c.id === feature.NamingCategoryId)?.name || '...'}
+              {namingCategories.find(c => c.id === feature.namingCategoryId)?.name || '...'}
             </span>
           </div>
         )}
 
-        {feature.HistoricNames && (
+        {feature.historicNames && (
           <div className="text-sm leading-relaxed">
             <span className="text-black/50">Гістарычная(-ыя) назва(-ы): </span>
-            <span className="text-black italic">{feature.HistoricNames}</span>
+            <span className="text-black italic">{feature.historicNames}</span>
           </div>
         )}
 
-        {feature.YearNamed && (
+        {feature.yearNamed && (
           <div className="text-sm leading-relaxed">
             <span className="text-black/50">Год назвы: </span>
-            <span className="text-black">{feature.YearNamed}</span>
+            <span className="text-black">{feature.yearNamed}</span>
           </div>
         )}
 
         {/* Admin-only: Comment field */}
-        {isAdmin && feature.Comment && (
+        {isAdmin && feature.comment && (
           <div className="text-sm leading-relaxed">
             <span className="text-black/50">Камэнтар: </span>
-            <span className="text-black">{feature.Comment}</span>
+            <span className="text-black">{feature.comment}</span>
           </div>
         )}
       </div>
@@ -190,41 +191,41 @@ const FeatureInfoView = ({
       )}
 
       {/* DossierRecord section - admin only, separated by horizontal line */}
-      {hasAdminData && feature.DossierRecordId && (
+      {hasAdminData && feature.dossierRecordId && (
         <div className="flex flex-col gap-2 pt-4 border-t border-black/10">
-          {feature.DossierRecordNameBeTarask && (
+          {feature.dossierRecordNameBeTarask && (
             <div className="text-sm leading-relaxed">
               <span className="text-black/50">Этымалёгія: </span>
-              <span className="text-black">{feature.DossierRecordNameBeTarask}</span>
+              <span className="text-black">{feature.dossierRecordNameBeTarask}</span>
             </div>
           )}
 
-          {feature.DossierRecordClassification !== undefined && feature.DossierRecordClassification !== 0 && (
+          {feature.dossierRecordClassification !== undefined && feature.dossierRecordClassification !== 0 && (
             <div className="text-sm leading-relaxed">
               <span className="text-black/50">Клясыфікацыя: </span>
-              <span className="font-medium text-black">{getClassificationText(feature.DossierRecordClassification)}</span>
+              <span className="font-medium text-black">{getClassificationText(feature.dossierRecordClassification)}</span>
             </div>
           )}
 
-          {feature.DossierRecordDescriptionBe && (
+          {feature.dossierRecordDescriptionBe && (
             <div className="text-sm leading-relaxed">
               <span className="text-black/50">Апісаньне: </span>
-              <span className="text-black">{feature.DossierRecordDescriptionBe}</span>
+              <span className="text-black">{feature.dossierRecordDescriptionBe}</span>
             </div>
           )}
 
-          {feature.DossierRecordDescriptionRu && (
+          {feature.dossierRecordDescriptionRu && (
             <div className="text-sm leading-relaxed">
               <span className="text-black/50">Апісаньне КА: </span>
-              <span className="text-black">{feature.DossierRecordDescriptionRu}</span>
+              <span className="text-black">{feature.dossierRecordDescriptionRu}</span>
             </div>
           )}
 
-          {feature.DossierRecordNamingCategoryId && (
+          {feature.dossierRecordNamingCategoryId && (
             <div className="text-sm leading-relaxed">
               <span className="text-black/50">Катэгорыя: </span>
               <span className="text-black">
-                {namingCategories.find(c => c.id === feature.DossierRecordNamingCategoryId)?.name || '...'}
+                {namingCategories.find(c => c.id === feature.dossierRecordNamingCategoryId)?.name || '...'}
               </span>
             </div>
           )}
