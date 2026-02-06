@@ -1,6 +1,9 @@
 ﻿using System.Reflection;
+using Amazon;
+using Amazon.DynamoDBv2;
+using Amazon.Extensions.NETCore.Setup;
+using Amazon.Runtime;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Vulicy.Services;
 
 namespace Vulicy.Web.Infrastructure;
 
@@ -22,6 +25,22 @@ public static class RegistrationExtensions
                 var section = configuration.GetSection(type.Name);
                 serviceCollection.AddSingleton(type, section.Get(type)!);
             }
+        }
+
+        public void AddAws(IConfiguration configuration)
+        {
+            var settings = configuration.GetSection("AwsConfig").Get<AwsConfig>();
+            var region = RegionEndpoint.GetBySystemName(settings.Region);
+
+            var credentials = string.IsNullOrEmpty(settings.AccessKeyID)
+                ? null
+                : new BasicAWSCredentials(settings.AccessKeyID, settings.SecretAccessKey);
+            serviceCollection.AddDefaultAWSOptions(new AWSOptions
+            {
+                Region = region,
+                Credentials = credentials,
+            });
+            serviceCollection.AddAWSService<IAmazonDynamoDB>();
         }
     }
 }

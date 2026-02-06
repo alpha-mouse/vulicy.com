@@ -32,6 +32,10 @@ builder.Services.AddConventionalServices(typeof(IImportingService).Assembly);
 builder.Services.AddHttpClient();
 builder.Services.AddMemoryCache();
 
+builder.Services.AddAws(builder.Configuration);
+builder.Services.AddSingleton<IAuditQueue, AuditQueue>();
+builder.Services.AddHostedService<AuditPersistenceHostedService>();
+
 builder.Services.AddSingleton<ILinksService, LinksService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -64,6 +68,7 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 
 app.UseAuthentication();
+app.UseMiddleware<AuditMiddleware>(); // after authentication
 app.UseAuthorization();
 
 await app.Services.InitializeDatabases();

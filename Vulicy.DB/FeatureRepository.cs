@@ -104,7 +104,7 @@ public class FeatureRepository(VulicyDbContext dbContext)
                 f."{nameof(FeatureEntity.Id)}" as "id",
                 ST_AsMVTGeom(ST_Transform(f."{nameof(FeatureEntity.Geometry)}", 3857), ST_TileEnvelope(@z, @x, @y), 4096, 64, true) as "geom",
                 f."{nameof(FeatureEntity.NameBeTarask)}" as "nameBeTarask",
-                f."{nameof(FeatureEntity.NameBeNark)}" as "nameBeNard",
+                f."{nameof(FeatureEntity.NameBeNark)}" as "nameBeNark",
                 f."{nameof(FeatureEntity.NameRu)}" as "nameRu",
                 f."{nameof(FeatureEntity.Classification)}" as "classification",
                 f."{nameof(FeatureEntity.Type)}" as "type",
