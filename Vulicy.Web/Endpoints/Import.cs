@@ -1,14 +1,16 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Vulicy.Services;
+using Vulicy.Web.Infrastructure;
 
 namespace Vulicy.Web.Endpoints;
 
 public static class Import
 {
-    public static void MapImport(this IEndpointRouteBuilder builder)
+    public static void MapImport(this IEndpointRouteBuilder builder, bool withAdminAuth)
     {
         // AllowAnonymous: These endpoints are only registered in Development mode (see Program.cs)
-        var group = builder.MapGroup("/api/import").AllowAnonymous();
+        var group = builder.MapGroup("/api/import");
+        group = withAdminAuth ? group.RequireAdmin() : group.AllowAnonymous();
         group.MapPost("/osm", ImportOsm);
         group.MapPost("/cadastre", ImportCadastre);
         group.MapPost("/cadastre-initial", ImportCadastreInitial);

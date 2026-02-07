@@ -73,8 +73,7 @@ app.UseAuthorization();
 
 await app.Services.InitializeDatabases();
 
-if (app.Environment.IsDevelopment())
-    app.MapImport();
+app.MapImport(withAdminAuth: !app.Environment.IsDevelopment());
 app.MapMap();
 app.MapFeatures();
 app.MapDossierRecords();
