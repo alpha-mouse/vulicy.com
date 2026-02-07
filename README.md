@@ -89,3 +89,23 @@ npm run dev
 - `dotnet build` - Зборка рашэння
 - `dotnet test` - Запуск тэстаў
 
+
+## Інфраструктура на продзе
+
+### forum.vulicy.com
+- Hetzner vpc
+- Discourse на гэтай vpc падняты згодна з https://github.com/discourse/discourse/blob/main/docs/INSTALL-cloud.md
+- cdn files on aws s3 Stockholm (eu-north-1) exposed via CloudFront forum-cdn.vulicy.com
+- backups on aws s3
+- google project for OAuth2 on vulicy.com@gmail.com
+- mailgun for emails
+
+### vulicy.com
+- Hetzner vpc
+- coolify on port 8000. Каб зь ім паўзаемадзейнічаць можна адкрыць порт на фаерволе на Hetzner, ці як раблю я, падключыцца да сэрвэра па ssh і замапіць порт каб ён быў дасяжны лякальна
+- postgis db from postgis/postgis:18-3.6-alpine image
+- db backed up to aws s3 Sydney (ap-southeast-2) bucket
+- application as docker images at vulicy/vulicy-app
+- audit aws DynamoDB tables in Stockholm (eu-north-1)
+- растравы слой карты з maptiler
+- Sentry для логінгу памылак
