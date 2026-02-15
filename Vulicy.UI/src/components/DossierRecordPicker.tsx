@@ -94,7 +94,7 @@ const DossierRecordPicker = ({
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+        className="glass w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -110,7 +110,7 @@ const DossierRecordPicker = ({
 
         {/* Search bar */}
         <div className="p-5 border-b border-black/5">
-          <div className="bg-black/5 h-10 flex items-center gap-3 rounded-xl border border-black/10 px-4 box-border focus-within:border-primary/50 focus-within:bg-white transition-all">
+          <div className="bg-black/5 dark:bg-white/5 h-10 flex items-center gap-3 rounded-xl border border-black/10 px-4 box-border focus-within:border-primary/50 focus-within:bg-white dark:focus-within:bg-white/10 transition-all">
             <SearchIcon className="text-black/30 w-4 h-4 shrink-0" />
             <input
               ref={inputRef}
@@ -136,7 +136,7 @@ const DossierRecordPicker = ({
           <div className="px-5 pt-3">
             <button
               onClick={handleUnlink}
-              className="text-sm font-medium text-red-500 hover:text-red-600 hover:underline bg-transparent border-none cursor-pointer p-1 rounded-lg hover:bg-red-50 transition-colors"
+              className="text-sm font-medium text-red-500 hover:text-red-600 hover:underline bg-transparent border-none cursor-pointer p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
             >
               Адвязаць імя
             </button>
@@ -158,7 +158,7 @@ const DossierRecordPicker = ({
                 <DossierRecordItem record={record} namingCategories={namingCategories} compact />
               </div>
               <div className="flex flex-col items-end gap-1 shrink-0">
-                <span className="text-[10px] uppercase tracking-wider font-bold text-black/30 bg-black/5 px-2 py-0.5 rounded-md">
+                <span className="text-[10px] uppercase tracking-wider font-bold text-black/30 bg-black/5 dark:bg-white/10 px-2 py-0.5 rounded-md">
                   {record.numFeatures}
                 </span>
               </div>

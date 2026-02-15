@@ -31,7 +31,7 @@ export const TextField = ({
         onChange={(e) => onChange(e.target.value)}
         maxLength={maxLength}
         rows={3}
-        className={`text-sm p-2 border rounded-lg bg-white/50 outline-none focus:border-primary resize-none ${error ? 'border-red-400' : 'border-black/20'}`}
+        className={`text-sm p-2 border rounded-lg bg-white/50 dark:bg-black/20 outline-none focus:border-primary resize-none ${error ? 'border-red-400' : 'border-black/20 dark:border-white/10'}`}
       />
     ) : (
       <input
@@ -39,7 +39,7 @@ export const TextField = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         maxLength={maxLength}
-        className={`text-sm p-2 border rounded-lg bg-white/50 outline-none focus:border-primary ${error ? 'border-red-400' : 'border-black/20'}`}
+        className={`text-sm p-2 border rounded-lg bg-white/50 dark:bg-black/20 outline-none focus:border-primary ${error ? 'border-red-400' : 'border-black/20 dark:border-white/10'}`}
       />
     )}
     {error && <span className="text-xs text-red-500">{error}</span>}
@@ -72,7 +72,7 @@ export const SelectField = ({
     <select
       value={value ?? ''}
       onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
-      className="text-sm p-2 border border-black/20 rounded-lg bg-white/50 outline-none focus:border-primary cursor-pointer"
+      className="text-sm p-2 border border-black/20 dark:border-white/10 rounded-lg bg-white/50 dark:bg-black/20 outline-none focus:border-primary cursor-pointer"
     >
       {options.map((opt) => (
         <option key={opt.value} value={opt.value}>

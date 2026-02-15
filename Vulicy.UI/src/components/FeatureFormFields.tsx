@@ -131,7 +131,7 @@ const FeatureFormFields = ({
         <label className="text-xs text-black/50">Імя (дасье)</label>
         <button
           onClick={onOpenDossierPicker}
-          className="text-sm p-2 border border-black/20 rounded-lg bg-white/50 text-left cursor-pointer hover:border-primary transition-colors"
+          className="text-sm p-2 border border-black/20 dark:border-white/10 rounded-lg bg-white/50 dark:bg-black/20 text-left cursor-pointer hover:border-primary transition-colors"
         >
           {selectedDossierName || (editForm.dossierRecordId ? `#${editForm.dossierRecordId}` : '(не прывязана)')}
         </button>
