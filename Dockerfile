@@ -9,6 +9,7 @@ RUN npm run build
 
 # --- 2. Build Backend (.NET SDK) ---
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+RUN apk add --no-cache icu-libs
 ARG COMMIT_HASH
 ARG COMMIT_TIME
 WORKDIR /src

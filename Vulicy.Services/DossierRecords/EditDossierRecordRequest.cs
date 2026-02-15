@@ -11,6 +11,7 @@ public class EditDossierRecordRequest
     public string? DescriptionBe { get; set; }
     public string? DescriptionRu { get; set; }
     public ClassificationGrade Classification { get; set; }
+    public int? NamingCategoryId { get; set; }
 }
 
 public class EditDossierRecordRequestValidator : AbstractValidator<EditDossierRecordRequest>

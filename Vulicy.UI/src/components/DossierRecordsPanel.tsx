@@ -296,6 +296,7 @@ const DossierRecordsPanel = ({
         <DossierRecordEditForm
           onClose={() => setIsCreatingRecord(false)}
           onRecordUpdated={handleRecordCreated}
+          namingCategories={namingCategories}
         />
       )}
 
@@ -305,6 +306,7 @@ const DossierRecordsPanel = ({
           record={editingRecord}
           onClose={() => setEditingRecord(null)}
           onRecordUpdated={handleRecordUpdated}
+          namingCategories={namingCategories}
         />
       )}
 

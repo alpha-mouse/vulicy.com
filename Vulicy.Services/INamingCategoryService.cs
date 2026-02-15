@@ -14,6 +14,7 @@ public class NamingCategoryService(INamingCategoryRepository namingCategoryRepos
         var entities = await namingCategoryRepository.GetAll();
         return entities
             .Select(x => new NamingCategory(x.Id, x.Name))
+            .OrderBy(x => x.Name, CultureProvider.BeByStringComparer)
             .ToList();
     }
 }

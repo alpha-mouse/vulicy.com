@@ -31,6 +31,7 @@ public class DossierRecordService(
             DescriptionBe = request.DescriptionBe,
             DescriptionRu = request.DescriptionRu,
             Classification = request.Classification,
+            NamingCategoryId = request.NamingCategoryId,
             LastModifiedById = userId,
         };
 
@@ -124,6 +125,7 @@ public class DossierRecordService(
         record.DescriptionBe = request.DescriptionBe;
         record.DescriptionRu = request.DescriptionRu;
         record.Classification = request.Classification;
+        record.NamingCategoryId = request.NamingCategoryId;
         record.LastModifiedById = userId;
 
         await dossierRecordRepository.SaveChanges();

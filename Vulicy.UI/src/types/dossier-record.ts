@@ -26,6 +26,7 @@ export interface DossierRecordEditRequest {
   descriptionBe: string | null;
   descriptionRu: string | null;
   classification: number;
+  namingCategoryId: number | null;
 }
 
 export interface MergeSuggestion {

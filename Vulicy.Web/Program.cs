@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Globalization;
 using Vulicy.Services;
 using Vulicy.Web.Endpoints;
 using Vulicy.Web.Infrastructure;
+
+CultureInfo.DefaultThreadCurrentCulture = CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = CultureInfo.InvariantCulture;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X, Loader2, Save, AlertCircle } from 'lucide-react';
 import { TextField, SelectField } from './FormFields';
 import Button from './Button';
-import type { DossierRecordSearchResult, DossierRecordEditRequest } from '../types';
+import type { DossierRecordSearchResult, DossierRecordEditRequest, NamingCategory } from '../types';
 import { DOSSIER_CLASSIFICATION_OPTIONS } from '../constants/mapConstants';
 import { api } from '../utils/api';
 
@@ -10,6 +10,7 @@ interface DossierRecordEditFormProps {
   record?: DossierRecordSearchResult;
   onClose: () => void;
   onRecordUpdated: (record: DossierRecordSearchResult) => void;
+  namingCategories: NamingCategory[];
 }
 
 /**
@@ -20,6 +21,7 @@ const DossierRecordEditForm = ({
   record,
   onClose,
   onRecordUpdated,
+  namingCategories,
 }: DossierRecordEditFormProps) => {
   const isCreateMode = !record;
   const [isSaving, setIsSaving] = useState(false);
@@ -34,6 +36,7 @@ const DossierRecordEditForm = ({
     descriptionBe: record?.descriptionBe || null,
     descriptionRu: record?.descriptionRu || null,
     classification: record?.classification || 1,
+    namingCategoryId: record?.namingCategoryId ?? null,
   });
 
   // Validation matching backend EditDossierRecordRequestValidator
@@ -84,6 +87,7 @@ const DossierRecordEditForm = ({
           descriptionBe: editForm.descriptionBe ?? undefined,
           descriptionRu: editForm.descriptionRu ?? undefined,
           classification: editForm.classification,
+          namingCategoryId: editForm.namingCategoryId ?? undefined,
           numFeatures: 0,
         };
         onRecordUpdated(newRecord);
@@ -100,6 +104,7 @@ const DossierRecordEditForm = ({
           descriptionBe: editForm.descriptionBe ?? undefined,
           descriptionRu: editForm.descriptionRu ?? undefined,
           classification: editForm.classification,
+          namingCategoryId: editForm.namingCategoryId ?? undefined,
         };
         onRecordUpdated(updatedRecord);
       }
@@ -184,6 +189,16 @@ const DossierRecordEditForm = ({
             value={editForm.classification}
             onChange={(v) => updateField('classification', v ?? 1)}
             options={DOSSIER_CLASSIFICATION_OPTIONS}
+          />
+
+          <SelectField
+            label="Катэгорыя"
+            value={editForm.namingCategoryId ?? 0}
+            onChange={(v) => updateField('namingCategoryId', v === 0 ? null : v)}
+            options={[
+              { value: 0, label: '— не абрана —' },
+              ...namingCategories.map(c => ({ value: c.id, label: c.name })),
+            ]}
           />
         </div>
 
