@@ -9,7 +9,6 @@ import SourceFeatureSearch from './SourceFeatureSearch';
 import FeatureCreateDialog from './FeatureCreateDialog';
 import { useSourcesMapInitialization } from '../hooks/useSourcesMapInitialization';
 import { useUrlParams } from '../hooks/useUrlParams';
-import { useNavigation } from '../hooks/useNavigation';
 import { useMapStore } from '../store/mapStore';
 import { useSourcesStore } from '../store/sourcesStore';
 import { computeCentroid } from '../utils/geometry';
@@ -18,16 +17,15 @@ import { SearchResult, getFeatureName } from '../types/feature';
 
 // Back button for the TopBar left side
 const BackButton = () => {
-  const { navigateToMap } = useNavigation();
 
   return (
-    <button
-      onClick={navigateToMap}
-      className="p-2 hover:bg-black/5 rounded-lg transition-colors bg-transparent border-none cursor-pointer outline-none"
+    <a
+      href="/"
+      className="p-2 hover:bg-black/5 rounded-lg transition-colors bg-transparent border-none cursor-pointer outline-none inline-flex"
       title="Вярнуцца да мапы"
     >
       <ArrowLeft size={20} className="text-black/60" />
-    </button>
+    </a>
   );
 };
 

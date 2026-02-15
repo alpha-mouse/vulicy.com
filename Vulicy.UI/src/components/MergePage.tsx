@@ -3,7 +3,6 @@ import { ArrowLeft } from 'lucide-react';
 import TopBar from './TopBar';
 import MergeComparisonTable, { type Selections, type FieldKey, type Side } from './MergeComparisonTable';
 import Button from './Button';
-import { useNavigation } from '../hooks/useNavigation';
 import { api } from '../utils/api';
 import type { MergeSuggestion, MergeDossierRecordRequest, DossierRecordSearchResult, NamingCategory } from '../types';
 
@@ -68,21 +67,19 @@ function computeInitialSelections(
 
 // Back button for the TopBar left side
 const BackButton = () => {
-  const { navigateToMap } = useNavigation();
 
   return (
-    <button
-      onClick={navigateToMap}
-      className="p-2 hover:bg-black/5 rounded-lg transition-colors bg-transparent border-none cursor-pointer outline-none"
+    <a
+      href="/"
+      className="p-2 hover:bg-black/5 rounded-lg transition-colors bg-transparent border-none cursor-pointer outline-none inline-flex"
       title="Вярнуцца да мапы"
     >
       <ArrowLeft size={20} className="text-black/60" />
-    </button>
+    </a>
   );
 };
 
 const MergePage = () => {
-  const { navigateToMap } = useNavigation();
 
   const [suggestion, setSuggestion] = useState<MergeSuggestion | null>(null);
   const [selections, setSelections] = useState<Selections | null>(null);
@@ -212,9 +209,13 @@ const MergePage = () => {
         ) : completed || !suggestion ? (
           <div className="flex flex-col items-center justify-center h-full gap-4">
             <div className="text-xl font-medium text-black/70">Няма прапановаў для аб'яднаньня</div>
-            <Button variant="secondary" onClick={navigateToMap}>
-              Вярнуцца да мапы
-            </Button>
+            <a
+              href="/"
+              className="p-2 hover:bg-black/5 rounded-lg transition-colors bg-transparent border-none cursor-pointer outline-none inline-flex"
+              title="Вярнуцца да мапы"
+            >
+              <ArrowLeft size={20} className="text-black/60" /> Вярнуцца да мапы
+            </a>
           </div>
         ) : (
           <div className="flex flex-col gap-6">

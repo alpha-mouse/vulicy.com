@@ -11,7 +11,6 @@ import { useConfig } from '../hooks/useConfig';
 import { useUrlParams } from '../hooks/useUrlParams';
 import { useClickOutside } from '../hooks/useClickOutside';
 import { useAuth } from '../hooks/useAuth';
-import { useNavigation } from '../hooks/useNavigation';
 import { useMapStore } from '../store/mapStore';
 import type { FeatureProperties, SearchResult, NamingCategory } from '../types';
 import { api } from '../utils/api';
@@ -24,7 +23,6 @@ interface MapComponentProps {
 // Menu + Search content for the TopBar left side
 const MapTopBarContent = () => {
   const { user, isAdmin } = useAuth();
-  const { navigateToMerge, navigateToSources } = useNavigation();
   const { setDossierPanelOpen } = useMapStore();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -61,20 +59,20 @@ const MapTopBarContent = () => {
               <FileUser size={18} className="text-black/60" />
               <span>Імёны</span>
             </button>
-            <button
-              onClick={() => handleMenuItemClick(navigateToMerge)}
-              className="w-full px-4 py-2.5 text-left text-sm font-medium text-black hover:bg-black/5 transition-colors bg-transparent border-none cursor-pointer outline-none flex items-center gap-2"
+            <a
+              href="/dossier-deduplication"
+              className="w-full px-4 py-2.5 text-left text-sm font-medium text-black hover:bg-black/5 transition-colors bg-transparent border-none cursor-pointer outline-none flex items-center gap-2 no-underline"
             >
               <GitMerge size={18} className="text-black/60" />
               <span>Аб'яднаньне імёнаў</span>
-            </button>
-            <button
-              onClick={() => handleMenuItemClick(navigateToSources)}
-              className="w-full px-4 py-2.5 text-left text-sm font-medium text-black hover:bg-black/5 transition-colors bg-transparent border-none cursor-pointer outline-none flex items-center gap-2"
+            </a>
+            <a
+              href="/sources"
+              className="w-full px-4 py-2.5 text-left text-sm font-medium text-black hover:bg-black/5 transition-colors bg-transparent border-none cursor-pointer outline-none flex items-center gap-2 no-underline"
             >
               <Database size={18} className="text-black/60" />
               <span>Крыніцы</span>
-            </button>
+            </a>
           </div>
         )}
       </div>
