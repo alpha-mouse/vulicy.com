@@ -5,6 +5,7 @@ import { api } from '../utils/api';
 import FeatureListItem from './FeatureListItem';
 import DossierRecordItem from './DossierRecordItem';
 import DossierRecordEditForm from './DossierRecordEditForm';
+import { CLASSIFICATION_COLORS } from '../constants/mapConstants';
 
 interface DossierRecordsPanelProps {
   isOpen: boolean;
@@ -220,6 +221,10 @@ const DossierRecordsPanel = ({
                   {record.nameBeTarask || record.nameBeNark || record.nameRu || '(без назвы)'}
                 </div>
               </div>
+              <div
+                className="w-2.5 h-2.5 rounded-full shrink-0"
+                style={{ backgroundColor: CLASSIFICATION_COLORS[record.classification] || CLASSIFICATION_COLORS[0] }}
+              />
               <span className="text-xs text-black/50 bg-black/5 px-2 py-0.5 rounded-full shrink-0">
                 {record.numFeatures}
               </span>

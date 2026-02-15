@@ -1,5 +1,5 @@
 import { Pencil, Trash2 } from 'lucide-react';
-import { getClassificationText } from '../constants/mapConstants';
+import { getClassificationText, CLASSIFICATION_COLORS } from '../constants/mapConstants';
 import type { DossierRecordSearchResult, NamingCategory } from '../types';
 
 interface DossierRecordItemProps {
@@ -36,7 +36,10 @@ const DossierRecordItem = ({
           {record.nameBeTarask || record.nameBeNark || record.nameRu || '(без назвы)'}
         </span>
         {record.classification !== 0 && (
-          <span className="text-xs text-black/50 truncate">
+          <span
+            className="text-xs truncate font-medium"
+            style={{ color: CLASSIFICATION_COLORS[record.classification] }}
+          >
             {getClassificationText(record.classification)}
           </span>
         )}
@@ -73,7 +76,12 @@ const DossierRecordItem = ({
       {record.classification !== 0 && (
         <div className="leading-relaxed">
           <span className="text-black/50">Клясыфікацыя: </span>
-          <span className="font-medium text-black">{getClassificationText(record.classification)}</span>
+          <span
+            className="font-medium"
+            style={{ color: CLASSIFICATION_COLORS[record.classification] }}
+          >
+            {getClassificationText(record.classification)}
+          </span>
         </div>
       )}
       {categoryName && (
