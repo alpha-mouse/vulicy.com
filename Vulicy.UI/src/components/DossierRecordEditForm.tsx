@@ -35,7 +35,7 @@ const DossierRecordEditForm = ({
     nameRu: record?.nameRu || null,
     descriptionBe: record?.descriptionBe || null,
     descriptionRu: record?.descriptionRu || null,
-    classification: record?.classification || 1,
+    classification: record?.classification || 0,
     namingCategoryId: record?.namingCategoryId ?? null,
   });
 
