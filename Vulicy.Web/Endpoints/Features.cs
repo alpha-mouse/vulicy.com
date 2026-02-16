@@ -14,6 +14,7 @@ public static class Features
         features.MapPost("/from-sources", CreateFeatureFromSources).RequireAdmin().Validate<FeatureCreateFromSourcesRequest>();
         features.MapPut("/{id:int}", EditFeature).RequireAdmin().Validate<FeatureEditRequest>();
         features.MapPost("/{id:int}/link-osm", LinkOsmFeature).RequireAdmin().Validate<OsmId>();
+        features.MapPut("/{id:int}/recompute-geometry", RecomputeGeometry).RequireAdmin();
         features.MapPost("/preview", GetFeaturePreview).RequireAdmin().Validate<GetFeaturePreviewRequest>();
 
         var osmFeatures = builder.MapGroup("/api/osm-features").RequireAdmin();
@@ -44,6 +45,11 @@ public static class Features
     {
         var userId = context.User.GetUserId();
         return featureService.LinkOsmFeature(id, feature, userId);
+    }
+
+    private static Task RecomputeGeometry(int id, IFeatureService featureService)
+    {
+        return featureService.RecomputeGeometry(id);
     }
 
     private static Task<FeatureTileMinimalDetails> GetFeaturePreview(GetFeaturePreviewRequest request, IFeatureService featureService)

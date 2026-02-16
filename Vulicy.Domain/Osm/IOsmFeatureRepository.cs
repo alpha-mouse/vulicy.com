@@ -9,4 +9,5 @@ public interface IOsmFeatureRepository
     Task<List<OsmFeatureSearchResult>> SearchUnmatchedByName(string query, double? lat = null, double? lng = null);
     Task<OsmFeatureEntity?> GetById(OsmType type, long id);
     Task<OsmFeatureEntity?> GetByIdTracked(OsmType type, long id);
+    Task<List<OsmFeatureEntity>> GetByFeatureId(int featureId);
 }

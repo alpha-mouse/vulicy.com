@@ -9,6 +9,7 @@ public interface IFeatureService
     Task<List<FeatureSearchResult>> GetByDossierRecord(int dossierRecordId);
     Task<FeatureSearchResult> CreateFeatureFromSources(FeatureCreateFromSourcesRequest featureEditRequest, int userId);
     Task<Geometry> LinkOsmFeature(int id, OsmId osmId, int userId);
+    Task RecomputeGeometry(int id);
     Task EditFeature(int id, FeatureEditRequest featureEditRequest, int userId);
     Task<FeatureTileMinimalDetails> GetFeaturePreview(GetFeaturePreviewRequest request);
 }
@@ -80,6 +81,24 @@ public class FeatureService(
         await transaction.Commit();
 
         return feature.Geometry;
+    }
+
+    public async Task RecomputeGeometry(int id)
+    {
+        await using var transaction = await featureRepository.BeginTransaction();
+        var feature = await featureRepository.GetByIdTracked(id);
+        if (feature == null)
+            throw new InvalidOperationException("Feature not found");
+
+        var osmFeatures = await osmFeatureRepository.GetByFeatureId(id);
+
+        var lineMerger = new LineMerger();
+        foreach (var osmFeature in osmFeatures)
+            lineMerger.Add(osmFeature.Geometry);
+
+        feature.Geometry = lineMerger.ToMerged();
+        await featureRepository.SaveChanges();
+        await transaction.Commit();
     }
 
     public async Task EditFeature(int id, FeatureEditRequest featureEditRequest, int userId)

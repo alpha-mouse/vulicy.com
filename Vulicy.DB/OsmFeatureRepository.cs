@@ -111,4 +111,11 @@ public class OsmFeatureRepository(VulicyDbContext context) : IOsmFeatureReposito
             .AsTracking()
             .FirstOrDefaultAsync(x => x.Type == type && x.Id == id);
     }
+
+    public Task<List<OsmFeatureEntity>> GetByFeatureId(int featureId)
+    {
+        return Entities
+            .Where(x => x.FeatureId == featureId)
+            .ToListAsync();
+    }
 }
