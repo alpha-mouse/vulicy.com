@@ -1,4 +1,4 @@
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Merge } from 'lucide-react';
 import { getClassificationText, CLASSIFICATION_COLORS } from '../constants/mapConstants';
 import type { DossierRecordSearchResult, NamingCategory } from '../types';
 
@@ -10,6 +10,7 @@ interface DossierRecordItemProps {
   isAdmin?: boolean;
   onEdit?: (record: DossierRecordSearchResult) => void;
   onDelete?: (record: DossierRecordSearchResult) => void;
+  onMerge?: (record: DossierRecordSearchResult) => void;
 }
 
 /**
@@ -24,6 +25,7 @@ const DossierRecordItem = ({
   isAdmin = false,
   onEdit,
   onDelete,
+  onMerge,
 }: DossierRecordItemProps) => {
   const categoryName = record.namingCategoryId
     ? namingCategories.find(c => c.id === record.namingCategoryId)?.name || '...'
@@ -98,7 +100,7 @@ const DossierRecordItem = ({
       )}
 
       {/* Admin actions */}
-      {isAdmin && (onEdit || onDelete) && (
+      {isAdmin && (onEdit || onDelete || onMerge) && (
         <div className="flex gap-2 pt-2 border-t border-black/10 mt-1">
           {onEdit && (
             <button
@@ -124,6 +126,19 @@ const DossierRecordItem = ({
             >
               <Trash2 size={14} />
               <span>Выдаліць</span>
+            </button>
+          )}
+          {onMerge && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onMerge(record);
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-black/60 hover:text-amber-600 hover:bg-amber-50 rounded-md transition-colors bg-transparent border-none cursor-pointer"
+              title="Аб'яднаць"
+            >
+              <Merge size={14} />
+              <span>Аб'яднаць</span>
             </button>
           )}
         </div>

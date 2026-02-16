@@ -5,6 +5,7 @@ import { api } from '../utils/api';
 import FeatureListItem from './FeatureListItem';
 import DossierRecordItem from './DossierRecordItem';
 import DossierRecordEditForm from './DossierRecordEditForm';
+import MergeDialog from './MergeDialog';
 import { CLASSIFICATION_COLORS } from '../constants/mapConstants';
 
 interface DossierRecordsPanelProps {
@@ -37,6 +38,7 @@ const DossierRecordsPanel = ({
   const [isCreatingRecord, setIsCreatingRecord] = useState(false);
   const [deletingRecord, setDeletingRecord] = useState<DossierRecordSearchResult | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [mergingRecord, setMergingRecord] = useState<DossierRecordSearchResult | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -157,6 +159,13 @@ const DossierRecordsPanel = ({
     }
   }, [deletingRecord, isDeleting, expandedId]);
 
+  // Handle successful merge - refresh the records list
+  const handleMerged = useCallback(() => {
+    setMergingRecord(null);
+    skipRef.current = 0;
+    searchRecords(query, 0, false);
+  }, [query, searchRecords]);
+
   if (!isOpen) return null;
 
   return (
@@ -242,6 +251,7 @@ const DossierRecordsPanel = ({
                   record={record}
                   namingCategories={namingCategories}
                   isAdmin={isAdmin}
+                  onMerge={setMergingRecord}
                   onEdit={setEditingRecord}
                   onDelete={setDeletingRecord}
                 />
@@ -341,6 +351,16 @@ const DossierRecordsPanel = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Merge Dialog */}
+      {mergingRecord && (
+        <MergeDialog
+          record={mergingRecord}
+          namingCategories={namingCategories}
+          onClose={() => setMergingRecord(null)}
+          onMerged={handleMerged}
+        />
       )}
     </div>
   );

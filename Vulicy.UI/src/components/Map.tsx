@@ -60,13 +60,6 @@ const MapTopBarContent = () => {
               <span>Імёны</span>
             </button>
             <a
-              href="/dossier-deduplication"
-              className="w-full px-4 py-2.5 text-left text-sm font-medium text-black hover:bg-black/5 transition-colors bg-transparent border-none cursor-pointer outline-none flex items-center gap-2 no-underline"
-            >
-              <GitMerge size={18} className="text-black/60" />
-              <span>Аб'яднаньне імёнаў</span>
-            </a>
-            <a
               href="/sources"
               className="w-full px-4 py-2.5 text-left text-sm font-medium text-black hover:bg-black/5 transition-colors bg-transparent border-none cursor-pointer outline-none flex items-center gap-2 no-underline"
             >
