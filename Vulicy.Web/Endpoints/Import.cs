@@ -22,6 +22,7 @@ public static class Import
         group.MapPost("/4-initialize-features-dossier-categories-references", InitializeFeaturesDossierCategoriesReferences);
         group.MapPost("/5-map-fields-from-initial-cadastre-import", MapFieldsFromInitialCadastreImport);
         group.MapPost("/6-create-missing-administrative", CreateMissingAdministrative);
+        group.MapPost("/7-set-administrative-on-features", SetAdministrativeOnFeatures);
     }
 
     private static Task<int> ImportOsm([FromBody] string pbfDownloadUrl, IImportingService importingService, IHostApplicationLifetime hostApplicationLifetime)
@@ -72,5 +73,10 @@ public static class Import
     private static Task CreateMissingAdministrative(IAdministrativeRepository administrativeRepository)
     {
         return administrativeRepository.CreateMissingAdministrativeFromCadastre();
+    }
+
+    private static Task SetAdministrativeOnFeatures(IAdministrativeRepository administrativeRepository)
+    {
+        return administrativeRepository.SetAdministrativeOnFeatures();
     }
 }

@@ -267,4 +267,27 @@ public class AdministrativeRepository(VulicyDbContext dbContext)
             new NpgsqlParameter("unknown", (object)(int)AdministrativeType.Unknown)
         );
     }
+
+    public Task SetAdministrativeOnFeatures()
+    {
+        const string command =
+            $"""
+             with "AssignedAdministrative" as (
+                select f."{nameof(FeatureEntity.Id)}" as "FeatureId",
+                       a."{nameof(AdministrativeEntity.Id)}" as "AdministrativeId"
+                from "{FeatureConfiguration.TableName}" f
+                join "{CadastreFeatureConfiguration.TableName}" cf on f."{nameof(FeatureEntity.Id)}" = cf."{nameof(CadastreFeatureEntity.FeatureId)}"
+                join "{AdministrativeConfiguration.TableName}" a on cf."{nameof(CadastreFeatureEntity.Ate)}" = a."{nameof(AdministrativeEntity.CadastreAte)}"
+                where "{nameof(FeatureEntity.AdministrativeId)}" is null
+             )
+             update "{FeatureConfiguration.TableName}" as f
+             set
+                 "{nameof(FeatureEntity.AdministrativeId)}" = aa."AdministrativeId"
+             from "AssignedAdministrative" as aa
+             where f."{nameof(FeatureEntity.Id)}" = aa."FeatureId"
+             ;
+             """;
+
+        return Context.Database.ExecuteSqlRawAsync(command);
+    }
 }

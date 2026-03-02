@@ -21,6 +21,7 @@ public abstract class FeatureBaseEntity : Entity<int>
     public int LastModifiedById { get; set; }
     public int? NamingCategoryId { get; set; }
     public int? DossierRecordId { get; set; }
+    public int? AdministrativeId { get; set; }
 }
 
 public class FeatureEntity : FeatureBaseEntity
@@ -30,6 +31,7 @@ public class FeatureEntity : FeatureBaseEntity
     public UserEntity LastModifiedBy { get; set; }
     public NamingCategoryEntity? NamingCategory { get; set; }
     public DossierRecordEntity? DossierRecord { get; set; }
+    public AdministrativeEntity? Administrative { get; set; }
 }
 
 public class FeatureHistoricEntity : FeatureBaseEntity, IHistoricEntity<int>

@@ -45,6 +45,10 @@ POST {{Vulicy.Web_HostAddress}}/api/import/6-create-missing-administrative
 
 ###
 
+POST {{Vulicy.Web_HostAddress}}/api/import/7-set-administrative-on-features
+
+###
+
 GET {{Vulicy.Web_HostAddress}}/api/map/naming-categories
 
 ###
