@@ -15,14 +15,14 @@ public static class Import
         group.MapPost("/osm", ImportOsm);
         group.MapPost("/cadastre", ImportCadastre);
         group.MapPost("/cadastre-initial", ImportCadastreInitial);
-        group.MapPost("/match-osm-cadastre", MatchOsmCadastre);
         group.MapPost("/1-initialize-naming-categories", InitializeNamingCategories);
         group.MapPost("/2-create-dossier-records-from-sql", CreateDossierRecordsFromSql);
         group.MapPost("/3-initialize-dossier-records", InitializeDossierRecords);
-        group.MapPost("/4-initialize-features-dossier-categories-references", InitializeFeaturesDossierCategoriesReferences);
-        group.MapPost("/5-map-fields-from-initial-cadastre-import", MapFieldsFromInitialCadastreImport);
-        group.MapPost("/6-create-missing-administrative", CreateMissingAdministrative);
-        group.MapPost("/7-set-administrative-on-features", SetAdministrativeOnFeatures);
+        group.MapPost("/4-create-missing-administrative", CreateMissingAdministrative);
+        group.MapPost("/5-match-osm-cadastre", MatchOsmCadastre);
+        group.MapPost("/6-initialize-features-dossier-categories-references", InitializeFeaturesDossierCategoriesReferences);
+        group.MapPost("/7-map-fields-from-initial-cadastre-import", MapFieldsFromInitialCadastreImport);
+        group.MapPost("/8-set-administrative-on-features", SetAdministrativeOnFeatures);
     }
 
     private static Task<int> ImportOsm([FromBody] string pbfDownloadUrl, IImportingService importingService, IHostApplicationLifetime hostApplicationLifetime)

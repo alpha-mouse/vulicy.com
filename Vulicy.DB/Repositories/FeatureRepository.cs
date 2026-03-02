@@ -56,10 +56,10 @@ public class FeatureRepository(VulicyDbContext dbContext)
                  f."{nameof(FeatureEntity.NameBeNark)}",
                  f."{nameof(FeatureEntity.NameRu)}",
                  f."{nameof(FeatureEntity.Type)}",
-                 cf."{nameof(CadastreFeatureEntity.AteNameBel)}" as "{nameof(FeatureSearchResult.Location)}",
+                 a."{nameof(AdministrativeEntity.NameBeTarask)}" as "{nameof(FeatureSearchResult.Location)}",
                  f."{nameof(FeatureEntity.Geometry)}"
              from "{FeatureConfiguration.TableName}" f
-             left outer join "{CadastreFeatureConfiguration.TableName}" cf on f."{nameof(FeatureEntity.Id)}" = cf."{nameof(CadastreFeatureEntity.FeatureId)}"
+             join "{AdministrativeConfiguration.TableName}" a on f."{nameof(FeatureEntity.AdministrativeId)}" = a."{nameof(AdministrativeEntity.Id)}"
              where (
                    f."{nameof(FeatureEntity.NameBeTarask)}" ilike @query
                    or f."{nameof(FeatureEntity.NameBeNark)}" ilike @query

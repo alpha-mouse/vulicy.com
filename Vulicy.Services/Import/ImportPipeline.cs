@@ -236,6 +236,7 @@ public partial class ImportPipeline(
             var cadastreFeatureRepository = scope.ServiceProvider.GetRequiredService<ICadastreFeatureRepository>();
             var osmFeatureRepository = scope.ServiceProvider.GetRequiredService<IOsmFeatureRepository>();
             var featureRepository = scope.ServiceProvider.GetRequiredService<IFeatureRepository>();
+            var administrativeRepositoryRepository = scope.ServiceProvider.GetRequiredService<IAdministrativeRepository>();
 
             var unmatchedAtes = await cadastreFeatureRepository.GetUnmatchedAtes();
 
@@ -255,6 +256,8 @@ public partial class ImportPipeline(
                         bbox.ExpandToInclude(cadastreFeature.Geometry.EnvelopeInternal);
 
                 if (bbox.IsNull) continue;
+
+                var administrative = administrativeRepositoryRepository.GetByCadastreAte(ate);
 
                 var osmFeatures = await osmFeatureRepository.GetUnmatchedIntersectingTracking(bbox.ToGeometry());
 
@@ -306,6 +309,7 @@ public partial class ImportPipeline(
                         Geometry = AssembleOsmGeometry(matchingOsm),
                         CadastreFeature = cadastre,
                         OsmFeatures = matchingOsm.ToList(),
+                        AdministrativeId = administrative.Id,
                     };
 
                     featureRepository.Add(feature);

@@ -290,4 +290,9 @@ public class AdministrativeRepository(VulicyDbContext dbContext)
 
         return Context.Database.ExecuteSqlRawAsync(command);
     }
+
+    public Task<AdministrativeEntity?> GetByCadastreAte(int cadastreAte)
+    {
+        return Entities.FirstOrDefaultAsync(x => x.CadastreAte == cadastreAte);
+    }
 }

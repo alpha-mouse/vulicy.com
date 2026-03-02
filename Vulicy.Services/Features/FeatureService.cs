@@ -20,7 +20,8 @@ public class FeatureService(
     IOsmFeatureRepository osmFeatureRepository,
     ICadastreFeatureRepository cadastreFeatureRepository,
     IInitialCadastreFeatureImportRepository initialCadastreFeatureImportRepository,
-    IDossierRecordRepository dossierRecordRepository
+    IDossierRecordRepository dossierRecordRepository,
+    IAdministrativeRepository administrativeRepository
     ) : IFeatureService
 {
     public Task<List<FeatureSearchResult>> GetByDossierRecord(int dossierRecordId)
@@ -37,11 +38,16 @@ public class FeatureService(
         CheckForLinking(osmFeature);
         CheckForLinking(cadastreFeature);
 
+        var administrative = await administrativeRepository.GetByCadastreAte(cadastreFeature.Ate);
+        if (administrative == null)
+            throw new InvalidOperationException("Administrative not found");
+
         var feature = new FeatureEntity();
 
         MapFromRequest(featureEditRequest, feature);
 
         feature.Geometry = osmFeature.Geometry;
+        feature.AdministrativeId = administrative.Id;
         feature.LastModifiedById = userId;
         osmFeature.Feature = feature;
         cadastreFeature.Feature = feature;
@@ -54,7 +60,7 @@ public class FeatureService(
             feature.NameBeTarask,
             feature.NameBeNark,
             feature.NameRu,
-            cadastreFeature.AteNameBel,
+            administrative.NameBeTarask,
             feature.Type,
             feature.Geometry
         );

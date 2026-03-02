@@ -4,4 +4,5 @@ public interface IAdministrativeRepository : IRepository<AdministrativeEntity, i
 {
     Task CreateMissingAdministrativeFromCadastre();
     Task SetAdministrativeOnFeatures();
+    Task<AdministrativeEntity?> GetByCadastreAte(int cadastreAte);
 }
