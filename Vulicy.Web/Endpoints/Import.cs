@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Vulicy.Domain;
 using Vulicy.Services;
 using Vulicy.Web.Infrastructure;
 
@@ -16,9 +17,11 @@ public static class Import
         group.MapPost("/cadastre-initial", ImportCadastreInitial);
         group.MapPost("/match-osm-cadastre", MatchOsmCadastre);
         group.MapPost("/1-initialize-naming-categories", InitializeNamingCategories);
-        group.MapPost("/2-initialize-dossier-records", InitializeDossierRecords);
-        group.MapPost("/3-initialize-features-dossier-categories-references", InitializeFeaturesDossierCategoriesReferences);
-        group.MapPost("/4-map-fields-from-initial-cadastre-import", MapFieldsFromInitialCadastreImport);
+        group.MapPost("/2-create-dossier-records-from-sql", CreateDossierRecordsFromSql);
+        group.MapPost("/3-initialize-dossier-records", InitializeDossierRecords);
+        group.MapPost("/4-initialize-features-dossier-categories-references", InitializeFeaturesDossierCategoriesReferences);
+        group.MapPost("/5-map-fields-from-initial-cadastre-import", MapFieldsFromInitialCadastreImport);
+        group.MapPost("/6-create-missing-administrative", CreateMissingAdministrative);
     }
 
     private static Task<int> ImportOsm([FromBody] string pbfDownloadUrl, IImportingService importingService, IHostApplicationLifetime hostApplicationLifetime)
@@ -46,6 +49,11 @@ public static class Import
         return importingService.InitializeNamingCategories();
     }
 
+    private static IResult CreateDossierRecordsFromSql()
+    {
+        return Results.BadRequest("FROM SQL!!1! Run SQL script manually.");
+    }
+
     private static Task InitializeDossierRecords(IImportPipeline importPipeline)
     {
         return importPipeline.InitializeDossierRecords();
@@ -59,5 +67,10 @@ public static class Import
     private static Task MapFieldsFromInitialCadastreImport(IImportPipeline importPipeline, IHostApplicationLifetime hostApplicationLifetime)
     {
         return importPipeline.MapFieldsFromInitialCadastreImport(hostApplicationLifetime.ApplicationStopping);
+    }
+
+    private static Task CreateMissingAdministrative(IAdministrativeRepository administrativeRepository)
+    {
+        return administrativeRepository.CreateMissingAdministrativeFromCadastre();
     }
 }

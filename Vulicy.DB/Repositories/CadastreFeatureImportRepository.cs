@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Npgsql;
-using Vulicy.Domain;
 using Vulicy.DB.Configurations;
+using Vulicy.Domain;
 
-namespace Vulicy.DB;
+namespace Vulicy.DB.Repositories;
 
 public class CadastreFeatureImportRepository(VulicyDbContext dbContext)
     : RepositoryBase<CadastreFeatureImportEntity, string>(dbContext)

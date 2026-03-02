@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Vulicy.Domain;
 
-namespace Vulicy.DB;
+namespace Vulicy.DB.Repositories;
 
 public class InitialCadastreFeatureImportRepository(VulicyDbContext dbContext)
     : RepositoryBase<InitialCadastreFeatureImportEntity, string>(dbContext)

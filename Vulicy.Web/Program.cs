@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Globalization;
+using System.Text;
 using Vulicy.Services;
 using Vulicy.Web.Endpoints;
 using Vulicy.Web.Infrastructure;
 
+Console.OutputEncoding = Encoding.UTF8;
 CultureInfo.DefaultThreadCurrentCulture = CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = CultureInfo.InvariantCulture;
 
 var builder = WebApplication.CreateSlimBuilder(args);

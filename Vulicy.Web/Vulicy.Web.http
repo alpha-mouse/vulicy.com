@@ -29,15 +29,19 @@ POST {{Vulicy.Web_HostAddress}}/api/import/1-initialize-naming-categories
 
 ###
 
-POST {{Vulicy.Web_HostAddress}}/api/import/2-initialize-dossier-records
+POST {{Vulicy.Web_HostAddress}}/api/import/3-initialize-dossier-records
 
 ###
 
-POST {{Vulicy.Web_HostAddress}}/api/import/3-initialize-features-dossier-categories-references
+POST {{Vulicy.Web_HostAddress}}/api/import/4-initialize-features-dossier-categories-references
 
 ###
 
-POST {{Vulicy.Web_HostAddress}}/api/import/4-map-fields-from-initial-cadastre-import
+POST {{Vulicy.Web_HostAddress}}/api/import/5-map-fields-from-initial-cadastre-import
+
+###
+
+POST {{Vulicy.Web_HostAddress}}/api/import/6-create-missing-administrative
 
 ###
 

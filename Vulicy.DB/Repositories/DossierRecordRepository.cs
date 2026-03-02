@@ -3,7 +3,7 @@ using Npgsql;
 using Vulicy.DB.Configurations;
 using Vulicy.Domain;
 
-namespace Vulicy.DB;
+namespace Vulicy.DB.Repositories;
 
 public class DossierRecordRepository(VulicyDbContext dbContext)
     : RepositoryBase<DossierRecordEntity, int>(dbContext)

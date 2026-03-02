@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Vulicy.Domain;
 
-namespace Vulicy.DB;
+namespace Vulicy.DB.Configurations;
 
 public class DossierRecordMergeSuggestionConfiguration : IEntityTypeConfiguration<DossierRecordMergeSuggestionEntity>
 {
