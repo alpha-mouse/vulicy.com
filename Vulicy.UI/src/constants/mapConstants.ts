@@ -2,12 +2,12 @@ export const SOURCES_CADASTRE_COLOR = '#8B0A50'; // Cadastre features
 export const SOURCES_OSM_COLOR = '#FF8C00'; // OSM features
 
 export const CLASSIFICATION_COLORS: Record<number, string> = {
-  1: '#ff4d4f', // Priority - Vibrant Red
-  2: '#ff7875', // Required - Lighter Red
-  3: '#ffa940', // Suggested - Orange
-  4: '#ffec3d', // Possible - Yellow
-  5: '#73d13d', // Unneeded - Green
-  0: '#cbbef8ff', // None/Unknown - Purple
+  1: '#e50f44', // Priority - Vibrant Red
+  2: '#fa6970', // Required - Lighter Red
+  3: '#ffb240', // Suggested - Orange
+  4: '#ffe254', // Possible - Yellow
+  5: '#77d993', // Unneeded - Green
+  0: '#8ca9ff', // None/Unknown - Purple
 };
 
 export const FEATURE_TYPE_LABELS: Record<number, string> = {
