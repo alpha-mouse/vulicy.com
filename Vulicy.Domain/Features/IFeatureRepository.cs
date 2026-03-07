@@ -7,7 +7,7 @@ public interface IFeatureRepository : IRepository<FeatureEntity, int>
     Task<byte[]?> GetTileDetails(int z, int x, int y);
     Task<List<FeatureSearchResult>> GetByDossierRecord(int dossierRecordId);
 
-    Task<ForumTopicData?> GetCreateForumTopicData(int id);
+    Task<FeatureForumTopicData?> GetCreateForumTopicData(int id);
     Task UpdateForumLink(int featureId, string forumRelativeLink, int userId);
     Task SetForumLinkIfEmpty(int featureId, string forumRelativeLink, int userId);
 

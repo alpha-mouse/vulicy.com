@@ -10,6 +10,7 @@ public enum DiscourseWebhookResult
 
 public interface IDiscourseService
 {
-    Task<string?> CreateTopic(int featureId, int userId);
+    Task<string?> CreateFeatureTopic(int featureId, int userId);
+    Task<string?> CreateDossierRecordTopic(int dossierRecordId, int userId);
     Task<DiscourseWebhookResult> ProcessWebhook(string? signatureHeader, string? eventTypeHeader, ArraySegment<byte> body);
 }

@@ -3,7 +3,7 @@ using Vulicy.Web.Infrastructure;
 
 namespace Vulicy.Web.Endpoints;
 
-public record CreateTopicRequest(int FeatureId);
+public record CreateTopicRequest(int ObjectId);
 
 public record CreateTopicResponse(string ForumRelativeLink);
 
@@ -12,19 +12,36 @@ public static class Forum
     public static void MapForum(this IEndpointRouteBuilder builder)
     {
         var group = builder.MapGroup("/api/forum");
-        group.MapPost("/create-topic", CreateTopic).RequireAdmin();
+        group.MapPost("/create-feature-topic", CreateFeatureTopic).RequireAuthorization();
+        group.MapPost("/create-dossier-record-topic", CreateDossierRecordTopic).RequireAuthorization();
         // AllowAnonymous: This webhook uses HMAC signature verification instead of cookie auth
         group.MapPost("/discourse-webhook", DiscourseWebhook).AllowAnonymous();
     }
 
-    private static async Task<IResult> CreateTopic(
+    private static async Task<IResult> CreateFeatureTopic(
         CreateTopicRequest request,
         IDiscourseService discourseService,
         HttpContext context)
     {
         var userId = context.User.GetUserId();
 
-        var forumRelativeLink = await discourseService.CreateTopic(request.FeatureId, userId);
+        var forumRelativeLink = await discourseService.CreateFeatureTopic(request.ObjectId, userId);
+        if (forumRelativeLink == null)
+        {
+            return Results.Problem("Failed to create forum topic. Check Discourse configuration.");
+        }
+
+        return Results.Ok(new CreateTopicResponse(forumRelativeLink));
+    }
+
+    private static async Task<IResult> CreateDossierRecordTopic(
+        CreateTopicRequest request,
+        IDiscourseService discourseService,
+        HttpContext context)
+    {
+        var userId = context.User.GetUserId();
+
+        var forumRelativeLink = await discourseService.CreateDossierRecordTopic(request.ObjectId, userId);
         if (forumRelativeLink == null)
         {
             return Results.Problem("Failed to create forum topic. Check Discourse configuration.");

@@ -1,13 +1,18 @@
-import { Pencil, Trash2, Merge } from 'lucide-react';
+import { useState } from 'react';
+import { Pencil, Trash2, Merge, MessageSquarePlus, MessageSquare, Loader2 } from 'lucide-react';
+import Button from './Button';
 import { getClassificationText, CLASSIFICATION_COLORS } from '../constants/mapConstants';
 import type { DossierRecordSearchResult, NamingCategory } from '../types';
+import { api } from '../utils/api';
 
 interface DossierRecordItemProps {
   record: DossierRecordSearchResult;
   namingCategories: NamingCategory[];
   showFeatureCount?: boolean;
   compact?: boolean;
+  isAuthenticated?: boolean;
   isAdmin?: boolean;
+  discourseBaseUrl?: string;
   onEdit?: (record: DossierRecordSearchResult) => void;
   onDelete?: (record: DossierRecordSearchResult) => void;
   onMerge?: (record: DossierRecordSearchResult) => void;
@@ -22,11 +27,39 @@ const DossierRecordItem = ({
   namingCategories,
   showFeatureCount = false,
   compact = false,
+  isAuthenticated = false,
   isAdmin = false,
+  discourseBaseUrl,
   onEdit,
   onDelete,
   onMerge,
 }: DossierRecordItemProps) => {
+  const [isCreatingTopic, setIsCreatingTopic] = useState(false);
+  const [localForumLink, setLocalForumLink] = useState<string | null>(null);
+
+  const handleCreateDiscussion = async () => {
+    if (isCreatingTopic) return;
+    const targetDossierRecordId = record.id;
+    setIsCreatingTopic(true);
+
+    try {
+      const data = await api.post<{ forumRelativeLink: string }>('/api/forum/create-dossier-record-topic', {
+        objectId: targetDossierRecordId
+      });
+
+      setLocalForumLink(data.forumRelativeLink);
+    } catch (error) {
+      console.error('Failed to create forum topic:', error);
+    } finally {
+      setIsCreatingTopic(false);
+    }
+  };
+
+  const effectiveForumLink = localForumLink || record.forumRelativeLink;
+  const forumFullUrl = effectiveForumLink && discourseBaseUrl
+    ? `${discourseBaseUrl}${effectiveForumLink.startsWith('/') ? '' : '/'}${effectiveForumLink}`
+    : null;
+
   const categoryName = record.namingCategoryId
     ? namingCategories.find(c => c.id === record.namingCategoryId)?.name || '...'
     : null;
@@ -97,6 +130,33 @@ const DossierRecordItem = ({
           <span className="text-black/50">Аб'ектаў: </span>
           <span className="text-black">{record.numFeatures}</span>
         </div>
+      )}
+
+      {/* Forum link - shown before dossier record details */}
+      {forumFullUrl && (
+        <a
+          href={forumFullUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 text-primary hover:underline text-sm w-fit transition-colors"
+        >
+          <MessageSquare size={16} />
+          Абмеркаваць на форуме
+        </a>
+      )}
+
+      {/* Create discussion button - shown when authenticated and no forum link */}
+      {isAuthenticated && !forumFullUrl && (
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={handleCreateDiscussion}
+          disabled={isCreatingTopic}
+          icon={isCreatingTopic ? <Loader2 size={18} className="animate-spin" /> : <MessageSquarePlus size={18} />}
+          className="w-fit"
+        >
+          {isCreatingTopic ? 'Стварэньне...' : 'Стварыць абмеркаваньне'}
+        </Button>
       )}
 
       {/* Admin actions */}

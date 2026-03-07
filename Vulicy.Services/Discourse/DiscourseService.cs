@@ -1,8 +1,8 @@
+using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using Microsoft.Extensions.Logging;
 using Vulicy.Domain;
 
 namespace Vulicy.Services;
@@ -11,11 +11,12 @@ public partial class DiscourseService(
     DiscourseConfig discourseConfig,
     ILinksService linksService,
     IFeatureRepository featureRepository,
+    IDossierRecordRepository dossierRecordRepository,
     IHttpClientFactory httpClientFactory,
     ILogger<DiscourseService> logger
     ) : IDiscourseService
 {
-    public async Task<string?> CreateTopic(int featureId, int userId)
+    public async Task<string?> CreateFeatureTopic(int featureId, int userId)
     {
         var data = await featureRepository.GetCreateForumTopicData(featureId);
         if (data == null)
@@ -65,6 +66,55 @@ public partial class DiscourseService(
         return null;
     }
 
+    public async Task<string?> CreateDossierRecordTopic(int dossierRecordId, int userId)
+    {
+        var dossierRecord = await dossierRecordRepository.GetById(dossierRecordId);
+        if (dossierRecord == null)
+            return null;
+
+        if (dossierRecord.ForumRelativeLink != null)
+            return dossierRecord.ForumRelativeLink;
+
+        var backLink = linksService.CreateDossierRecordLink(dossierRecordId);
+
+        var topicBody = $"[Глядзець на мапе]({backLink})" + '\n' + (dossierRecord.DescriptionBe ?? dossierRecord.DescriptionRu);
+
+        var title = dossierRecord.NameBeTarask;
+
+        var client = httpClientFactory.CreateClient();
+        client.DefaultRequestHeaders.Add("Api-Key", discourseConfig.ApiKey);
+        client.DefaultRequestHeaders.Add("Api-Username", "system");
+
+        var requestBody = new
+        {
+            title = title,
+            raw = topicBody,
+            category = discourseConfig.DossierRecordCategoryId,
+        };
+
+        var response = await client.PostAsJsonAsync(
+            $"{discourseConfig.BaseUrl}/posts.json",
+            requestBody);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        var postResponse = await response.Content.ReadFromJsonAsync(DiscourseJsonSerializerContext.Default.DiscoursePostResponse);
+
+        if (postResponse != null)
+        {
+            var forumRelativeLink = $"/t/{postResponse.TopicSlug}/{postResponse.TopicId}";
+
+            await dossierRecordRepository.UpdateForumLink(dossierRecordId, forumRelativeLink, userId);
+
+            return forumRelativeLink;
+        }
+
+        return null;
+    }
+
     public async Task<DiscourseWebhookResult> ProcessWebhook(string? signatureHeader, string? eventTypeHeader, ArraySegment<byte> body)
     {
         if (string.IsNullOrEmpty(signatureHeader))
@@ -96,17 +146,23 @@ public partial class DiscourseService(
         if (payload?.Topic == null)
             return DiscourseWebhookResult.UnexpectedBody;
 
-        if (payload.Topic.CategoryId != discourseConfig.StreetCategoryId)
+        if (payload.Topic.CategoryId != discourseConfig.StreetCategoryId && payload.Topic.CategoryId != discourseConfig.DossierRecordCategoryId)
             return DiscourseWebhookResult.IgnoredEvent;
 
         var firstPost = await FetchFirstPost(payload.Topic.Id);
         if (firstPost == null)
             return DiscourseWebhookResult.Success;
 
-        if (linksService.TryFindLinkAndParseFeatureId(firstPost.Raw, out var featureId))
+        if (payload.Topic.CategoryId == discourseConfig.StreetCategoryId && linksService.TryFindFeatureLinkAndParseId(firstPost.Raw, out var featureId))
         {
             var forumRelativeLink = $"/t/{payload.Topic.Slug}/{payload.Topic.Id}";
             await featureRepository.SetForumLinkIfEmpty(featureId, forumRelativeLink, 0);
+        }
+
+        if (payload.Topic.CategoryId == discourseConfig.DossierRecordCategoryId && linksService.TryFindDossierRecordLinkAndParseId(firstPost.Raw, out var dossierRecordId))
+        {
+            var forumRelativeLink = $"/t/{payload.Topic.Slug}/{payload.Topic.Id}";
+            await dossierRecordRepository.SetForumLinkIfEmpty(dossierRecordId, forumRelativeLink, 0);
         }
 
         return DiscourseWebhookResult.Success;
@@ -119,13 +175,19 @@ public partial class DiscourseService(
         if (payload?.Post == null)
             return DiscourseWebhookResult.UnexpectedBody;
 
-        if (payload.Post.CategoryId != discourseConfig.StreetCategoryId || payload.Post.PostNumber != 1)
+        if (payload.Post.PostNumber != 1 || payload.Post.CategoryId != discourseConfig.StreetCategoryId && payload.Post.CategoryId != discourseConfig.DossierRecordCategoryId)
             return DiscourseWebhookResult.IgnoredEvent;
 
-        if (linksService.TryFindLinkAndParseFeatureId(payload.Post.Raw, out var featureId))
+        if (payload.Post.CategoryId == discourseConfig.StreetCategoryId && linksService.TryFindFeatureLinkAndParseId(payload.Post.Raw, out var featureId))
         {
             var forumRelativeLink = $"/t/{payload.Post.TopicSlug}/{payload.Post.TopicId}";
             await featureRepository.SetForumLinkIfEmpty(featureId, forumRelativeLink, 0);
+        }
+
+        if (payload.Post.CategoryId == discourseConfig.DossierRecordCategoryId && linksService.TryFindDossierRecordLinkAndParseId(payload.Post.Raw, out var dossierRecordId))
+        {
+            var forumRelativeLink = $"/t/{payload.Post.TopicSlug}/{payload.Post.TopicId}";
+            await dossierRecordRepository.SetForumLinkIfEmpty(dossierRecordId, forumRelativeLink, 0);
         }
 
         return DiscourseWebhookResult.Success;

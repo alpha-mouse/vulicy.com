@@ -12,6 +12,7 @@ public abstract class DossierRecordBaseEntity : Entity<int>
     public List<string>? AlternativeDescriptionsBe { get; set; }
     public List<string>? AlternativeDescriptionsRu { get; set; }
     public ClassificationGrade Classification { get; set; }
+    public string? ForumRelativeLink { get; set; }
 
     public int LastModifiedById { get; set; }
     public int? NamingCategoryId { get; set; }

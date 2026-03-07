@@ -56,8 +56,8 @@ const FeatureInfoView = ({
     setIsCreatingTopic(true);
 
     try {
-      const data = await api.post<{ forumRelativeLink: string }>('/api/forum/create-topic', {
-        featureId: targetFeatureId
+      const data = await api.post<{ forumRelativeLink: string }>('/api/forum/create-feature-topic', {
+        objectId: targetFeatureId
       });
 
       if (data.forumRelativeLink && currentIdRef.current === targetFeatureId) {

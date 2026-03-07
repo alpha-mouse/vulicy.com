@@ -65,6 +65,10 @@ GET {{Vulicy.Web_HostAddress}}/api/dossier-records/search?query=Скарына
 
 ###
 
+GET {{Vulicy.Web_HostAddress}}/api/dossier-records/22854
+
+###
+
 GET {{Vulicy.Web_HostAddress}}/api/dossier-records/19978/features
 
 ###

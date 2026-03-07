@@ -13,8 +13,8 @@ public class DossierRecordMergeSuggestionRepository(VulicyDbContext dbContext)
             .OrderBy(x => x.Id)
             .Select(x => new DossierRecordMergeSuggestion(
                 x.Id,
-                new DossierRecordSearchResult(x.LeftRecord.Id, x.LeftRecord.NameBeTarask, x.LeftRecord.NameBeNark, x.LeftRecord.NameRu, x.LeftRecord.DescriptionBe, x.LeftRecord.DescriptionRu, x.LeftRecord.Classification, x.LeftRecord.NamingCategoryId, 0),
-                new DossierRecordSearchResult(x.RightRecord.Id, x.RightRecord.NameBeTarask, x.RightRecord.NameBeNark, x.RightRecord.NameRu, x.RightRecord.DescriptionBe, x.RightRecord.DescriptionRu, x.RightRecord.Classification, x.RightRecord.NamingCategoryId, 0)
+                new DossierRecordSearchResult(x.LeftRecord.Id, x.LeftRecord.NameBeTarask, x.LeftRecord.NameBeNark, x.LeftRecord.NameRu, x.LeftRecord.DescriptionBe, x.LeftRecord.DescriptionRu, x.LeftRecord.Classification, x.LeftRecord.NamingCategoryId, 0, x.LeftRecord.ForumRelativeLink),
+                new DossierRecordSearchResult(x.RightRecord.Id, x.RightRecord.NameBeTarask, x.RightRecord.NameBeNark, x.RightRecord.NameRu, x.RightRecord.DescriptionBe, x.RightRecord.DescriptionRu, x.RightRecord.Classification, x.RightRecord.NamingCategoryId, 0, x.RightRecord.ForumRelativeLink)
             ))
             .FirstOrDefaultAsync();
     }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ChevronLeft, Search as SearchIcon, X, MapPin, ChevronDown, ChevronUp, Loader2, FileUser, Plus } from 'lucide-react';
+import { ChevronLeft, Search as SearchIcon, X, MapPin, ChevronDown, ChevronUp, Loader2, FileUser, Plus, Link, Check } from 'lucide-react';
 import type { SearchResult, DossierRecordSearchResult, NamingCategory } from '../types';
 import { api } from '../utils/api';
 import FeatureListItem from './FeatureListItem';
@@ -13,7 +13,11 @@ interface DossierRecordsPanelProps {
   onClose: () => void;
   onFeatureClick: (feature: SearchResult) => void;
   namingCategories: NamingCategory[];
+  isAuthenticated?: boolean;
   isAdmin?: boolean;
+  discourseBaseUrl?: string;
+  initialRecordId?: number | null;
+  onInitialRecordHandled?: () => void;
 }
 
 const PAGE_SIZE = 50;
@@ -23,7 +27,11 @@ const DossierRecordsPanel = ({
   onClose,
   onFeatureClick,
   namingCategories,
+  isAuthenticated = false,
   isAdmin = false,
+  discourseBaseUrl,
+  initialRecordId,
+  onInitialRecordHandled,
 }: DossierRecordsPanelProps) => {
   const [query, setQuery] = useState('');
   const [records, setRecords] = useState<DossierRecordSearchResult[]>([]);
@@ -39,9 +47,11 @@ const DossierRecordsPanel = ({
   const [deletingRecord, setDeletingRecord] = useState<DossierRecordSearchResult | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [mergingRecord, setMergingRecord] = useState<DossierRecordSearchResult | null>(null);
+  const [copiedRecordId, setCopiedRecordId] = useState<number | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const isInitialRecordActiveRef = useRef(false);
   const skipRef = useRef(0);
 
   // Search for records
@@ -68,9 +78,33 @@ const DossierRecordsPanel = ({
     }
   }, []);
 
+  // Fetch single record by ID when opened via deep link
+  useEffect(() => {
+    if (!isOpen || !initialRecordId) {
+      isInitialRecordActiveRef.current = false;
+      return;
+    }
+
+    isInitialRecordActiveRef.current = true;
+    setIsLoading(true);
+    setRecords([]);
+    api.get<DossierRecordSearchResult>(`/api/dossier-records/${initialRecordId}`)
+      .then((data) => {
+        setRecords([data]);
+        setHasMore(false);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch dossier record by id:', err);
+        setRecords([]);
+      })
+      .finally(() => setIsLoading(false));
+  }, [isOpen, initialRecordId]);
+
   // Initial load and search on query change
   useEffect(() => {
     if (!isOpen) return;
+    // Skip the normal search if we loaded via deep link and user hasn't typed yet
+    if (isInitialRecordActiveRef.current) return;
 
     const timer = setTimeout(() => {
       skipRef.current = 0;
@@ -166,6 +200,16 @@ const DossierRecordsPanel = ({
     searchRecords(query, 0, false);
   }, [query, searchRecords]);
 
+  const handleCopyRecordLink = useCallback((e: React.MouseEvent, recordId: number) => {
+    e.stopPropagation();
+    const url = new URL(window.location.href);
+    // Keep only the dossierRecordId param for a clean deep link
+    url.searchParams.set('dossierRecordId', String(recordId));
+    navigator.clipboard.writeText(url.toString());
+    setCopiedRecordId(recordId);
+    setTimeout(() => setCopiedRecordId(null), 2000);
+  }, []);
+
   if (!isOpen) return null;
 
   return (
@@ -201,7 +245,13 @@ const DossierRecordsPanel = ({
           <input
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              if (isInitialRecordActiveRef.current) {
+                isInitialRecordActiveRef.current = false;
+                onInitialRecordHandled?.();
+              }
+              setQuery(e.target.value);
+            }}
             placeholder="Пошук імені..."
             className="bg-transparent border-none outline-none w-full text-sm text-black placeholder:text-black/30"
           />
@@ -230,6 +280,13 @@ const DossierRecordsPanel = ({
                   {record.nameBeTarask || record.nameBeNark || record.nameRu || '(без назвы)'}
                 </div>
               </div>
+              <button
+                onClick={(e) => handleCopyRecordLink(e, record.id)}
+                className="p-1 inline-flex items-center justify-center text-black/30 hover:text-black/60 transition-colors bg-transparent border-none cursor-pointer outline-none shrink-0"
+                title="Скапіяваць спасылку"
+              >
+                {copiedRecordId === record.id ? <Check size={14} className="text-green-500" /> : <Link size={14} />}
+              </button>
               <div
                 className="w-2.5 h-2.5 rounded-full shrink-0"
                 style={{ backgroundColor: CLASSIFICATION_COLORS[record.classification] || CLASSIFICATION_COLORS[0] }}
@@ -250,7 +307,9 @@ const DossierRecordsPanel = ({
                 <DossierRecordItem
                   record={record}
                   namingCategories={namingCategories}
+                  isAuthenticated={isAuthenticated}
                   isAdmin={isAdmin}
+                  discourseBaseUrl={discourseBaseUrl}
                   onMerge={setMergingRecord}
                   onEdit={setEditingRecord}
                   onDelete={setDeletingRecord}

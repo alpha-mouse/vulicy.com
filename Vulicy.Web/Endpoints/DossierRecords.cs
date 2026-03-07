@@ -10,6 +10,7 @@ public static class DossierRecords
     {
         var group = builder.MapGroup("/api/dossier-records");
         group.MapGet("/search", Search);
+        group.MapGet("/{id:int}", GetDossierRecord);
         group.MapGet("/{id:int}/features", GetFeatures);
         group.MapPost("", CreateRecord).RequireAdmin().Validate<EditDossierRecordRequest>();
         group.MapPut("/{id:int}", EditRecord).RequireAdmin().Validate<EditDossierRecordRequest>();
@@ -23,6 +24,14 @@ public static class DossierRecords
     private static Task<List<DossierRecordSearchResult>> Search(string? query, int? skip, int? take, IDossierRecordService dossierRecordService)
     {
         return dossierRecordService.SearchByName(query, skip, take);
+    }
+
+    private static async Task<IResult> GetDossierRecord(int id, IDossierRecordService dossierRecordService)
+    {
+        var result = await dossierRecordService.Get(id);
+        if (result == null)
+            return Results.NotFound();
+        return Results.Ok(result);
     }
 
     private static Task<List<FeatureSearchResult>> GetFeatures(int id, IFeatureService featureService)

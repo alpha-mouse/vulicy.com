@@ -151,7 +151,7 @@ public class FeatureRepository(VulicyDbContext dbContext)
             .ToListAsync();
     }
 
-    public Task<ForumTopicData?> GetCreateForumTopicData(int id)
+    public Task<FeatureForumTopicData?> GetCreateForumTopicData(int id)
     {
         const string query = $"""
             select
@@ -165,7 +165,7 @@ public class FeatureRepository(VulicyDbContext dbContext)
             """;
 
         return Context.Database
-            .SqlQueryRaw<ForumTopicData>(query, new NpgsqlParameter("id", id))
+            .SqlQueryRaw<FeatureForumTopicData>(query, new NpgsqlParameter("id", id))
             .FirstOrDefaultAsync();
     }
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './SourcesMap.css';
-import { Menu, FileUser, GitMerge, Database } from 'lucide-react';
+import { Menu, FileUser, Database } from 'lucide-react';
 import TopBar from './TopBar';
 import FeatureInfoPanel from './FeatureInfoPanel';
 import DossierRecordsPanel from './DossierRecordsPanel';
@@ -35,13 +35,10 @@ const MapTopBarContent = () => {
     setIsMenuOpen(false);
   };
 
-  // We need to get handleResultClick from parent - keep search logic in parent
-  // Actually, let's keep this simple and just handle menu here
-
   return (
     <>
-      {/* Admin menu button - always in DOM to prevent layout shift */}
-      <div className={`relative ${!(isAdmin && user) ? 'invisible' : ''}`} ref={menuRef}>
+      {/* Menu button - visible to all users */}
+      <div className="relative" ref={menuRef}>
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           className="p-2 hover:bg-black/5 rounded-lg transition-colors bg-transparent border-none cursor-pointer outline-none"
@@ -59,13 +56,15 @@ const MapTopBarContent = () => {
               <FileUser size={18} className="text-black/60" />
               <span>Імёны</span>
             </button>
-            <a
-              href="/sources"
-              className="w-full px-4 py-2.5 text-left text-sm font-medium text-black hover:bg-black/5 transition-colors bg-transparent border-none cursor-pointer outline-none flex items-center gap-2 no-underline"
-            >
-              <Database size={18} className="text-black/60" />
-              <span>Крыніцы</span>
-            </a>
+            {isAdmin && user && (
+              <a
+                href="/sources"
+                className="w-full px-4 py-2.5 text-left text-sm font-medium text-black hover:bg-black/5 transition-colors bg-transparent border-none cursor-pointer outline-none flex items-center gap-2 no-underline"
+              >
+                <Database size={18} className="text-black/60" />
+                <span>Крыніцы</span>
+              </a>
+            )}
           </div>
         )}
       </div>
@@ -102,7 +101,20 @@ const MapComponent = ({
 
   // Hooks
   const { config } = useConfig();
-  const { updateParams } = useUrlParams();
+  const { updateParams, getNumericParam } = useUrlParams();
+
+  // Deep link: read dossierRecordId from URL on mount
+  const [initialDossierRecordId, setInitialDossierRecordId] = useState<number | null>(() => {
+    const id = getNumericParam('dossierRecordId');
+    return id !== undefined && Number.isInteger(id) ? id : null;
+  });
+
+  // Auto-open dossier panel when deep link param is present
+  useEffect(() => {
+    if (initialDossierRecordId !== null) {
+      setDossierPanelOpen(true);
+    }
+  }, []); // only on mount
 
   // Sync ref with state for animation loop access
   useEffect(() => {
@@ -179,6 +191,19 @@ const MapComponent = ({
     updateParams({ featureId: null });
   }, [setSelectedFeature, setFeatureLoading, updateParams]);
 
+  const handleCloseDossierPanel = useCallback(() => {
+    setDossierPanelOpen(false);
+    if (initialDossierRecordId !== null) {
+      setInitialDossierRecordId(null);
+      updateParams({ dossierRecordId: null });
+    }
+  }, [setDossierPanelOpen, initialDossierRecordId, updateParams]);
+
+  const handleInitialRecordHandled = useCallback(() => {
+    setInitialDossierRecordId(null);
+    updateParams({ dossierRecordId: null });
+  }, [updateParams]);
+
   // Handler for when a forum topic is created
   const handleForumLinkCreated = useCallback((featureId: number, forumLink: string) => {
     // Update current feature and cache it
@@ -245,10 +270,14 @@ const MapComponent = ({
 
         <DossierRecordsPanel
           isOpen={isDossierPanelOpen}
-          onClose={() => setDossierPanelOpen(false)}
+          onClose={handleCloseDossierPanel}
           onFeatureClick={handleResultClick}
           namingCategories={namingCategories}
+          isAuthenticated={!!user}
           isAdmin={isAdmin}
+          discourseBaseUrl={config?.discourseBaseUrl}
+          initialRecordId={initialDossierRecordId}
+          onInitialRecordHandled={handleInitialRecordHandled}
         />
       </div>
     </div>

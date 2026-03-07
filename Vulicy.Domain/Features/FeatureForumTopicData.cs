@@ -1,6 +1,6 @@
 namespace Vulicy.Domain;
 
-public class ForumTopicData
+public class FeatureForumTopicData
 {
     public FeatureType Type { get; set; }
     public string Name { get; set; }

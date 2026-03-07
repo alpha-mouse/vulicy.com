@@ -17,6 +17,7 @@ export interface DossierRecordSearchResult {
   classification: number;
   namingCategoryId?: number;
   numFeatures: number;
+  forumRelativeLink?: string;
 }
 
 export interface DossierRecordEditRequest {

@@ -6,4 +6,5 @@ public class DiscourseConfig
     public string AuthSecret { get; set; } = null!;
     public string? ApiKey { get; set; }
     public int StreetCategoryId { get; set; }
+    public int DossierRecordCategoryId { get; set; }
 }

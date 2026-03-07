@@ -9,6 +9,29 @@ public class DossierRecordRepository(VulicyDbContext dbContext)
     : RepositoryBase<DossierRecordEntity, int>(dbContext)
         , IDossierRecordRepository
 {
+    private const string SearchColumnsList =
+        $"""
+         dr."{nameof(DossierRecordEntity.Id)}",
+         dr."{nameof(DossierRecordEntity.NameBeTarask)}",
+         dr."{nameof(DossierRecordEntity.NameBeNark)}",
+         dr."{nameof(DossierRecordEntity.NameRu)}",
+         dr."{nameof(DossierRecordEntity.DescriptionBe)}",
+         dr."{nameof(DossierRecordEntity.DescriptionRu)}",
+         dr."{nameof(DossierRecordEntity.Classification)}",
+         dr."{nameof(DossierRecordEntity.NamingCategoryId)}",
+         dr."{nameof(DossierRecordEntity.ForumRelativeLink)}"
+         """;
+
+    private const string SearchBaseQuery =
+        $"""
+         select
+             {SearchColumnsList},
+             count(f."{nameof(FeatureEntity.Id)}") as "{nameof(DossierRecordSearchResult.NumFeatures)}"
+         from "{DossierRecordConfiguration.TableName}" dr
+         left outer join "{FeatureConfiguration.TableName}" f on dr."{nameof(DossierRecordEntity.Id)}" = f."{nameof(FeatureEntity.DossierRecordId)}"
+
+         """;
+
     public Task<bool> HasAny()
     {
         return Entities.AnyAsync();
@@ -28,36 +51,14 @@ public class DossierRecordRepository(VulicyDbContext dbContext)
     {
         var cleanedQuery = DatabaseHelpers.CleanQuery(query);
 
-        const string columnsList =
+        const string orderAndLimit =
             $"""
-            dr."{nameof(DossierRecordEntity.Id)}",
-            dr."{nameof(DossierRecordEntity.NameBeTarask)}",
-            dr."{nameof(DossierRecordEntity.NameBeNark)}",
-            dr."{nameof(DossierRecordEntity.NameRu)}",
-            dr."{nameof(DossierRecordEntity.DescriptionBe)}",
-            dr."{nameof(DossierRecordEntity.DescriptionRu)}",
-            dr."{nameof(DossierRecordEntity.Classification)}",
-            dr."{nameof(DossierRecordEntity.NamingCategoryId)}"
-            """;
-
-        const string baseQuery =
-            $"""
-            select
-                {columnsList},
-                count(f."{nameof(FeatureEntity.Id)}") as "{nameof(DossierRecordSearchResult.NumFeatures)}"
-            from "{DossierRecordConfiguration.TableName}" dr
-            left outer join "{FeatureConfiguration.TableName}" f on dr."{nameof(DossierRecordEntity.Id)}" = f."{nameof(FeatureEntity.DossierRecordId)}"
-
-            """;
-
-        const string orderAndLimit = 
-            $"""
-            group by {columnsList}
+            group by {SearchColumnsList}
             order by dr."{nameof(DossierRecordEntity.NameBeTarask)}"
             limit @take offset @skip
             """;
 
-        const string queryWithSearch = baseQuery +
+        const string queryWithSearch = SearchBaseQuery +
             $"""
             where
                 dr."{nameof(DossierRecordEntity.NameBeTarask)}" ilike @query
@@ -66,7 +67,7 @@ public class DossierRecordRepository(VulicyDbContext dbContext)
 
             """
             + orderAndLimit;
-        const string queryWithoutSearch = baseQuery + orderAndLimit;
+        const string queryWithoutSearch = SearchBaseQuery + orderAndLimit;
 
         IQueryable<DossierRecordSearchResult> result;
         if (string.IsNullOrEmpty(cleanedQuery))
@@ -88,6 +89,21 @@ public class DossierRecordRepository(VulicyDbContext dbContext)
         }
 
         return result.ToListAsync();
+    }
+
+    public Task<DossierRecordSearchResult?> SearchById(int id)
+    {
+        const string query = SearchBaseQuery +
+            $"""
+             where dr."{nameof(DossierRecordEntity.Id)}" = @id
+             group by {SearchColumnsList}
+             """;
+
+        return Context.Database
+            .SqlQueryRaw<DossierRecordSearchResult>(query,
+                new NpgsqlParameter("id", id)
+            )
+            .FirstOrDefaultAsync();
     }
 
     public Task<bool> HasFeatures(int id)
@@ -126,5 +142,41 @@ public class DossierRecordRepository(VulicyDbContext dbContext)
         if (!string.IsNullOrEmpty(descriptionRu))
             query = query.Where(x => x.DescriptionRu == descriptionRu || x.AlternativeDescriptionsRu != null && x.AlternativeDescriptionsRu.Contains(descriptionRu));
         return query.ToListAsync();
+    }
+
+    public async Task UpdateForumLink(int dossierRecordId, string forumRelativeLink, int userId)
+    {
+        await using var transaction = await Context.Database.BeginTransactionAsync();
+        var dossierRecord = await Entities.AsTracking().FirstOrDefaultAsync(x => x.Id == dossierRecordId);
+        if (dossierRecord != null)
+        {
+            var history = DossierRecordHistoricEntity.FromBase(dossierRecord);
+            history.ChangeDateTime = DateTime.UtcNow;
+            history.InHistoryById = userId;
+            Context.Add(history);
+
+            dossierRecord.ForumRelativeLink = forumRelativeLink;
+            dossierRecord.LastModifiedById = userId;
+            await Context.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+    }
+
+    public async Task SetForumLinkIfEmpty(int dossierRecordId, string forumRelativeLink, int userId)
+    {
+        await using var transaction = await Context.Database.BeginTransactionAsync();
+        var dossierRecord = await Entities.AsTracking().FirstOrDefaultAsync(x => x.Id == dossierRecordId);
+        if (dossierRecord is { ForumRelativeLink: null })
+        {
+            var history = DossierRecordHistoricEntity.FromBase(dossierRecord);
+            history.ChangeDateTime = DateTime.UtcNow;
+            history.InHistoryById = userId;
+            Context.Add(history);
+
+            dossierRecord.ForumRelativeLink = forumRelativeLink;
+            dossierRecord.LastModifiedById = userId;
+            await Context.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
     }
 }
