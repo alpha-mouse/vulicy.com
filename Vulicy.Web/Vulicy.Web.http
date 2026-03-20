@@ -74,3 +74,7 @@ GET {{Vulicy.Web_HostAddress}}/api/dossier-records/19978/features
 ###
 
 GET {{Vulicy.Web_HostAddress}}/api/dossier-records/merge-suggestion
+
+###
+
+GET {{Vulicy.Web_HostAddress}}/api/administratives

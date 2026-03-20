@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './SourcesMap.css';
-import { Menu, FileUser, Database } from 'lucide-react';
+import { Menu, FileUser, Database, ListTree } from 'lucide-react';
 import TopBar from './TopBar';
 import FeatureInfoPanel from './FeatureInfoPanel';
 import DossierRecordsPanel from './DossierRecordsPanel';
@@ -57,13 +57,22 @@ const MapTopBarContent = () => {
               <span>Імёны</span>
             </button>
             {isAdmin && user && (
-              <a
-                href="/sources"
-                className="w-full px-4 py-2.5 text-left text-sm font-medium text-black hover:bg-black/5 transition-colors bg-transparent border-none cursor-pointer outline-none flex items-center gap-2 no-underline"
-              >
-                <Database size={18} className="text-black/60" />
-                <span>Крыніцы</span>
-              </a>
+              <>
+                <a
+                  href="/sources"
+                  className="w-full px-4 py-2.5 text-left text-sm font-medium text-black hover:bg-black/5 transition-colors bg-transparent border-none cursor-pointer outline-none flex items-center gap-2 no-underline"
+                >
+                  <Database size={18} className="text-black/60" />
+                  <span>Крыніцы</span>
+                </a>
+                <a
+                  href="/administrative"
+                  className="w-full px-4 py-2.5 text-left text-sm font-medium text-black hover:bg-black/5 transition-colors bg-transparent border-none cursor-pointer outline-none flex items-center gap-2 no-underline"
+                >
+                  <ListTree size={18} className="text-black/60" />
+                  <span>Адміністрацыйны падзел</span>
+                </a>
+              </>
             )}
           </div>
         )}

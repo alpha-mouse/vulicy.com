@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.ResponseCompression;
 using System.Globalization;
 using System.Text;
 using Vulicy.Services;
@@ -27,6 +28,13 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 
     // Add NTS GeoJSON converter for proper geometry serialization
     options.SerializerOptions.Converters.Add(new NetTopologySuite.IO.Converters.GeoJsonConverterFactory());
+});
+
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
 });
 
 builder.Services.AddConfigs(builder.Configuration, typeof(DiscourseConfig).Assembly);
@@ -72,6 +80,8 @@ frontConfig.Environment = app.Environment.IsProduction() ? "production" : "devel
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
+app.UseResponseCompression();
+
 app.UseAuthentication();
 app.UseMiddleware<AuditMiddleware>(); // after authentication
 app.UseAuthorization();
@@ -85,6 +95,7 @@ app.MapDossierRecords();
 app.MapAuth();
 app.MapConfig();
 app.MapForum();
+app.MapAdministratives();
 
 app.MapFallbackToFile("index.html");
 

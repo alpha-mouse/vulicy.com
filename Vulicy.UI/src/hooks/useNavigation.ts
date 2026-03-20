@@ -29,13 +29,16 @@ export function useNavigation() {
   const navigateToMap = useCallback(() => navigateTo('/'), [navigateTo]);
   const navigateToMerge = useCallback(() => navigateTo('/dossier-deduplication'), [navigateTo]);
   const navigateToSources = useCallback(() => navigateTo('/sources'), [navigateTo]);
+  const navigateToAdministrative = useCallback(() => navigateTo('/administrative'), [navigateTo]);
 
   return {
     pathname,
     isSourcesMode: pathname === '/sources',
     isMergePage: pathname === '/dossier-deduplication',
+    isAdministrativePage: pathname === '/administrative',
     navigateToMap,
     navigateToMerge,
     navigateToSources,
+    navigateToAdministrative,
   };
 }
