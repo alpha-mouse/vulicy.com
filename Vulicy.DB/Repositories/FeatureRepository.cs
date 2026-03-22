@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Vulicy.DB.Configurations;
-using Vulicy.DB.Migrations;
 using Vulicy.Domain;
 
 namespace Vulicy.DB.Repositories;
@@ -97,42 +96,62 @@ public class FeatureRepository(VulicyDbContext dbContext)
         return result.ToListAsync();
     }
 
+    private const string TileDetailsQuery = $"""
+        select ST_AsMVT(tile, 'streets') as "Value" from (
+          select
+            f."{nameof(FeatureEntity.Id)}" as "id",
+            ST_AsMVTGeom(ST_Transform(f."{nameof(FeatureEntity.Geometry)}", 3857), ST_TileEnvelope(@z, @x, @y), 4096, 64, true) as "geom",
+            f."{nameof(FeatureEntity.NameBeTarask)}" as "nameBeTarask",
+            f."{nameof(FeatureEntity.NameBeNark)}" as "nameBeNark",
+            f."{nameof(FeatureEntity.NameRu)}" as "nameRu",
+            f."{nameof(FeatureEntity.Classification)}" as "classification",
+            f."{nameof(FeatureEntity.Type)}" as "type",
+            f."{nameof(FeatureEntity.RenamingReason)}" as "renamingReason",
+            f."{nameof(FeatureEntity.HistoricNames)}" as "historicNames",
+            f."{nameof(FeatureEntity.HistoricPossible)}" as "historicPossible",
+            f."{nameof(FeatureEntity.YearNamed)}" as "yearNamed",
+            f."{nameof(FeatureEntity.Comment)}" as "comment",
+            dr."{nameof(DossierRecordEntity.Id)}" as "dossierRecordId",
+            dr."{nameof(DossierRecordEntity.NameBeTarask)}" as "dossierRecordNameBeTarask",
+            dr."{nameof(DossierRecordEntity.Classification)}" as "dossierRecordClassification",
+            dr."{nameof(DossierRecordEntity.DescriptionBe)}" as "dossierRecordDescriptionBe",
+            dr."{nameof(DossierRecordEntity.DescriptionRu)}" as "dossierRecordDescriptionRu",
+            dr."{nameof(DossierRecordEntity.NamingCategoryId)}" as "dossierRecordNamingCategoryId",
+            f."{nameof(FeatureEntity.ForumRelativeLink)}" as "forumRelativeLink",
+            f."{nameof(FeatureEntity.NamingCategoryId)}" as "namingCategoryId"
+          from "{FeatureConfiguration.TableName}" f
+          left outer join "{DossierRecordConfiguration.TableName}" dr on f."{nameof(FeatureEntity.DossierRecordId)}" = dr."{nameof(DossierRecordEntity.Id)}"
+          where f."{nameof(FeatureEntity.Geometry)}" && ST_Transform(ST_TileEnvelope(@z, @x, @y), 4326)
+          
+        """;
+
     public Task<byte[]?> GetTileDetails(int z, int x, int y)
     {
-        const string query = $"""
-            select ST_AsMVT(tile, 'streets') as "Value" from (
-              select
-                f."{nameof(FeatureEntity.Id)}" as "id",
-                ST_AsMVTGeom(ST_Transform(f."{nameof(FeatureEntity.Geometry)}", 3857), ST_TileEnvelope(@z, @x, @y), 4096, 64, true) as "geom",
-                f."{nameof(FeatureEntity.NameBeTarask)}" as "nameBeTarask",
-                f."{nameof(FeatureEntity.NameBeNark)}" as "nameBeNark",
-                f."{nameof(FeatureEntity.NameRu)}" as "nameRu",
-                f."{nameof(FeatureEntity.Classification)}" as "classification",
-                f."{nameof(FeatureEntity.Type)}" as "type",
-                f."{nameof(FeatureEntity.RenamingReason)}" as "renamingReason",
-                f."{nameof(FeatureEntity.HistoricNames)}" as "historicNames",
-                f."{nameof(FeatureEntity.HistoricPossible)}" as "historicPossible",
-                f."{nameof(FeatureEntity.YearNamed)}" as "yearNamed",
-                f."{nameof(FeatureEntity.Comment)}" as "comment",
-                dr."{nameof(DossierRecordEntity.Id)}" as "dossierRecordId",
-                dr."{nameof(DossierRecordEntity.NameBeTarask)}" as "dossierRecordNameBeTarask",
-                dr."{nameof(DossierRecordEntity.Classification)}" as "dossierRecordClassification",
-                dr."{nameof(DossierRecordEntity.DescriptionBe)}" as "dossierRecordDescriptionBe",
-                dr."{nameof(DossierRecordEntity.DescriptionRu)}" as "dossierRecordDescriptionRu",
-                dr."{nameof(DossierRecordEntity.NamingCategoryId)}" as "dossierRecordNamingCategoryId",
-                f."{nameof(FeatureEntity.ForumRelativeLink)}" as "forumRelativeLink",
-                f."{nameof(FeatureEntity.NamingCategoryId)}" as "namingCategoryId"
-              from "{FeatureConfiguration.TableName}" f
-              left outer join "{DossierRecordConfiguration.TableName}" dr on f."{nameof(FeatureEntity.DossierRecordId)}" = dr."{nameof(DossierRecordEntity.Id)}"
-              where f."{nameof(FeatureEntity.Geometry)}" && ST_Transform(ST_TileEnvelope(@z, @x, @y), 4326)
-            ) AS tile
-            """;
+        const string query = TileDetailsQuery + " ) as tile";
 
         return Context.Database
             .SqlQueryRaw<byte[]>(query,
                 new NpgsqlParameter("z", z),
                 new NpgsqlParameter("x", x),
                 new NpgsqlParameter("y", y))
+            .FirstOrDefaultAsync();
+    }
+
+    public Task<byte[]?> GetExplicitlyCategorizedTileDetails(int z, int x, int y)
+    {
+        const string query = TileDetailsQuery +
+                             $"""
+                                and f."{nameof(FeatureEntity.Classification)}" != @none and f."{nameof(FeatureEntity.Classification)}" != dr."{nameof(DossierRecordEntity.Classification)}"
+                              ) as tile
+                              """;
+
+        var none = (int)ClassificationGrade.None;
+        return Context.Database
+            .SqlQueryRaw<byte[]>(query,
+                new NpgsqlParameter("z", z),
+                new NpgsqlParameter("x", x),
+                new NpgsqlParameter("y", y),
+                new NpgsqlParameter("none", none))
             .FirstOrDefaultAsync();
     }
 

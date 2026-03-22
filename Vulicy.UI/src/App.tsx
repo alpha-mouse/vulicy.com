@@ -2,6 +2,7 @@ import Map from './components/Map'
 import SourcesMap from './components/SourcesMap'
 import MergePage from './components/MergePage'
 import AdministrativePage from './components/AdministrativePage'
+import ExplicitlyCategorizedMap from './components/ExplicitlyCategorizedMap'
 import { ConfigProvider, useConfig } from './hooks/useConfig'
 import { useAuth } from './hooks/useAuth'
 import { useNavigation } from './hooks/useNavigation'
@@ -9,7 +10,7 @@ import * as Sentry from "@sentry/react";
 
 function AppContent() {
   const { isAdmin, clearAuthState } = useAuth();
-  const { isSourcesMode, isMergePage, isAdministrativePage } = useNavigation();
+  const { isSourcesMode, isMergePage, isAdministrativePage, isExplicitlyCategorizedPage } = useNavigation();
 
   if (isMergePage && isAdmin) {
     return <MergePage />;
@@ -17,6 +18,10 @@ function AppContent() {
 
   if (isAdministrativePage) {
     return <AdministrativePage />;
+  }
+
+  if (isExplicitlyCategorizedPage) {
+    return <ExplicitlyCategorizedMap />;
   }
 
   // Sources mode is admin-only

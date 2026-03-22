@@ -30,15 +30,18 @@ export function useNavigation() {
   const navigateToMerge = useCallback(() => navigateTo('/dossier-deduplication'), [navigateTo]);
   const navigateToSources = useCallback(() => navigateTo('/sources'), [navigateTo]);
   const navigateToAdministrative = useCallback(() => navigateTo('/administrative'), [navigateTo]);
+  const navigateToExplicitlyCategorized = useCallback(() => navigateTo('/explicitly-categorized'), [navigateTo]);
 
   return {
     pathname,
     isSourcesMode: pathname === '/sources',
     isMergePage: pathname === '/dossier-deduplication',
     isAdministrativePage: pathname === '/administrative',
+    isExplicitlyCategorizedPage: pathname === '/explicitly-categorized',
     navigateToMap,
     navigateToMerge,
     navigateToSources,
     navigateToAdministrative,
+    navigateToExplicitlyCategorized,
   };
 }

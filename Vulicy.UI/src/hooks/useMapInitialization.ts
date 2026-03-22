@@ -22,6 +22,8 @@ interface UseMapInitializationOptions {
   updateUrl: (params: Record<string, string | number | null | undefined>) => void;
   isAdmin: boolean;
   onAdminFallback?: () => void;
+  /** Override the tile endpoint name (e.g. 'explicitly-categorized-tile'). When set, admin tile logic is bypassed. */
+  tileEndpoint?: string;
 }
 
 /**
@@ -48,6 +50,7 @@ export const useMapInitialization = ({
   updateUrl,
   isAdmin,
   onAdminFallback,
+  tileEndpoint,
 }: UseMapInitializationOptions) => {
   const { config } = useConfig();
   const map = useRef<MapLibreMap | null>(null);
@@ -75,11 +78,11 @@ export const useMapInitialization = ({
     );
   }, []);
 
-  // Get tile URL based on admin status
+  // Get tile URL based on admin status (or custom endpoint override)
   const getTileUrl = useCallback((useAdmin: boolean) => {
-    const endpoint = useAdmin ? 'tile-details' : 'tile';
+    const endpoint = tileEndpoint ?? (useAdmin ? 'tile-details' : 'tile');
     return window.location.origin + `/api/map/${endpoint}/{z}/{x}/{y}.mvt`;
-  }, []);
+  }, [tileEndpoint]);
 
   // Update tile source when admin status changes
   useEffect(() => {
