@@ -2,7 +2,7 @@
 
 namespace Vulicy.Services;
 
-internal static class CultureProvider
+public static class CultureProvider
 {
     public static readonly CultureInfo BeByCultureInfo = CultureInfo.GetCultureInfo("be-by");
 

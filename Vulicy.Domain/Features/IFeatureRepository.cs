@@ -17,4 +17,6 @@ public interface IFeatureRepository : IRepository<FeatureEntity, int>
     Task<List<FeatureEntity>> GetNextForGeometryUpdateTracking(int batchSize);
     Task MirrorFromInitialCadastre();
     Task AssignClassificationsFromInitialCadastre();
+    Task<List<FeatureEntity>> GetForExport();
+    Task<List<FeatureEntity>> GetForExportByAdministrative(int administrativeId);
 }

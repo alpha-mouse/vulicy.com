@@ -26,6 +26,12 @@
   margin-bottom: 1.25rem;
 }
 
+.admin-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .admin-title {
   font-size: 1.15rem;
   font-weight: 600;
@@ -57,6 +63,17 @@
 @media (prefers-color-scheme: dark) {
   .admin-controls button:hover {
     background-color: rgba(255, 255, 255, 0.06);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .admin-export-all-btn {
+    color: #60a5fa !important;
+    border-color: rgba(96, 165, 250, 0.35) !important;
+  }
+  .admin-export-all-btn:hover {
+    background-color: rgba(96, 165, 250, 0.12) !important;
+    border-color: rgba(96, 165, 250, 0.6) !important;
   }
 }
 
@@ -93,6 +110,39 @@
 
 .tree-node-row.expandable {
   cursor: pointer;
+}
+
+/* Per-row export button */
+.tree-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.72rem;
+  border: 1px solid transparent;
+  border-radius: 0.35rem;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.35;
+  transition: opacity 0.15s, background-color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tree-export-btn:hover {
+  opacity: 1;
+  background-color: rgba(37, 99, 235, 0.08);
+  border-color: rgba(37, 99, 235, 0.3);
+  color: #2563eb;
+}
+
+@media (prefers-color-scheme: dark) {
+  .tree-export-btn:hover {
+    background-color: rgba(96, 165, 250, 0.12);
+    border-color: rgba(96, 165, 250, 0.3);
+    color: #60a5fa;
+  }
 }
 
 /* Indentation levels */

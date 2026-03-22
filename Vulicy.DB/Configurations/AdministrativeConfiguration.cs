@@ -17,17 +17,17 @@ public class AdministrativeConfiguration : IEntityTypeConfiguration<Administrati
         builder.Property(x => x.NameRu).HasMaxLength(128);
 
         builder
-            .HasOne<AdministrativeEntity>()
+            .HasOne(x => x.ParentRegion)
             .WithMany()
             .HasForeignKey(x => x.ParentRegionId);
 
         builder
-            .HasOne<AdministrativeEntity>()
+            .HasOne(x => x.ParentDistrict)
             .WithMany()
             .HasForeignKey(x => x.ParentDistrictId);
 
         builder
-            .HasOne<AdministrativeEntity>()
+            .HasOne(x => x.ParentVillageCouncil)
             .WithMany()
             .HasForeignKey(x => x.ParentVillageCouncilId);
 

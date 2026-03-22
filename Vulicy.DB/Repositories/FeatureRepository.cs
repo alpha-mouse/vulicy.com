@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Vulicy.DB.Configurations;
+using Vulicy.DB.Migrations;
 using Vulicy.Domain;
 
 namespace Vulicy.DB.Repositories;
@@ -353,5 +354,33 @@ public class FeatureRepository(VulicyDbContext dbContext)
              ;
              """;
         return Context.Database.ExecuteSqlRawAsync(query);
+    }
+
+    public Task<List<FeatureEntity>> GetForExport()
+    {
+        return Entities
+            .Include(x => x.Administrative)
+            .Include(x => x.Administrative.ParentRegion)
+            .Include(x => x.Administrative.ParentDistrict)
+            .Include(x => x.Administrative.ParentVillageCouncil)
+            .Include(x => x.DossierRecord.NamingCategory)
+            .Include(x => x.NamingCategory)
+            .ToListAsync();
+    }
+
+    public Task<List<FeatureEntity>> GetForExportByAdministrative(int administrativeId)
+    {
+        return Entities
+            .Where(x => x.AdministrativeId == administrativeId
+                        || x.Administrative.ParentVillageCouncilId == administrativeId
+                        || x.Administrative.ParentDistrictId == administrativeId
+                        || x.Administrative.ParentRegionId == administrativeId)
+            .Include(x => x.Administrative)
+            .Include(x => x.Administrative.ParentRegion)
+            .Include(x => x.Administrative.ParentDistrict)
+            .Include(x => x.Administrative.ParentVillageCouncil)
+            .Include(x => x.DossierRecord.NamingCategory)
+            .Include(x => x.NamingCategory)
+            .ToListAsync();
     }
 }

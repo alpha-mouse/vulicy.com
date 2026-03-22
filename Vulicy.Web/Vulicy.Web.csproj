@@ -10,6 +10,7 @@
   <ItemGroup>
     <PackageReference Include="AWSSDK.DynamoDBv2" Version="4.0.14" />
     <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.3.22" />
+    <PackageReference Include="CsvHelper" Version="33.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.1">
       <PrivateAssets>all</PrivateAssets>
@@ -51,7 +52,7 @@
 
     <MakeDir Directories="$(VersionFileDir)" Condition="!Exists('$(VersionFileDir)')" />
 
-    <WriteLinesToFile File="$(VersionFilePath)" Lines='{"version": "$(GitCommitHash)", "buildDate": "$(BuildDate)"}' Overwrite="true" />
+    <WriteLinesToFile File="$(VersionFilePath)" Lines="{&quot;version&quot;: &quot;$(GitCommitHash)&quot;, &quot;buildDate&quot;: &quot;$(BuildDate)&quot;}" Overwrite="true" />
 
     <ItemGroup>
       <Content Include="$(VersionFilePath)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />

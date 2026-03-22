@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Download } from 'lucide-react';
 import TopBar from './TopBar';
 import { api } from '../utils/api';
 import { ADMINISTRATIVE_PREFIX, type Administrative } from '../types/administrative';
@@ -10,9 +10,10 @@ interface TreeNodeProps {
   level: number;
   expandedIds: Set<number>;
   onToggle: (id: number) => void;
+  onExport: (id: number) => void;
 }
 
-const TreeNode = ({ node, level, expandedIds, onToggle }: TreeNodeProps) => {
+const TreeNode = ({ node, level, expandedIds, onToggle, onExport }: TreeNodeProps) => {
   const hasChildren = node.childAdministratives && node.childAdministratives.length > 0;
   const isExpanded = expandedIds.has(node.id);
   const prefix = ADMINISTRATIVE_PREFIX[node.type] ?? '';
@@ -32,6 +33,14 @@ const TreeNode = ({ node, level, expandedIds, onToggle }: TreeNodeProps) => {
         )}
         {prefix && <span className="tree-prefix">{prefix}</span>}
         <span className="tree-name">{node.nameBeTarask}</span>
+        <button
+          className="tree-export-btn"
+          title="Экспартаваць"
+          onClick={e => { e.stopPropagation(); onExport(node.id); }}
+        >
+          <Download size={12} />
+          Экспартаваць
+        </button>
       </div>
       {hasChildren && isExpanded && (
         <div className="tree-children">
@@ -42,6 +51,7 @@ const TreeNode = ({ node, level, expandedIds, onToggle }: TreeNodeProps) => {
               level={level + 1}
               expandedIds={expandedIds}
               onToggle={onToggle}
+              onExport={onExport}
             />
           ))}
         </div>
@@ -113,6 +123,14 @@ const AdministrativePage = () => {
     setExpandedIds(new Set());
   }, []);
 
+  const handleExport = useCallback((id: number) => {
+    window.location.href = `/api/features/export/by-administrative/${id}`;
+  }, []);
+
+  const handleExportAll = useCallback(() => {
+    window.location.href = '/api/features/export';
+  }, []);
+
   return (
     <div className="admin-page">
       <TopBar leftContent={<BackButton />} />
@@ -129,7 +147,13 @@ const AdministrativePage = () => {
         ) : (
           <>
             <div className="admin-header">
-              <h1 className="admin-title">Адміністрацыйны падзел</h1>
+              <div className="admin-header-left">
+                <h1 className="admin-title">Адміністрацыйны падзел</h1>
+                <button className="tree-export-btn" onClick={handleExportAll}>
+                  <Download size={13} />
+                  Экспартаваць усё
+                </button>
+              </div>
               <div className="admin-controls">
                 <button onClick={expandAll}>Разгарнуць усе</button>
                 <button onClick={collapseAll}>Згарнуць усе</button>
@@ -143,6 +167,7 @@ const AdministrativePage = () => {
                   level={0}
                   expandedIds={expandedIds}
                   onToggle={handleToggle}
+                  onExport={handleExport}
                 />
               ))}
             </div>
