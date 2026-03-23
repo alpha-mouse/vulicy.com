@@ -11,7 +11,7 @@ public class HistoricRepositoryBase<T, TKey>(VulicyDbContext dbContext) : IHisto
 
     public Task<List<T>> GetById(TKey id)
     {
-        return Entities.Where(x => x.Id.Equals(id)).ToListAsync();
+        return Entities.Where(x => x.Id!.Equals(id)).ToListAsync();
     }
 
     public Task<List<T>> GetAll()

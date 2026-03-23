@@ -5,7 +5,7 @@ namespace Vulicy.Domain;
 public record OsmFeatureSearchResult(
     long Id,
     OsmType Type,
-    string Highway,
+    string? Highway,
     Dictionary<string, string> Tags,
     Geometry Geometry,
     int? FeatureId);

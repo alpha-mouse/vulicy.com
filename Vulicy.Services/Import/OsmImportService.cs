@@ -2,6 +2,7 @@
 using NetTopologySuite.Geometries;
 using OsmSharp;
 using OsmSharp.Streams;
+using OsmSharp.Tags;
 using Vulicy.Domain;
 
 namespace Vulicy.Services;
@@ -47,9 +48,7 @@ public partial class OsmImportService(
                 }
             }
             // it is a common practice that nodes will be the first elements in OSM PBF files, so by the time we reach ways, all nodes are already cached
-            else if (osmGeo is Way { Tags: not null, Id: not null } way
-                     && way.Tags.ContainsKey("highway")
-                     && (way.Tags.ContainsKey("name") || way.Tags.ContainsKey("name:be") || way.Tags.ContainsKey("name:ru") || way.Tags.ContainsKey("name:be-tarask")))
+            else if (osmGeo is Way { Id: not null } way)
             {
                 var coordinates = ResolveCoordinates(way, nodeCache);
                 if (coordinates == null) continue;
@@ -62,7 +61,7 @@ public partial class OsmImportService(
                     ImportId = importId,
                     Type = OsmType.Way,
                     Geometry = geometry,
-                    Tags = way.Tags.ToDictionary(t => t.Key, t => t.Value),
+                    Tags = (way.Tags ?? Enumerable.Empty<Tag>()).ToDictionary(t => t.Key, t => t.Value),
                     IsDeleted = false,
                 };
 
@@ -131,10 +130,10 @@ public partial class OsmImportService(
     [LoggerMessage(LogLevel.Information, "Cached {nodeMillionCount} million nodes")]
     private partial void LogCachedNodes(int nodeMillionCount);
 
-    [LoggerMessage(LogLevel.Information, "Staged {wayCount} highways")]
+    [LoggerMessage(LogLevel.Information, "Staged {wayCount} ways")]
     private partial void LogStagedHighways(int wayCount);
 
-    [LoggerMessage(LogLevel.Information, "Staging of current ways complete. Total highways: {wayCount}, Total nodes: {nodeCount}")]
+    [LoggerMessage(LogLevel.Information, "Staging of current ways complete. Total ways: {wayCount}, Total nodes: {nodeCount}")]
     private partial void LogStaged(int wayCount, int nodeCount);
 
     [LoggerMessage(LogLevel.Information, "Marked import {importId} records")]

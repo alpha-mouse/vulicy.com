@@ -63,7 +63,7 @@ public static class Features
 
     private static Task<List<OsmFeatureSearchResult>> OsmSearch(string query, double? lat, double? lng, IOsmFeatureRepository osmFeatureRepository)
     {
-        return osmFeatureRepository.SearchUnmatchedByName(query, lat, lng);
+        return osmFeatureRepository.SearchUnmatched(query, lat, lng);
     }
 
     private static Task<List<CadastreFeatureSearchResult>> CadastreSearch(string query, double? lat, double? lng, ICadastreFeatureRepository cadastreFeatureRepository)

@@ -4,4 +4,5 @@ public interface INamingCategoryRepository : IRepository<NamingCategoryEntity, i
 {
     Task<bool> HasAny();
     Task MergeFromCadastreInitial(DateTime now);
+    Task<int?> GetIdByName(string name);
 }

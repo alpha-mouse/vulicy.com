@@ -21,6 +21,7 @@ public class FeatureService(
     ICadastreFeatureRepository cadastreFeatureRepository,
     IInitialCadastreFeatureImportRepository initialCadastreFeatureImportRepository,
     IDossierRecordRepository dossierRecordRepository,
+    INamingCategoryRepository namingCategoryRepository,
     IAdministrativeRepository administrativeRepository
     ) : IFeatureService
 {
@@ -139,23 +140,30 @@ public class FeatureService(
             ? []
             : await dossierRecordRepository.FindByDescriptions(initialCadastre?.Reason, cadastreFeature.ShortInfo);
 
+        int? namingCategoryId = null;
+        if (initialCadastre?.NameCategory != null)
+            namingCategoryId = await namingCategoryRepository.GetIdByName(initialCadastre.NameCategory);
+
         var (type, namesBe, namesRu, nameBeTarask) = ImportPipeline.TryParseOsmFeatureName(osmFeature);
         namesBe ??= [];
         namesRu ??= [];
         var dossierRecord = dossierRecords.FirstOrDefault(dr => dr.PossibleNamesBeNark?.Intersect(namesBe).Any() == true || dr.PossibleNamesRu?.Intersect(namesRu).Any() == true);
+        var nameBe = namesBe.FirstOrDefault() ?? cadastreFeature.ElementNameBel;
+        var nameRu = namesRu.FirstOrDefault() ?? cadastreFeature.ElementName;
+        type ??= (FeatureType)cadastreFeature.ElementType;
         return new FeatureTileMinimalDetails(
             osmFeature.Geometry,
-            nameBeTarask,
-            namesBe.FirstOrDefault(),
-            namesRu.FirstOrDefault(),
-            initialCadastre != null && dossierRecord != null && initialCadastre.Classification != (int)dossierRecord.Classification ? (ClassificationGrade)(initialCadastre.Classification ?? 0) : ClassificationGrade.None,
-            type ?? FeatureType.Unknown,
+            nameBeTarask ?? nameBe,
+            nameBe,
+            nameRu,
+            initialCadastre != null && (dossierRecord == null || initialCadastre.Classification != (int)dossierRecord.Classification) ? (ClassificationGrade)(initialCadastre.Classification ?? 0) : ClassificationGrade.None,
+            type.Value,
             initialCadastre?.Reason,
             initialCadastre?.HistoricName,
             initialCadastre?.HistoricPossible ?? false,
             initialCadastre?.YearNamed,
             initialCadastre?.Comment,
-            NamingCategoryId: null,
+            namingCategoryId != dossierRecord?.NamingCategoryId ? namingCategoryId : null,
             dossierRecord?.Id,
             dossierRecord?.NameBeTarask
         );

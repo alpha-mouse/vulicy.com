@@ -46,4 +46,12 @@ public class NamingCategoryRepository(VulicyDbContext dbContext)
             new NpgsqlParameter("now", now)
         );
     }
+
+    public Task<int?> GetIdByName(string name)
+    {
+        return Entities
+            .Where(x => x.Name == name)
+            .Select(x => (int?)x.Id)
+            .FirstOrDefaultAsync();
+    }
 }

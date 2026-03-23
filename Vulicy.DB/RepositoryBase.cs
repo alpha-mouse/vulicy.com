@@ -12,12 +12,12 @@ public partial class RepositoryBase<T, TKey>(VulicyDbContext dbContext) : IRepos
 
     public Task<T?> GetById(TKey id)
     {
-        return Entities.FirstOrDefaultAsync(x => x.Id.Equals(id));
+        return Entities.FirstOrDefaultAsync(x => x.Id!.Equals(id));
     }
 
     public Task<T?> GetByIdTracked(TKey id)
     {
-        return Entities.AsTracking().FirstOrDefaultAsync(x => x.Id.Equals(id));
+        return Entities.AsTracking().FirstOrDefaultAsync(x => x.Id!.Equals(id));
     }
 
     public Task<List<T>> GetAll()

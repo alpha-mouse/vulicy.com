@@ -210,8 +210,6 @@ public partial class ImportPipeline(
         // It's used as a small tolerance for features that should touch/intersect but might have slight precision differences
         const double geometryDelta = 0.001;
 
-        var now = DateTime.UtcNow;
-
         await MirrorIsDeletedFromCadastre();
 
         await CreateNewFeatures();
@@ -224,6 +222,8 @@ public partial class ImportPipeline(
 
         async Task MirrorIsDeletedFromCadastre()
         {
+            var now = DateTime.UtcNow;
+
             await using var scope = serviceScopeFactory.CreateAsyncScope();
             var featureRepository = scope.ServiceProvider.GetRequiredService<IFeatureRepository>();
 
@@ -257,7 +257,7 @@ public partial class ImportPipeline(
 
                 if (bbox.IsNull) continue;
 
-                var administrative = administrativeRepositoryRepository.GetByCadastreAte(ate);
+                var administrative = await administrativeRepositoryRepository.GetByCadastreAte(ate);
 
                 var osmFeatures = await osmFeatureRepository.GetUnmatchedIntersectingTracking(bbox.ToGeometry());
 
@@ -309,7 +309,7 @@ public partial class ImportPipeline(
                         Geometry = AssembleOsmGeometry(matchingOsm),
                         CadastreFeature = cadastre,
                         OsmFeatures = matchingOsm.ToList(),
-                        AdministrativeId = administrative.Id,
+                        AdministrativeId = administrative?.Id,
                     };
 
                     featureRepository.Add(feature);
@@ -329,6 +329,8 @@ public partial class ImportPipeline(
 
         async Task LinkNewOsmToExistingFeatures()
         {
+            var now = DateTime.UtcNow;
+
             await using var scope = serviceScopeFactory.CreateAsyncScope();
             var cadastreFeatureRepository = scope.ServiceProvider.GetRequiredService<ICadastreFeatureRepository>();
             var osmFeatureRepository = scope.ServiceProvider.GetRequiredService<IOsmFeatureRepository>();
@@ -414,6 +416,8 @@ public partial class ImportPipeline(
 
         async Task UpdatePendingFeatureGeometries()
         {
+            var now = DateTime.UtcNow;
+
             await using var scope = serviceScopeFactory.CreateAsyncScope();
             var featureRepository = scope.ServiceProvider.GetRequiredService<IFeatureRepository>();
             var featureHistoricRepository = scope.ServiceProvider.GetRequiredService<IFeatureHistoricRepository>();

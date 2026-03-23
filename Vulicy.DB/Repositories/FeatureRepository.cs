@@ -315,6 +315,7 @@ public class FeatureRepository(VulicyDbContext dbContext)
     public Task<List<FeatureEntity>> GetNextForGeometryUpdateTracking(int batchSize)
     {
         return Entities
+            .AsTracking()
             .Include(x => x.OsmFeatures)
             .Where(x => x.OsmFeatures.Any(x => x.GeometryUpdatePending))
             // unstable ordering doesn't matter here, anyway everything will be processed eventually
@@ -379,10 +380,10 @@ public class FeatureRepository(VulicyDbContext dbContext)
     {
         return Entities
             .Include(x => x.Administrative)
-            .Include(x => x.Administrative.ParentRegion)
-            .Include(x => x.Administrative.ParentDistrict)
-            .Include(x => x.Administrative.ParentVillageCouncil)
-            .Include(x => x.DossierRecord.NamingCategory)
+            .Include(x => x.Administrative!.ParentRegion)
+            .Include(x => x.Administrative!.ParentDistrict)
+            .Include(x => x.Administrative!.ParentVillageCouncil)
+            .Include(x => x.DossierRecord!.NamingCategory)
             .Include(x => x.NamingCategory)
             .ToListAsync();
     }
@@ -391,14 +392,14 @@ public class FeatureRepository(VulicyDbContext dbContext)
     {
         return Entities
             .Where(x => x.AdministrativeId == administrativeId
-                        || x.Administrative.ParentVillageCouncilId == administrativeId
-                        || x.Administrative.ParentDistrictId == administrativeId
-                        || x.Administrative.ParentRegionId == administrativeId)
+                        || x.Administrative!.ParentVillageCouncilId == administrativeId
+                        || x.Administrative!.ParentDistrictId == administrativeId
+                        || x.Administrative!.ParentRegionId == administrativeId)
             .Include(x => x.Administrative)
-            .Include(x => x.Administrative.ParentRegion)
-            .Include(x => x.Administrative.ParentDistrict)
-            .Include(x => x.Administrative.ParentVillageCouncil)
-            .Include(x => x.DossierRecord.NamingCategory)
+            .Include(x => x.Administrative!.ParentRegion)
+            .Include(x => x.Administrative!.ParentDistrict)
+            .Include(x => x.Administrative!.ParentVillageCouncil)
+            .Include(x => x.DossierRecord!.NamingCategory)
             .Include(x => x.NamingCategory)
             .ToListAsync();
     }

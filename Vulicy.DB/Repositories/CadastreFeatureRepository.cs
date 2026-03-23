@@ -135,15 +135,14 @@ public class CadastreFeatureRepository(VulicyDbContext context)
             cleanedQuery.Count >= 1 ? new NpgsqlParameter("term0", cleanedQuery[0]) : new NpgsqlParameter("term0", DbType.AnsiString) { NpgsqlValue = DBNull.Value },
             cleanedQuery.Count >= 2 ? new NpgsqlParameter("term1", cleanedQuery[1]) : new NpgsqlParameter("term1", DbType.AnsiString) { NpgsqlValue = DBNull.Value },
             cleanedQuery.Count >= 3 ? new NpgsqlParameter("term2", cleanedQuery[2]) : new NpgsqlParameter("term2", DbType.AnsiString) { NpgsqlValue = DBNull.Value },
+            new NpgsqlParameter("lat", lat ?? 0),
+            new NpgsqlParameter("lng", lng ?? 0),
         };
-        if (lat.HasValue && lng.HasValue)
-        {
-            parameters.Add(new NpgsqlParameter("lat", lat.Value));
-            parameters.Add(new NpgsqlParameter("lng", lng.Value));
-        }
+
+        var querySql = lat.HasValue && lng.HasValue ? searchWithCoordinates : searchWithoutCoordinates;
 
         return Context.Database
-                .SqlQueryRaw<CadastreFeatureSearchResult>(searchWithCoordinates, parameters.ToArray())
+                .SqlQueryRaw<CadastreFeatureSearchResult>(querySql, parameters.ToArray())
                 .ToListAsync();
     }
 }

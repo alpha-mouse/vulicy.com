@@ -43,9 +43,17 @@ const getSourcesLayerConfigs = (): PulseLayerConfig[] | null => {
 
 // Common filters for OSM features
 const OSM_HIGHWAY_EXCLUSION_FILTERS: FilterSpecification[] = [
+  ['has', 'highway'],
   ['!=', ['get', 'highway'], 'footway'],
   ['!=', ['get', 'highway'], 'path'],
   ['!=', ['get', 'highway'], 'proposed'],
+  [
+    'any',
+    ['has', 'name'],
+    ['has', 'name:be'],
+    ['has', 'name:be-tarask'],
+    ['has', 'name:ru'],
+  ],
 ];
 
 export const useSourcesMapInitialization = ({
