@@ -1,7 +1,7 @@
 import { useRef, useCallback, useState } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './SourcesMap.css';
-import { ArrowLeft, Plus, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, Loader2, Link } from 'lucide-react';
 import TopBar from './TopBar';
 import CadastreInfoPanel from './CadastreInfoPanel';
 import OsmInfoPanel from './OsmInfoPanel';
@@ -69,6 +69,8 @@ const SourcesMapSearchControls = ({
   const showCreateButton = selectedOsm && selectedCadastre && !selectedFeature;
   // Show "Link OSM" button when OSM and Vulicy are selected but Cadastre is not
   const showLinkButton = selectedOsm && selectedFeature && !selectedCadastre;
+  // Show "Create from OSM only" button when only OSM is selected
+  const showCreateFromOsmButton = selectedOsm && !selectedCadastre && !selectedFeature;
   return (
     <div className="flex-1 flex items-center justify-center gap-2">
       {/* OSM Feature Search */}
@@ -91,15 +93,15 @@ const SourcesMapSearchControls = ({
         )}
       />
 
-      {/* Link OSM to Feature button - always takes space, hidden when inapplicable */}
+      {/* Link OSM / Create from OSM only - always takes space, hidden when inapplicable */}
       <button
-        onClick={onLinkClick}
-        disabled={isLinking}
+        onClick={showCreateFromOsmButton ? onCreateClick : onLinkClick}
+        disabled={showLinkButton ? isLinking : false}
         className="w-8 h-8 flex items-center justify-center bg-primary text-white hover:bg-primary/90 transition-colors cursor-pointer border-none rounded-lg disabled:cursor-wait"
-        style={{ visibility: showLinkButton ? 'visible' : 'hidden' }}
-        title="Прыяднаць OSM да вуліцы"
+        style={{ visibility: (showLinkButton || showCreateFromOsmButton) ? 'visible' : 'hidden' }}
+        title={showCreateFromOsmButton ? 'Стварыць вуліцу з OSM' : 'Прыяднаць OSM да вуліцы'}
       >
-        {isLinking ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
+        {showLinkButton && isLinking ? <Loader2 size={18} className="animate-spin" /> : showCreateFromOsmButton ? <Plus size={18} /> : <Link size={18} />}
       </button>
 
       {/* Feature Search or Create Button */}
@@ -346,7 +348,7 @@ const SourcesMap = () => {
         )}
 
         {/* Feature creation dialog - center */}
-        {createDialogOpen && selectedOsmFeature && selectedCadastreFeature && (
+        {createDialogOpen && selectedOsmFeature && (
           <FeatureCreateDialog
             osmFeature={selectedOsmFeature}
             cadastreFeature={selectedCadastreFeature}

@@ -63,7 +63,7 @@ export function getFeatureName(result: NamedFeature): string {
 export interface FeaturePreviewRequest {
   osmId: number;
   osmType: number;
-  cadastreId: string;
+  cadastreId?: string;
 }
 
 // Preview response - minimal details for pre-filling form
@@ -88,5 +88,5 @@ export interface FeaturePreviewResponse {
 export interface FeatureCreateFromSourcesRequest extends FeatureEditRequest {
   osmId: number;
   osmType: number;
-  cadastreId: string;
+  cadastreId?: string;
 }

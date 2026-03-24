@@ -7,7 +7,7 @@ namespace Vulicy.Services;
 public interface IFeatureService
 {
     Task<List<FeatureSearchResult>> GetByDossierRecord(int dossierRecordId);
-    Task<FeatureSearchResult> CreateFeatureFromSources(FeatureCreateFromSourcesRequest featureEditRequest, int userId);
+    Task<FeatureSearchResult> CreateFeatureFromSources(FeatureCreateFromSourcesRequest featureCreateRequest, int userId);
     Task<Geometry> LinkOsmFeature(int id, OsmId osmId, int userId);
     Task RecomputeGeometry(int id);
     Task EditFeature(int id, FeatureEditRequest featureEditRequest, int userId);
@@ -30,28 +30,31 @@ public class FeatureService(
         return featureRepository.GetByDossierRecord(dossierRecordId);
     }
 
-    public async Task<FeatureSearchResult> CreateFeatureFromSources(FeatureCreateFromSourcesRequest featureEditRequest, int userId)
+    public async Task<FeatureSearchResult> CreateFeatureFromSources(FeatureCreateFromSourcesRequest featureCreateRequest, int userId)
     {
         await using var transaction = await featureRepository.BeginTransaction();
-        var osmFeature = await osmFeatureRepository.GetByIdTracked(featureEditRequest.OsmType, featureEditRequest.OsmId);
-        var cadastreFeature = await cadastreFeatureRepository.GetByIdTracked(featureEditRequest.CadastreId);
+        var osmFeature = await osmFeatureRepository.GetByIdTracked(featureCreateRequest.OsmType, featureCreateRequest.OsmId);
+        var cadastreFeature = featureCreateRequest.CadastreId != null ? await cadastreFeatureRepository.GetByIdTracked(featureCreateRequest.CadastreId) : null;
 
         CheckForLinking(osmFeature);
-        CheckForLinking(cadastreFeature);
+        if (featureCreateRequest.CadastreId != null)
+            CheckForLinking(cadastreFeature);
 
-        var administrative = await administrativeRepository.GetByCadastreAte(cadastreFeature.Ate);
-        if (administrative == null)
+        var administrative = featureCreateRequest.CadastreId != null
+            ? await administrativeRepository.GetByCadastreAte(cadastreFeature.Ate)
+            : await administrativeRepository.FindIntersecting(osmFeature.Geometry);
+        if (featureCreateRequest.CadastreId != null && administrative == null)
             throw new InvalidOperationException("Administrative not found");
 
         var feature = new FeatureEntity();
 
-        MapFromRequest(featureEditRequest, feature);
+        MapFromRequest(featureCreateRequest, feature);
 
         feature.Geometry = osmFeature.Geometry;
-        feature.AdministrativeId = administrative.Id;
+        feature.AdministrativeId = administrative?.Id;
         feature.LastModifiedById = userId;
         osmFeature.Feature = feature;
-        cadastreFeature.Feature = feature;
+        cadastreFeature?.Feature = feature;
         featureRepository.Add(feature);
         await featureRepository.SaveChanges();
         await transaction.Commit();
@@ -61,7 +64,7 @@ public class FeatureService(
             feature.NameBeTarask,
             feature.NameBeNark,
             feature.NameRu,
-            administrative.NameBeTarask,
+            administrative?.NameBeTarask,
             feature.Type,
             feature.Geometry
         );
@@ -130,15 +133,16 @@ public class FeatureService(
     public async Task<FeatureTileMinimalDetails> GetFeaturePreview(GetFeaturePreviewRequest request)
     {
         var osmFeature = await osmFeatureRepository.GetById(request.OsmType, request.OsmId);
-        var cadastreFeature = await cadastreFeatureRepository.GetById(request.CadastreId);
+        var cadastreFeature = request.CadastreId != null ? await cadastreFeatureRepository.GetById(request.CadastreId) : null;
 
         CheckForLinking(osmFeature);
-        CheckForLinking(cadastreFeature);
+        if (request.CadastreId != null)
+            CheckForLinking(cadastreFeature);
 
-        var initialCadastre = await initialCadastreFeatureImportRepository.GetById(request.CadastreId);
-        var dossierRecords = string.IsNullOrEmpty(initialCadastre?.Reason) && string.IsNullOrEmpty(cadastreFeature.ShortInfo)
+        var initialCadastre = request.CadastreId != null ? await initialCadastreFeatureImportRepository.GetById(request.CadastreId) : null;
+        var dossierRecords = string.IsNullOrEmpty(initialCadastre?.Reason) && string.IsNullOrEmpty(cadastreFeature?.ShortInfo)
             ? []
-            : await dossierRecordRepository.FindByDescriptions(initialCadastre?.Reason, cadastreFeature.ShortInfo);
+            : await dossierRecordRepository.FindByDescriptions(initialCadastre?.Reason, cadastreFeature?.ShortInfo);
 
         int? namingCategoryId = null;
         if (initialCadastre?.NameCategory != null)
@@ -148,9 +152,9 @@ public class FeatureService(
         namesBe ??= [];
         namesRu ??= [];
         var dossierRecord = dossierRecords.FirstOrDefault(dr => dr.PossibleNamesBeNark?.Intersect(namesBe).Any() == true || dr.PossibleNamesRu?.Intersect(namesRu).Any() == true);
-        var nameBe = namesBe.FirstOrDefault() ?? cadastreFeature.ElementNameBel;
-        var nameRu = namesRu.FirstOrDefault() ?? cadastreFeature.ElementName;
-        type ??= (FeatureType)cadastreFeature.ElementType;
+        var nameBe = namesBe.FirstOrDefault() ?? cadastreFeature?.ElementNameBel;
+        var nameRu = namesRu.FirstOrDefault() ?? cadastreFeature?.ElementName;
+        type ??= (FeatureType?)cadastreFeature?.ElementType ?? FeatureType.Unknown;
         return new FeatureTileMinimalDetails(
             osmFeature.Geometry,
             nameBeTarask ?? nameBe,

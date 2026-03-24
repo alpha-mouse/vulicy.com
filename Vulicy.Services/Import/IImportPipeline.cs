@@ -10,4 +10,5 @@ public interface IImportPipeline
     Task InitializeDossierRecords();
     Task InitializeFeaturesDossierCategoriesReferences(CancellationToken cancellationToken);
     Task MapFieldsFromInitialCadastreImport(CancellationToken applicationStopping);
+    Task ComputeAdministrativeBoundaries(CancellationToken applicationStopping);
 }

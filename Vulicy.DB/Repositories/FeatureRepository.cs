@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using NetTopologySuite.Geometries;
 using Npgsql;
 using Vulicy.DB.Configurations;
 using Vulicy.Domain;
@@ -401,6 +402,14 @@ public class FeatureRepository(VulicyDbContext dbContext)
             .Include(x => x.Administrative!.ParentVillageCouncil)
             .Include(x => x.DossierRecord!.NamingCategory)
             .Include(x => x.NamingCategory)
+            .ToListAsync();
+    }
+
+    public Task<List<Geometry>> GetGeometriesByAdministrative(int administrativeId)
+    {
+        return Entities
+            .Where(x => x.AdministrativeId == administrativeId)
+            .Select(x => x.Geometry)
             .ToListAsync();
     }
 }

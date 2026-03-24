@@ -15,9 +15,9 @@ public static class Administratives
 
     private static async Task<List<Services.Administrative>> GetAllAdministratives(IAdministrativeService administrativeService, IMemoryCache cache)
     {
-        if (cache.TryGetValue(AdministrativesCacheKey, out List<Administrative> administratives))
+        if (cache.TryGetValue(AdministrativesCacheKey, out List<Administrative>? administratives))
         {
-            return administratives;
+            return administratives!;
         }
 
         administratives = await administrativeService.GetAdministratives();

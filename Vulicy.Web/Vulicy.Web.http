@@ -3,7 +3,7 @@
 POST {{Vulicy.Web_HostAddress}}/api/import/osm
 Content-Type: application/json
 
-"http://127.0.0.1:8080/belarus-251222.osm.pbf"
+"http://127.0.0.1:8080/belarus-260321.osm.pbf"
 
 ###
 
@@ -46,6 +46,10 @@ POST {{Vulicy.Web_HostAddress}}/api/import/7-map-fields-from-initial-cadastre-im
 ###
 
 POST {{Vulicy.Web_HostAddress}}/api/import/8-set-administrative-on-features
+
+###
+
+POST {{Vulicy.Web_HostAddress}}/api/import/9-compute-administrative-boundaries
 
 ###
 

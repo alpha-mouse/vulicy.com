@@ -32,9 +32,8 @@ public record FeatureCreateFromSourcesRequest(
     int? DossierRecordId,
     int OsmId,
     OsmType OsmType,
-    string CadastreId
+    string? CadastreId
     ) : FeatureEditRequest(NameBeTarask, NameBeNark, NameRu, Classification, Type, RenamingReason, HistoricNames, Comment, HistoricPossible, YearNamed, NamingCategoryId, DossierRecordId);
-
 
 public abstract class FeatureEditRequestBaseValidator<T> : AbstractValidator<T>
     where T: FeatureEditRequest
@@ -61,6 +60,5 @@ public class FeatureCreateFromSourcesRequestValidator : FeatureEditRequestBaseVa
     {
         RuleFor(x => x.OsmId).NotEmpty();
         RuleFor(x => x.OsmType).IsInEnum();
-        RuleFor(x => x.CadastreId).NotEmpty();
     }
 }

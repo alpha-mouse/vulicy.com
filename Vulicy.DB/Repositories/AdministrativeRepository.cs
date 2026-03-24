@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using NetTopologySuite.Geometries;
 using Npgsql;
 using Vulicy.DB.Configurations;
 using Vulicy.Domain;
@@ -294,5 +295,21 @@ public class AdministrativeRepository(VulicyDbContext dbContext)
     public Task<AdministrativeEntity?> GetByCadastreAte(int cadastreAte)
     {
         return Entities.FirstOrDefaultAsync(x => x.CadastreAte == cadastreAte);
+    }
+
+    public Task<List<AdministrativeEntity>> GetBatchTracking(int greaterThanId, int take)
+    {
+        return Entities
+            .AsTracking()
+            .Where(x => x.Id > greaterThanId)
+            .OrderBy(x => x.Id)
+            .Take(take)
+            .ToListAsync();
+    }
+
+    public Task<AdministrativeEntity?> FindIntersecting(Geometry geometry)
+    {
+        return Entities
+            .FirstOrDefaultAsync(x => x.Boundary != null && x.Boundary.Intersects(geometry));
     }
 }

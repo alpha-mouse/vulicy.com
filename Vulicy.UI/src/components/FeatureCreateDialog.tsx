@@ -17,7 +17,7 @@ import { api } from '../utils/api';
 
 interface FeatureCreateDialogProps {
   osmFeature: OsmFeature;
-  cadastreFeature: CadastreFeature;
+  cadastreFeature?: CadastreFeature | null;
   onClose: () => void;
   onCreated: (feature: SearchResult) => void;
 }
@@ -73,7 +73,7 @@ const FeatureCreateDialog = ({
         const previewRequest: FeaturePreviewRequest = {
           osmId: osmFeature.id,
           osmType: osmFeature.type,
-          cadastreId: cadastreFeature.id,
+          ...(cadastreFeature ? { cadastreId: cadastreFeature.id } : {}),
         };
 
         [preview, categories] = await Promise.all([
@@ -115,7 +115,7 @@ const FeatureCreateDialog = ({
     };
 
     fetchData();
-  }, [osmFeature.id, osmFeature.type, cadastreFeature.id]);
+  }, [osmFeature.id, osmFeature.type, cadastreFeature?.id]);
 
   const handleSave = useCallback(async () => {
     if (isSaving) return;
@@ -134,7 +134,7 @@ const FeatureCreateDialog = ({
         ...editForm,
         osmId: osmFeature.id,
         osmType: osmFeature.type,
-        cadastreId: cadastreFeature.id,
+        ...(cadastreFeature ? { cadastreId: cadastreFeature.id } : {}),
       };
 
       const createdFeature = await api.post<SearchResult>('/api/features/from-sources', createRequest);

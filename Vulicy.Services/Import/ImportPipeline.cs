@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Operation.Linemerge;
+using NetTopologySuite.Operation.Union;
 using Vulicy.Domain;
 
 namespace Vulicy.Services;
@@ -604,6 +605,38 @@ public partial class ImportPipeline(
         LogAssignedClassifications();
     }
 
+    public async Task ComputeAdministrativeBoundaries(CancellationToken applicationStopping)
+    {
+        await using var scope = serviceScopeFactory.CreateAsyncScope();
+        var administrativeRepository = scope.ServiceProvider.GetRequiredService<IAdministrativeRepository>();
+        var featureRepository = scope.ServiceProvider.GetRequiredService<IFeatureRepository>();
+
+        int lastSeenId = 0;
+        int updatedAdministratives = 0;
+        while (true)
+        {
+            var administratives = await administrativeRepository.GetBatchTracking(lastSeenId, 100);
+            if (administratives.Count == 0)
+                break;
+            lastSeenId = administratives.Max(x => x.Id);
+
+            foreach (var administrative in administratives)
+            {
+                var featureGeometries = await featureRepository.GetGeometriesByAdministrative(administrative.Id);
+                var hulls = GeometryExtensions.GetConvexHullsForClusters(featureGeometries);
+                administrative.Boundary = hulls.Count == 0 ? null : UnaryUnionOp.Union(hulls);
+                updatedAdministratives++;
+                if (updatedAdministratives % 1000 == 0)
+                    LogAdministrativesBoundaryProgress(updatedAdministratives);
+            }
+
+            await administrativeRepository.SaveChanges();
+            administrativeRepository.ClearChangeTracker();
+        }
+
+        LogAdministrativesBoundaryComplete(updatedAdministratives);
+    }
+
     private static Geometry AssembleOsmGeometry(IEnumerable<OsmFeatureEntity> matchingOsm)
     {
         var lineMerger = new LineMerger();
@@ -797,4 +830,10 @@ public partial class ImportPipeline(
 
     [LoggerMessage(LogLevel.Information, "Assigned classifications from initial import")]
     private partial void LogAssignedClassifications();
+
+    [LoggerMessage(LogLevel.Information, "Updated {count} administratives with boundaries...")]
+    private partial void LogAdministrativesBoundaryProgress(int count);
+
+    [LoggerMessage(LogLevel.Information, "Complete. Total {count} administratives updated with boundaries")]
+    private partial void LogAdministrativesBoundaryComplete(int count);
 }

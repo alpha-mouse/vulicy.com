@@ -9,7 +9,7 @@ public interface IDossierRecordRepository : IRepository<DossierRecordEntity, int
     Task<bool> HasFeatures(int id);
     Task RelinkFeatures(int fromDossierRecordId, int toDossierRecordId);
     void Delete(DossierRecordEntity entity);
-    Task<List<DossierRecordEntity>> FindByDescriptions(string descriptionBe, string descriptionRu);
+    Task<List<DossierRecordEntity>> FindByDescriptions(string? descriptionBe, string? descriptionRu);
 
     Task UpdateForumLink(int dossierRecordId, string forumRelativeLink, int userId);
     Task SetForumLinkIfEmpty(int dossierRecordId, string forumRelativeLink, int userId);

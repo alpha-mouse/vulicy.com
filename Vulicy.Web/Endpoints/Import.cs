@@ -23,6 +23,7 @@ public static class Import
         group.MapPost("/6-initialize-features-dossier-categories-references", InitializeFeaturesDossierCategoriesReferences);
         group.MapPost("/7-map-fields-from-initial-cadastre-import", MapFieldsFromInitialCadastreImport);
         group.MapPost("/8-set-administrative-on-features", SetAdministrativeOnFeatures);
+        group.MapPost("/9-compute-administrative-boundaries", ComputeAdministrativeBoundaries);
     }
 
     private static Task<int> ImportOsm([FromBody] string pbfDownloadUrl, IImportingService importingService, IHostApplicationLifetime hostApplicationLifetime)
@@ -78,5 +79,10 @@ public static class Import
     private static Task SetAdministrativeOnFeatures(IAdministrativeRepository administrativeRepository)
     {
         return administrativeRepository.SetAdministrativeOnFeatures();
+    }
+
+    private static Task ComputeAdministrativeBoundaries(IImportPipeline importPipeline, IHostApplicationLifetime hostApplicationLifetime)
+    {
+        return importPipeline.ComputeAdministrativeBoundaries(hostApplicationLifetime.ApplicationStopping);
     }
 }

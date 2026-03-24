@@ -137,7 +137,7 @@ public static partial class NameHelpers
     [GeneratedRegex($@"(?<number>^\d+-[іыйя]) (?<name>.+)$")]
     private static partial Regex GetAlternativeNameRegex();
 
-    public static string TryGetAlternativeName(string name)
+    public static string? TryGetAlternativeName(string name)
     {
         var match = GetAlternativeNameRegex().Match(name);
         if (!match.Success) return null;

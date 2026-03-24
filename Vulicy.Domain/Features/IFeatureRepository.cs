@@ -1,4 +1,6 @@
-﻿namespace Vulicy.Domain;
+﻿using NetTopologySuite.Geometries;
+
+namespace Vulicy.Domain;
 
 public interface IFeatureRepository : IRepository<FeatureEntity, int>
 {
@@ -20,4 +22,5 @@ public interface IFeatureRepository : IRepository<FeatureEntity, int>
     Task AssignClassificationsFromInitialCadastre();
     Task<List<FeatureEntity>> GetForExport();
     Task<List<FeatureEntity>> GetForExportByAdministrative(int administrativeId);
+    Task<List<Geometry>> GetGeometriesByAdministrative(int administrativeId);
 }

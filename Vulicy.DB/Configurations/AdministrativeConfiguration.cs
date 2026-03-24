@@ -16,6 +16,8 @@ public class AdministrativeConfiguration : IEntityTypeConfiguration<Administrati
         builder.Property(x => x.NameBeNark).HasMaxLength(128);
         builder.Property(x => x.NameRu).HasMaxLength(128);
 
+        builder.Property(x => x.Boundary).HasGeometryColumnType();
+
         builder
             .HasOne(x => x.ParentRegion)
             .WithMany()

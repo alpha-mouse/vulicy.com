@@ -131,7 +131,7 @@ public class DossierRecordRepository(VulicyDbContext dbContext)
         Context.Remove(entity);
     }
 
-    public Task<List<DossierRecordEntity>> FindByDescriptions(string descriptionBe, string descriptionRu)
+    public Task<List<DossierRecordEntity>> FindByDescriptions(string? descriptionBe, string? descriptionRu)
     {
         if (string.IsNullOrEmpty(descriptionBe) && string.IsNullOrEmpty(descriptionRu))
             return Task.FromResult(new List<DossierRecordEntity>(0));

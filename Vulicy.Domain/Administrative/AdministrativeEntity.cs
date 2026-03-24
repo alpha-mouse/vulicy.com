@@ -1,4 +1,6 @@
-﻿namespace Vulicy.Domain;
+﻿using NetTopologySuite.Geometries;
+
+namespace Vulicy.Domain;
 
 public class AdministrativeEntity : Entity<int>
 {
@@ -10,6 +12,7 @@ public class AdministrativeEntity : Entity<int>
     public int? ParentDistrictId { get; set; }
     public int? ParentVillageCouncilId { get; set; }
     public int? CadastreAte { get; set; }
+    public Geometry? Boundary { get; set; }
 
     public AdministrativeEntity? ParentRegion { get; set; }
     public AdministrativeEntity? ParentDistrict { get; set; }
