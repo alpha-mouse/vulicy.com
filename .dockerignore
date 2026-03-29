@@ -8,3 +8,4 @@
 **/dist
 **/wwwroot/*
 !**/wwwroot/index.html
+**/appsettings.Development.json

@@ -181,7 +181,7 @@ const DossierRecordItem = ({
                 e.stopPropagation();
                 onDelete(record);
               }}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-black/60 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors bg-transparent border-none cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-black/60 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-500/20 rounded-md transition-colors bg-transparent border-none cursor-pointer"
               title="Выдаліць"
             >
               <Trash2 size={14} />
@@ -194,7 +194,7 @@ const DossierRecordItem = ({
                 e.stopPropagation();
                 onMerge(record);
               }}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-black/60 hover:text-amber-600 hover:bg-amber-50 rounded-md transition-colors bg-transparent border-none cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-black/60 hover:text-primary hover:bg-primary/10 rounded-md transition-colors bg-transparent border-none cursor-pointer"
               title="Аб'яднаць"
             >
               <Merge size={14} />
