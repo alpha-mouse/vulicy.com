@@ -2,7 +2,7 @@
 FROM node:22-alpine AS ui-build
 WORKDIR /src/Vulicy.UI
 COPY Vulicy.UI/package*.json ./
-RUN npm install
+RUN npm ci
 COPY Vulicy.UI/ ./
 # This will output to ../Vulicy.Web/wwwroot as per vite.config.js
 RUN npm run build
