@@ -4,7 +4,7 @@ import MergePage from './components/MergePage'
 import AdministrativePage from './components/AdministrativePage'
 import ExplicitlyCategorizedMap from './components/ExplicitlyCategorizedMap'
 import { ConfigProvider, useConfig } from './hooks/useConfig'
-import { useAuth } from './hooks/useAuth'
+import { useAuth, AuthProvider } from './hooks/useAuth'
 import { useNavigation } from './hooks/useNavigation'
 import * as Sentry from "@sentry/react";
 
@@ -55,7 +55,9 @@ function AppContainer() {
 function App() {
   return (
     <ConfigProvider>
-      <AppContainer />
+      <AuthProvider>
+        <AppContainer />
+      </AuthProvider>
     </ConfigProvider>
   )
 }

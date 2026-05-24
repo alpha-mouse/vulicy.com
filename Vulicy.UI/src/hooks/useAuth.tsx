@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useContext, createContext } from 'react';
+import type { ReactNode } from 'react';
 import type { User } from '../types';
 import { api } from '../utils/api';
 
 const AUTH_STORAGE_KEY = 'vulicy_user';
 
-interface UseAuthResult {
+interface AuthContextValue {
   user: User | null;
   isLoading: boolean;
   isAdmin: boolean;
@@ -13,7 +14,9 @@ interface UseAuthResult {
   clearAuthState: () => void;
 }
 
-export const useAuth = (): UseAuthResult => {
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(() => {
     try {
       const stored = localStorage.getItem(AUTH_STORAGE_KEY);
@@ -62,12 +65,17 @@ export const useAuth = (): UseAuthResult => {
     window.location.href = '/api/auth/logout';
   }, [clearAuthState]);
 
-  return {
-    user,
-    isLoading,
-    isAdmin: user?.isAdmin ?? false,
-    login,
-    logout,
-    clearAuthState,
-  };
+  return (
+    <AuthContext.Provider value={{ user, isLoading, isAdmin: user?.isAdmin ?? false, login, logout, clearAuthState }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = (): AuthContextValue => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
