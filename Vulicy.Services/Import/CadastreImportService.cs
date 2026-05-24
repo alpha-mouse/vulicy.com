@@ -53,8 +53,7 @@ public partial class CadastreImportService(
                     var ateProperty = properties.GetProperty("ate");
                     var geometryElement = feature.GetProperty("geometry");
                     if (elementTypeProperty.ValueKind == JsonValueKind.Null
-                        || ateProperty.ValueKind == JsonValueKind.Null
-                        || geometryElement.ValueKind == JsonValueKind.Null)
+                        || ateProperty.ValueKind == JsonValueKind.Null)
                         continue;
 
                     var elementType = elementTypeProperty.GetInt32();
@@ -153,6 +152,9 @@ public partial class CadastreImportService(
 
     private static Geometry? ParseGeometry(JsonElement geometryElement)
     {
+        if (geometryElement.ValueKind == JsonValueKind.Null)
+            return null;
+
         var type = geometryElement.GetProperty("type").GetString();
         var coordinates = geometryElement.GetProperty("coordinates");
 

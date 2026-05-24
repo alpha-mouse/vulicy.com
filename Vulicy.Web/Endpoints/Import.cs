@@ -9,7 +9,7 @@ public static class Import
 {
     public static void MapImport(this IEndpointRouteBuilder builder, bool withAdminAuth)
     {
-        // AllowAnonymous: These endpoints are only registered in Development mode (see Program.cs)
+        // These endpoints are registered anonymous in Development and admin authenticated in Production.
         var group = builder.MapGroup("/api/import");
         group = withAdminAuth ? group.RequireAdmin() : group.AllowAnonymous();
         group.MapPost("/osm", ImportOsm);
