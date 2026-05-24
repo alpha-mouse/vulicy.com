@@ -6,5 +6,5 @@ public interface ICadastreFeatureRepository : IRepository<CadastreFeatureEntity,
     Task<List<int>> GetUnmatchedAtes();
     Task<List<CadastreFeatureEntity>> GetUnmatchedByAteTracking(int ate);
     Task<List<int>> GetAllAtes();
-    Task<List<CadastreFeatureSearchResult>> SearchUnmatchedByName(string query, double? lat = null, double? lng = null);
+    Task<List<CadastreFeatureSearchResult>> SearchUnmatched(string query, double? lat = null, double? lng = null);
 }

@@ -68,7 +68,7 @@ public static class Features
 
     private static Task<List<CadastreFeatureSearchResult>> CadastreSearch(string query, double? lat, double? lng, ICadastreFeatureRepository cadastreFeatureRepository)
     {
-        return cadastreFeatureRepository.SearchUnmatchedByName(query, lat, lng);
+        return cadastreFeatureRepository.SearchUnmatched(query, lat, lng);
     }
 
     private static async Task<IResult> ExportFeatures(IFeatureRepository featureRepository, HttpContext context)
