@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Search as SearchIcon, X, MapPin } from 'lucide-react';
 import { useClickOutside } from '../hooks/useClickOutside';
 import type { SearchResult } from '../types/feature';
@@ -42,21 +42,18 @@ const Search = ({ onResultClick, currentLat, currentLng, embedded = false }: Sea
   }, [currentLat, currentLng]);
 
   // Debounce search
-  const handleQueryChange = useCallback((newQuery: string) => {
-    setQuery(newQuery);
-
-    if (!newQuery || newQuery.length < 2) {
+  useEffect(() => {
+    if (!query || query.length < 2) {
       setResults([]);
       return;
     }
 
-    // Debounce
     const timer = setTimeout(() => {
-      performSearch(newQuery);
+      performSearch(query);
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [performSearch]);
+  }, [query, performSearch]);
 
   const handleClear = () => {
     setQuery('');
@@ -84,7 +81,7 @@ const Search = ({ onResultClick, currentLat, currentLng, embedded = false }: Sea
           type="text"
           value={query}
           onChange={(e) => {
-            handleQueryChange(e.target.value);
+            setQuery(e.target.value);
             setIsOpen(true);
           }}
           onFocus={() => {
