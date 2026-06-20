@@ -77,6 +77,32 @@ var frontConfig = app.Services.GetRequiredService<FrontConfig>();
 frontConfig.DiscourseBaseUrl = app.Services.GetRequiredService<DiscourseConfig>().BaseUrl;
 frontConfig.Environment = app.Environment.IsProduction() ? "production" : "development" ;
 
+var sentryFeDsn = app.Configuration.GetValue<string>("AppConfig:SentryFeDsn");
+var sentryFeOrigin = string.IsNullOrEmpty(sentryFeDsn) ? "" : $"https://{new Uri(sentryFeDsn).Host}";
+var csp =
+    "default-src 'none'; " +
+    "script-src 'self'; " +
+    "style-src 'self' 'unsafe-inline'; " +
+    "font-src 'self'; " +
+    "img-src 'self' data:; " +
+    // MapLibre spawns web workers from blob: URLs; default-src 'none' would block them
+    "worker-src blob:; " +
+    // MapTiler serves style.json, vector tiles, glyphs and sprites; MapLibre fetches all via ajax (connect-src, not font-src/img-src)
+    $"connect-src 'self' {sentryFeOrigin} https://api.maptiler.com; " +
+    "base-uri 'self'; " +
+    "form-action 'self'; " +
+    "frame-ancestors 'none'";
+
+app.Use(async (ctx, next) =>
+{
+    ctx.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    ctx.Response.Headers.Append("X-Frame-Options", "DENY");
+    ctx.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    ctx.Response.Headers.Append("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=()");
+    ctx.Response.Headers.Append("Content-Security-Policy", csp);
+    await next();
+});
+
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
