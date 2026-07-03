@@ -18,7 +18,7 @@ public static class Map
 
         group.MapGet("/tile-details/{z}/{x}/{y}.mvt", GetTileDetails).RequireAdmin();
 
-        group.MapGet("/explicitly-categorized-tile/{z}/{x}/{y}.mvt", GetExplicitlyCategorizedTile);
+        group.MapGet("/explicitly-categorized-tile/{z}/{x}/{y}.mvt", GetExplicitlyCategorizedTile).RequireAdmin();
     }
 
     private static async Task<IResult> GetTile(int z, int x, int y, IFeatureRepository featureRepository, IMemoryCache cache)

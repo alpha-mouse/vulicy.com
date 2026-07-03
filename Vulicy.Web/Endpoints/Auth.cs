@@ -86,7 +86,18 @@ public static class Auth
 
         context.Response.Cookies.Delete("sso_nonce");
 
-        return Results.Redirect(string.IsNullOrEmpty(finalRedirect) ? "/" : finalRedirect);
+        return Results.Redirect(GetLocalRedirect(finalRedirect));
+    }
+
+    // Only allow site-relative redirects so a crafted returnUrl cannot turn login into an open redirect.
+    private static string GetLocalRedirect(string? url)
+    {
+        if (string.IsNullOrEmpty(url) || url[0] != '/')
+            return "/";
+        // Reject protocol-relative ("//host") and backslash-tricks ("/\host") that browsers treat as absolute.
+        if (url.Length > 1 && (url[1] == '/' || url[1] == '\\'))
+            return "/";
+        return url;
     }
 
     private static IResult Logout()

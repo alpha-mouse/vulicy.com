@@ -16,7 +16,7 @@ public static class DossierRecords
         group.MapPut("/{id:int}", EditRecord).RequireAdmin().Validate<EditDossierRecordRequest>();
         group.MapPut("/{id:int}/merge-other", MergeOtherRecord).RequireAdmin().Validate<MergeDossierRecordRequest>();
         group.MapDelete("/{id:int}", DeleteRecord).RequireAdmin();
-        group.MapGet("/merge-suggestions/next", GetNextMergeSuggestion);
+        group.MapGet("/merge-suggestions/next", GetNextMergeSuggestion).RequireAdmin();
         group.MapPost("/merge-suggestions/{id:int}/postpone", PostponeMergeSuggestion).RequireAdmin();
         group.MapDelete("/merge-suggestions/{id:int}", IgnoreMergeSuggestion).RequireAdmin();
     }

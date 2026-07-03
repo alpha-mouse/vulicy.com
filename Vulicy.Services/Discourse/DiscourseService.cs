@@ -124,11 +124,21 @@ public partial class DiscourseService(
             ? signatureHeader.AsSpan()[7..]
             : signatureHeader;
 
-        var expectedSignature = Convert.ToHexString(HMACSHA256.HashData(
-            Encoding.UTF8.GetBytes(discourseConfig.AuthSecret),
-            body));
+        byte[] providedSignature;
+        try
+        {
+            providedSignature = Convert.FromHexString(signature);
+        }
+        catch (FormatException)
+        {
+            return DiscourseWebhookResult.InvalidSignature;
+        }
 
-        if (!signature.Equals(expectedSignature, StringComparison.OrdinalIgnoreCase))
+        var expectedSignature = HMACSHA256.HashData(
+            Encoding.UTF8.GetBytes(discourseConfig.AuthSecret),
+            body);
+
+        if (!CryptographicOperations.FixedTimeEquals(expectedSignature, providedSignature))
             return DiscourseWebhookResult.InvalidSignature;
 
         return eventTypeHeader switch

@@ -1,3 +1,4 @@
+using Vulicy.Domain;
 using Vulicy.Services;
 using Vulicy.Web.Infrastructure;
 
@@ -21,8 +22,12 @@ public static class Forum
     private static async Task<IResult> CreateFeatureTopic(
         CreateTopicRequest request,
         IDiscourseService discourseService,
+        IFeatureRepository featureRepository,
         HttpContext context)
     {
+        if (!await featureRepository.Exists(request.ObjectId))
+            return Results.NotFound();
+
         var userId = context.User.GetUserId();
 
         var forumRelativeLink = await discourseService.CreateFeatureTopic(request.ObjectId, userId);
@@ -37,8 +42,12 @@ public static class Forum
     private static async Task<IResult> CreateDossierRecordTopic(
         CreateTopicRequest request,
         IDiscourseService discourseService,
+        IDossierRecordRepository dossierRecordRepository,
         HttpContext context)
     {
+        if (!await dossierRecordRepository.Exists(request.ObjectId))
+            return Results.NotFound();
+
         var userId = context.User.GetUserId();
 
         var forumRelativeLink = await discourseService.CreateDossierRecordTopic(request.ObjectId, userId);

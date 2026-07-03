@@ -20,6 +20,11 @@ public partial class RepositoryBase<T, TKey>(VulicyDbContext dbContext) : IRepos
         return Entities.AsTracking().FirstOrDefaultAsync(x => x.Id!.Equals(id));
     }
 
+    public Task<bool> Exists(TKey id)
+    {
+        return Entities.AnyAsync(x => x.Id!.Equals(id));
+    }
+
     public Task<List<T>> GetAll()
     {
         return Entities.ToListAsync();

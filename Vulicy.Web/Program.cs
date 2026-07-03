@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.ResponseCompression;
 using System.Globalization;
 using System.Text;
+using System.Threading.RateLimiting;
 using Vulicy.Services;
 using Vulicy.Web.Endpoints;
 using Vulicy.Web.Infrastructure;
@@ -45,6 +47,39 @@ builder.Services.AddConventionalServices(typeof(IImportingService).Assembly);
 builder.Services.AddHttpClient();
 builder.Services.AddMemoryCache();
 
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+    options.ForwardLimit = 2;
+
+    // Comma-separated CIDRs of trusted proxies (Cloudflare ranges + the Coolify/Traefik network).
+    // When empty (e.g. local dev) no forwarded headers are trusted and the scheme stays http.
+    var knownNetworks = builder.Configuration.GetValue<string>("ForwardedHeaders:KnownNetworks");
+    if (!string.IsNullOrWhiteSpace(knownNetworks))
+        foreach (var cidr in knownNetworks.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            options.KnownIPNetworks.Add(System.Net.IPNetwork.Parse(cidr));
+});
+
+// Origin-side throttle (per client IP) so a single client cannot exhaust the DB pool on the
+// anonymous, DB-heavy read endpoints. Cloudflare adds edge protection; this defends the origin.
+var permitsPerMinute = builder.Configuration.GetValue<int?>("RateLimiting:PermitsPerMinute") ?? 600;
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+    {
+        var partitionKey = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(partitionKey, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = permitsPerMinute,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+        });
+    });
+});
+
 builder.Services.AddAws(builder.Configuration);
 builder.Services.AddSingleton<IAuditQueue, AuditQueue>();
 builder.Services.AddHostedService<AuditPersistenceHostedService>();
@@ -55,6 +90,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     .AddCookie(options =>
     {
         options.Cookie.Name = "Vulicy.Auth";
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        // Force Secure in non-dev so the session cookie is never sent over the plaintext
+        // proxy hop; left as default (SameAsRequest) in dev for http://localhost logins.
+        if (!builder.Environment.IsDevelopment())
+            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         options.ExpireTimeSpan = TimeSpan.FromDays(30);
         options.SlidingExpiration = true;
         options.Events.OnRedirectToLogin = context =>
@@ -93,6 +133,11 @@ var csp =
     "form-action 'self'; " +
     "frame-ancestors 'none'";
 
+// Must run before anything that reads Request.Scheme / RemoteIpAddress (security headers, auth,
+// rate limiter, SSO callback URL construction).
+app.UseForwardedHeaders();
+
+var isDevelopment = app.Environment.IsDevelopment();
 app.Use(async (ctx, next) =>
 {
     ctx.Response.Headers.Append("X-Content-Type-Options", "nosniff");
@@ -100,6 +145,9 @@ app.Use(async (ctx, next) =>
     ctx.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
     ctx.Response.Headers.Append("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=()");
     ctx.Response.Headers.Append("Content-Security-Policy", csp);
+    // HSTS only in non-dev (never send it over plaintext localhost).
+    if (!isDevelopment)
+        ctx.Response.Headers.Append("Strict-Transport-Security", "max-age=15552000; includeSubDomains");
     await next();
 });
 
@@ -107,6 +155,9 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 
 app.UseResponseCompression();
+
+// After static files so SPA assets don't consume the per-IP budget; API + tile endpoints do.
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseMiddleware<AuditMiddleware>(); // after authentication

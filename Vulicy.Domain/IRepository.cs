@@ -7,6 +7,7 @@ public interface IRepository<T, in TKey>
 {
     Task<T?> GetById(TKey id);
     Task<T?> GetByIdTracked(TKey id);
+    Task<bool> Exists(TKey id);
     Task<List<T>> GetAll();
     void Add(T entity);
     void AddRange(IEnumerable<T> entities);

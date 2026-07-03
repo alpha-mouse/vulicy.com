@@ -18,7 +18,7 @@ public class DiscourseConnectService(DiscourseConfig config, IUserRepository use
 
     public async Task<UserEntity?> VerifyAndGetOrCreateUser(string payload, string signature, string nonce)
     {
-        if (CalculateSignature(payload) != signature)
+        if (!VerifySignature(payload, signature))
         {
             return null;
         }
@@ -72,11 +72,29 @@ public class DiscourseConnectService(DiscourseConfig config, IUserRepository use
         return user;
     }
 
+    private byte[] ComputeSignatureBytes(string payload)
+    {
+        return HMACSHA256.HashData(Encoding.UTF8.GetBytes(config.AuthSecret), Encoding.UTF8.GetBytes(payload));
+    }
+
     private string CalculateSignature(string payload)
     {
-        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(config.AuthSecret));
-        var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(payload));
-        return Convert.ToHexString(hash).ToLower();
+        return Convert.ToHexString(ComputeSignatureBytes(payload)).ToLower();
+    }
+
+    private bool VerifySignature(string payload, string providedHexSignature)
+    {
+        byte[] provided;
+        try
+        {
+            provided = Convert.FromHexString(providedHexSignature);
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+
+        return CryptographicOperations.FixedTimeEquals(ComputeSignatureBytes(payload), provided);
     }
 
     private static Dictionary<string, string> ParseQueryString(string query)

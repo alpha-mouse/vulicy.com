@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Net;
+using System.Net.Sockets;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Operation.Linemerge;
@@ -12,6 +14,9 @@ public partial class ImportPipeline(
     ILogger<ImportPipeline> logger
 ) : IImportPipeline
 {
+    // Generous ceiling for OSM/cadastre extracts; bounds a hostile or misconfigured URL from filling the disk.
+    private const long MaxDownloadBytes = 5L * 1024 * 1024 * 1024;
+
     public void StartRunning(int importId, ImportType importType, CancellationToken cancellationToken)
     {
         _ = Run(importId, importType, cancellationToken);
@@ -55,6 +60,15 @@ public partial class ImportPipeline(
             return false;
         }
 
+        if (!await IsSafeDownloadUrl(import.DownloadUrl, cancellationToken))
+        {
+            LogDownloadRejectedUrl(importId, import.DownloadUrl);
+            import.Status = ImportStatus.DownloadFailed;
+            import.Error = "Download URL rejected: must be an https URL resolving to a public host.";
+            await importRepository.SaveChanges();
+            return false;
+        }
+
         try
         {
             LogDownloadStarting(importId, import.DownloadUrl);
@@ -63,9 +77,13 @@ public partial class ImportPipeline(
             using var response = await httpClient.GetAsync(import.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             response.EnsureSuccessStatusCode();
 
-            await using (var fileStream = new FileStream(import.LocalPath, FileMode.OpenOrCreate, FileAccess.Write))
+            if (response.Content.Headers.ContentLength is > MaxDownloadBytes)
+                throw new InvalidOperationException($"Download rejected: Content-Length {response.Content.Headers.ContentLength} exceeds the {MaxDownloadBytes} byte limit.");
+
+            await using (var fileStream = new FileStream(import.LocalPath, FileMode.Create, FileAccess.Write))
+            await using (var source = await response.Content.ReadAsStreamAsync(cancellationToken))
             {
-                await response.Content.CopyToAsync(fileStream, cancellationToken);
+                await CopyWithLimit(source, fileStream, MaxDownloadBytes, cancellationToken);
             }
 
             import.Status = ImportStatus.Downloaded;
@@ -82,6 +100,66 @@ public partial class ImportPipeline(
             import.Error = e.Message;
             await importRepository.SaveChanges();
             return false;
+        }
+    }
+
+    // SSRF guard: the download URL is operator-supplied, so only allow https URLs that resolve to
+    // public addresses. Rejects loopback/link-local/private ranges and the 169.254.169.254 cloud
+    // metadata endpoint. (Residual TOCTOU: a host could re-resolve to a private IP between this check
+    // and the actual fetch — acceptable here as the import endpoint is admin-only in production.)
+    private static async Task<bool> IsSafeDownloadUrl(string? url, CancellationToken cancellationToken)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps)
+            return false;
+
+        IPAddress[] addresses;
+        try
+        {
+            addresses = await Dns.GetHostAddressesAsync(uri.DnsSafeHost, cancellationToken);
+        }
+        catch (SocketException)
+        {
+            return false;
+        }
+
+        return addresses.Length > 0 && addresses.All(IsPublicAddress);
+    }
+
+    private static bool IsPublicAddress(IPAddress address)
+    {
+        if (IPAddress.IsLoopback(address) || address.Equals(IPAddress.Any) || address.Equals(IPAddress.IPv6Any))
+            return false;
+
+        var bytes = address.GetAddressBytes();
+        if (address.AddressFamily == AddressFamily.InterNetwork)
+        {
+            if (bytes[0] is 0 or 10 or 127) return false;                       // 0/8, 10/8, 127/8
+            if (bytes[0] == 169 && bytes[1] == 254) return false;               // 169.254/16 link-local (incl. metadata)
+            if (bytes[0] == 172 && bytes[1] is >= 16 and <= 31) return false;   // 172.16/12
+            if (bytes[0] == 192 && bytes[1] == 168) return false;               // 192.168/16
+            if (bytes[0] == 100 && bytes[1] is >= 64 and <= 127) return false;  // 100.64/10 CGNAT
+        }
+        else if (address.AddressFamily == AddressFamily.InterNetworkV6)
+        {
+            if (address.IsIPv4MappedToIPv6) return IsPublicAddress(address.MapToIPv4());
+            if (address.IsIPv6LinkLocal || address.IsIPv6SiteLocal) return false;
+            if ((bytes[0] & 0xFE) == 0xFC) return false;                        // fc00::/7 unique local
+        }
+
+        return true;
+    }
+
+    private static async Task CopyWithLimit(Stream source, Stream destination, long maxBytes, CancellationToken cancellationToken)
+    {
+        var buffer = new byte[81920];
+        long total = 0;
+        int read;
+        while ((read = await source.ReadAsync(buffer, cancellationToken)) > 0)
+        {
+            total += read;
+            if (total > maxBytes)
+                throw new InvalidOperationException($"Download rejected: exceeds the {maxBytes} byte limit.");
+            await destination.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
         }
     }
 
@@ -778,6 +856,9 @@ public partial class ImportPipeline(
 
     [LoggerMessage(LogLevel.Error, "Failed to download import {importId}")]
     private partial void LogDownloadError(Exception e, int importId);
+
+    [LoggerMessage(LogLevel.Warning, "Rejected unsafe download URL for import {importId}: {url}")]
+    private partial void LogDownloadRejectedUrl(int importId, string url);
 
 
     [LoggerMessage(LogLevel.Warning, "Not proceeding with staging import {importId}, current status: {importStatus}")]
