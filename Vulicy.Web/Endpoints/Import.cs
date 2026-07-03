@@ -71,14 +71,16 @@ public static class Import
         return importPipeline.MapFieldsFromInitialCadastreImport(hostApplicationLifetime.ApplicationStopping);
     }
 
-    private static Task CreateMissingAdministrative(IAdministrativeRepository administrativeRepository)
+    private static async Task CreateMissingAdministrative(IAdministrativeRepository administrativeRepository)
     {
-        return administrativeRepository.CreateMissingAdministrativeFromCadastre();
+        using var timeoutScope = DbCommandTimeout.Unlimited();
+        await administrativeRepository.CreateMissingAdministrativeFromCadastre();
     }
 
-    private static Task SetAdministrativeOnFeatures(IAdministrativeRepository administrativeRepository)
+    private static async Task SetAdministrativeOnFeatures(IAdministrativeRepository administrativeRepository)
     {
-        return administrativeRepository.SetAdministrativeOnFeatures();
+        using var timeoutScope = DbCommandTimeout.Unlimited();
+        await administrativeRepository.SetAdministrativeOnFeatures();
     }
 
     private static Task ComputeAdministrativeBoundaries(IImportPipeline importPipeline, IHostApplicationLifetime hostApplicationLifetime)

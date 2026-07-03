@@ -35,10 +35,13 @@ public static class DatabaseExtensions
         {
             options.UseNpgsql(npgsqlDataSource, action =>
             {
-                action.CommandTimeout(0);
+                // Default ceiling for interactive queries; import work opts out via DbCommandTimeout.Unlimited().
+                action.CommandTimeout(30);
                 action.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
                 action.UseNetTopologySuite();
             });
+
+            options.AddInterceptors(new CommandTimeoutInterceptor());
 
             options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
 

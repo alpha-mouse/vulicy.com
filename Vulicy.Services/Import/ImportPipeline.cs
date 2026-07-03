@@ -24,6 +24,7 @@ public partial class ImportPipeline(
 
     private async Task Run(int importId, ImportType importType, CancellationToken cancellationToken)
     {
+        using var timeoutScope = DbCommandTimeout.Unlimited();
         try
         {
             if (!await DownloadImport(importId, cancellationToken))
@@ -285,6 +286,8 @@ public partial class ImportPipeline(
 
     public async Task MatchMissingOsmCadastre(CancellationToken cancellationToken)
     {
+        using var timeoutScope = DbCommandTimeout.Unlimited();
+
         // 0.001 is roughly 100-150 meters in degrees at Belarus latitude (53°N)
         // It's used as a small tolerance for features that should touch/intersect but might have slight precision differences
         const double geometryDelta = 0.001;
@@ -534,6 +537,8 @@ public partial class ImportPipeline(
 
     public async Task InitializeNamingCategories()
     {
+        using var timeoutScope = DbCommandTimeout.Unlimited();
+
         await using var scope = serviceScopeFactory.CreateAsyncScope();
         var namingCategoryRepository = scope.ServiceProvider.GetRequiredService<INamingCategoryRepository>();
         await namingCategoryRepository.MergeFromCadastreInitial(DateTime.UtcNow);
@@ -543,6 +548,8 @@ public partial class ImportPipeline(
 
     public async Task InitializeDossierRecords()
     {
+        using var timeoutScope = DbCommandTimeout.Unlimited();
+
         await using var scope = serviceScopeFactory.CreateAsyncScope();
         var dossierRecordRepository = scope.ServiceProvider.GetRequiredService<IDossierRecordRepository>();
         var namingCategoryRepository = scope.ServiceProvider.GetRequiredService<INamingCategoryRepository>();
@@ -590,6 +597,8 @@ public partial class ImportPipeline(
 
     public async Task InitializeFeaturesDossierCategoriesReferences(CancellationToken cancellationToken)
     {
+        using var timeoutScope = DbCommandTimeout.Unlimited();
+
         await using var scope = serviceScopeFactory.CreateAsyncScope();
         var dossierRecordRepository = scope.ServiceProvider.GetRequiredService<IDossierRecordRepository>();
         var namingCategoryRepository = scope.ServiceProvider.GetRequiredService<INamingCategoryRepository>();
@@ -673,6 +682,8 @@ public partial class ImportPipeline(
 
     public async Task MapFieldsFromInitialCadastreImport(CancellationToken applicationStopping)
     {
+        using var timeoutScope = DbCommandTimeout.Unlimited();
+
         await using var scope = serviceScopeFactory.CreateAsyncScope();
         var featureRepository = scope.ServiceProvider.GetRequiredService<IFeatureRepository>();
 
@@ -685,6 +696,8 @@ public partial class ImportPipeline(
 
     public async Task ComputeAdministrativeBoundaries(CancellationToken applicationStopping)
     {
+        using var timeoutScope = DbCommandTimeout.Unlimited();
+
         await using var scope = serviceScopeFactory.CreateAsyncScope();
         var administrativeRepository = scope.ServiceProvider.GetRequiredService<IAdministrativeRepository>();
         var featureRepository = scope.ServiceProvider.GetRequiredService<IFeatureRepository>();
