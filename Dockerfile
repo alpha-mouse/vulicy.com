@@ -32,8 +32,6 @@ RUN dotnet publish Vulicy.Web/Vulicy.Web.csproj -c Release -o /app/publish /p:Us
 # --- 3. Final Runtime (ASP.NET) ---
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS final
 RUN apk add --no-cache icu-libs
-# Run as a non-root user rather than root
-RUN addgroup -S app && adduser -S -G app app
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 WORKDIR /app
 EXPOSE 8080
