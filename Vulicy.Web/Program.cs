@@ -157,7 +157,8 @@ app.UseStaticFiles();
 app.UseResponseCompression();
 
 // After static files so SPA assets don't consume the per-IP budget; API + tile endpoints do.
-app.UseRateLimiter();
+if (!isDevelopment)
+    app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseMiddleware<AuditMiddleware>(); // after authentication
