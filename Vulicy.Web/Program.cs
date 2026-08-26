@@ -47,19 +47,13 @@ builder.Services.AddConventionalServices(typeof(IImportingService).Assembly);
 builder.Services.AddHttpClient();
 builder.Services.AddMemoryCache();
 
+// Recover the real client IP when proxied through Cloudflare. Trust is unconditional: Coolify's host is only reachable from Cloudflare.
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.ForwardedForHeaderName = "CF-Connecting-IP";
     options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
-    options.ForwardLimit = 2;
-
-    // Comma-separated CIDRs of trusted proxies (Cloudflare ranges + the Coolify/Traefik network).
-    // When empty (e.g. local dev) no forwarded headers are trusted and the scheme stays http.
-    var knownNetworks = builder.Configuration.GetValue<string>("ForwardedHeaders:KnownNetworks");
-    if (!string.IsNullOrWhiteSpace(knownNetworks))
-        foreach (var cidr in knownNetworks.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-            options.KnownIPNetworks.Add(System.Net.IPNetwork.Parse(cidr));
 });
 
 // Origin-side throttle (per client IP) so a single client cannot exhaust the DB pool on the
@@ -133,8 +127,7 @@ var csp =
     "form-action 'self'; " +
     "frame-ancestors 'none'";
 
-// Must run before anything that reads Request.Scheme / RemoteIpAddress (security headers, auth,
-// rate limiter, SSO callback URL construction).
+// Must run before anything that reads Request.Scheme / RemoteIpAddress (security headers, auth, rate limiter, SSO callback URL construction).
 app.UseForwardedHeaders();
 
 var isDevelopment = app.Environment.IsDevelopment();
