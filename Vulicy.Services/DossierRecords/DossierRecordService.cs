@@ -18,7 +18,7 @@ public class DossierRecordService(
 {
     public Task<List<DossierRecordSearchResult>> SearchByName(string? query, int? skip = null, int? take = null)
     {
-        if (skip < 0 || take < 0 || 1000 < take) throw new InvalidOperationException("Bad paging parameters");
+        if (skip < 0 || take < 0 || 1000 < take) throw new BadRequestException("Bad paging parameters");
         return dossierRecordRepository.SearchByName(query, skip ?? 0, take ?? 100);
     }
 
@@ -57,7 +57,7 @@ public class DossierRecordService(
 
         if (canonical is null || other is null)
         {
-            throw new InvalidOperationException("One or both dossier records not found");
+            throw new NotFoundException("One or both dossier records");
         }
 
         // 2. Create historic records for both
@@ -116,7 +116,7 @@ public class DossierRecordService(
         var record = await dossierRecordRepository.GetByIdTracked(id);
         if (record is null)
         {
-            throw new InvalidOperationException("Dossier record not found");
+            throw new NotFoundException("Dossier record");
         }
 
         var now = DateTime.UtcNow;
@@ -145,12 +145,12 @@ public class DossierRecordService(
         var record = await dossierRecordRepository.GetByIdTracked(id);
         if (record is null)
         {
-            throw new InvalidOperationException("Dossier record not found");
+            throw new NotFoundException("Dossier record");
         }
 
         if (await dossierRecordRepository.HasFeatures(id))
         {
-            throw new InvalidOperationException("Cannot delete dossier record with attached features");
+            throw new BadRequestException("Cannot delete dossier record with attached features");
         }
 
         var now = DateTime.UtcNow;

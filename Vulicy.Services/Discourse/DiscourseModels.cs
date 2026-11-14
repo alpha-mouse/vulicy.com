@@ -2,6 +2,12 @@ using System.Text.Json.Serialization;
 
 namespace Vulicy.Services;
 
+public record DiscourseCreatePostRequest(
+    [property: JsonPropertyName("title")] string? Title,
+    [property: JsonPropertyName("raw")] string Raw,
+    [property: JsonPropertyName("category")] int Category
+);
+
 public record DiscoursePostResponse(
     [property: JsonPropertyName("topic_id")] int TopicId,
     [property: JsonPropertyName("topic_slug")] string TopicSlug

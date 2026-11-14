@@ -21,7 +21,7 @@ public class ImportingService(
     public async Task<int> StartImportCadastreInitial(string geojsonDownloadUrl, CancellationToken cancellationToken)
     {
         if (await initialCadastreFeatureImportRepository.HasAny())
-            throw new InvalidOperationException("Initial cadastre import has already happened");
+            throw new BadRequestException("Initial cadastre import has already happened");
         return await CreateAndRunImport(geojsonDownloadUrl, ImportType.CadastreInitial, cancellationToken);
     }
 

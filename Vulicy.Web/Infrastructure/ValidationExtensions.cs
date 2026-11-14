@@ -4,8 +4,6 @@ using System.Reflection;
 
 namespace Vulicy.Web.Infrastructure;
 
-public record ErrorResponse(int Code, string Message);
-
 public static class ValidationExtensions
 {
     public static IServiceCollection AddValidatorsFromAssemblyContaining<T>(this IServiceCollection serviceCollection)

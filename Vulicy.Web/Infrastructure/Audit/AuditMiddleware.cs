@@ -71,7 +71,7 @@ public class AuditMiddleware(
         }
         catch (Exception e)
         {
-            // Filters (CommonExceptionFilter) are run upstream of this.
+            // ExceptionMiddleware is run upstream of this.
             // So if an exception occurs the status code will be a lie. It will be 200 OK.
             // So by the presence of the error message we'll be able to judge that something went wrong
             exceptionMessage = e.Message;

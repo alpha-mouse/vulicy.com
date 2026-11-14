@@ -77,6 +77,7 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.AddAws(builder.Configuration);
 builder.Services.AddSingleton<IAuditQueue, AuditQueue>();
 builder.Services.AddHostedService<AuditPersistenceHostedService>();
+builder.Services.AddSingleton<ExceptionMiddleware>();
 
 builder.Services.AddSingleton<ILinksService, LinksService>();
 
@@ -143,6 +144,8 @@ app.Use(async (ctx, next) =>
         ctx.Response.Headers.Append("Strict-Transport-Security", "max-age=15552000; includeSubDomains");
     await next();
 });
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseDefaultFiles();
 app.UseStaticFiles();

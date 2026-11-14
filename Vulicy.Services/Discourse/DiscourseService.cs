@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
@@ -16,11 +16,12 @@ public partial class DiscourseService(
     ILogger<DiscourseService> logger
     ) : IDiscourseService
 {
-    public async Task<string?> CreateFeatureTopic(int featureId, int userId)
+    private const int MaxLoggedResponseLength = 4000;
+
+    public async Task<string> CreateFeatureTopic(int featureId, int userId)
     {
-        var data = await featureRepository.GetCreateForumTopicData(featureId);
-        if (data == null)
-            return null;
+        var data = await featureRepository.GetCreateForumTopicData(featureId)
+                   ?? throw new NotFoundException("Feature");
 
         if (data.ForumRelativeLink != null)
             return data.ForumRelativeLink;
@@ -32,45 +33,17 @@ public partial class DiscourseService(
         var label = NameHelpers.GetLabel(data.Type);
         var title = string.IsNullOrWhiteSpace(label) ? data.Name : $"{label} {data.Name}";
 
-        var client = httpClientFactory.CreateClient();
-        client.DefaultRequestHeaders.Add("Api-Key", discourseConfig.ApiKey);
-        client.DefaultRequestHeaders.Add("Api-Username", "system");
+        var forumRelativeLink = await PostTopic("feature", featureId, title, topicBody, discourseConfig.StreetCategoryId);
 
-        var requestBody = new
-        {
-            title = title,
-            raw = topicBody,
-            category = discourseConfig.StreetCategoryId
-        };
+        await featureRepository.UpdateForumLink(featureId, forumRelativeLink, userId);
 
-        var response = await client.PostAsJsonAsync(
-            $"{discourseConfig.BaseUrl}/posts.json",
-            requestBody);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            return null;
-        }
-
-        var postResponse = await response.Content.ReadFromJsonAsync(DiscourseJsonSerializerContext.Default.DiscoursePostResponse);
-
-        if (postResponse != null)
-        {
-            var forumRelativeLink = $"/t/{postResponse.TopicSlug}/{postResponse.TopicId}";
-
-            await featureRepository.UpdateForumLink(featureId, forumRelativeLink, userId);
-
-            return forumRelativeLink;
-        }
-
-        return null;
+        return forumRelativeLink;
     }
 
-    public async Task<string?> CreateDossierRecordTopic(int dossierRecordId, int userId)
+    public async Task<string> CreateDossierRecordTopic(int dossierRecordId, int userId)
     {
-        var dossierRecord = await dossierRecordRepository.GetById(dossierRecordId);
-        if (dossierRecord == null)
-            return null;
+        var dossierRecord = await dossierRecordRepository.GetById(dossierRecordId)
+                            ?? throw new NotFoundException("Dossier record");
 
         if (dossierRecord.ForumRelativeLink != null)
             return dossierRecord.ForumRelativeLink;
@@ -81,39 +54,60 @@ public partial class DiscourseService(
 
         var title = dossierRecord.NameBeTarask;
 
+        var forumRelativeLink = await PostTopic("dossier record", dossierRecordId, title, topicBody, discourseConfig.DossierRecordCategoryId);
+
+        await dossierRecordRepository.UpdateForumLink(dossierRecordId, forumRelativeLink, userId);
+
+        return forumRelativeLink;
+    }
+
+    /// <summary>
+    /// Creates a topic and returns its relative link. Any Discourse-side failure is logged at Error level with
+    /// the full Discourse response (picked up by Sentry) and surfaced as <see cref="ExternalServiceException"/>.
+    /// </summary>
+    private async Task<string> PostTopic(string objectType, int objectId, string? title, string raw, int categoryId)
+    {
         var client = httpClientFactory.CreateClient();
         client.DefaultRequestHeaders.Add("Api-Key", discourseConfig.ApiKey);
         client.DefaultRequestHeaders.Add("Api-Username", "system");
 
-        var requestBody = new
-        {
-            title = title,
-            raw = topicBody,
-            category = discourseConfig.DossierRecordCategoryId,
-        };
+        var requestBody = new DiscourseCreatePostRequest(title, raw, categoryId);
 
-        var response = await client.PostAsJsonAsync(
+        using var response = await client.PostAsJsonAsync(
             $"{discourseConfig.BaseUrl}/posts.json",
-            requestBody);
+            requestBody,
+            DiscourseJsonSerializerContext.Default.DiscourseCreatePostRequest);
+
+        var responseBody = await response.Content.ReadAsStringAsync();
 
         if (!response.IsSuccessStatusCode)
         {
-            return null;
+            LogTopicCreationRejected(objectType, objectId, (int)response.StatusCode, response.ReasonPhrase, title, categoryId, Truncate(responseBody));
+            throw new ExternalServiceException("Failed to create forum topic");
         }
 
-        var postResponse = await response.Content.ReadFromJsonAsync(DiscourseJsonSerializerContext.Default.DiscoursePostResponse);
-
-        if (postResponse != null)
+        DiscoursePostResponse? postResponse;
+        try
         {
-            var forumRelativeLink = $"/t/{postResponse.TopicSlug}/{postResponse.TopicId}";
-
-            await dossierRecordRepository.UpdateForumLink(dossierRecordId, forumRelativeLink, userId);
-
-            return forumRelativeLink;
+            postResponse = JsonSerializer.Deserialize(responseBody, DiscourseJsonSerializerContext.Default.DiscoursePostResponse);
+        }
+        catch (JsonException e)
+        {
+            LogTopicCreationUnexpectedResponse(e, objectType, objectId, (int)response.StatusCode, Truncate(responseBody));
+            throw new ExternalServiceException("Failed to create forum topic");
         }
 
-        return null;
+        if (postResponse == null || string.IsNullOrEmpty(postResponse.TopicSlug))
+        {
+            LogTopicCreationUnexpectedResponse(null, objectType, objectId, (int)response.StatusCode, Truncate(responseBody));
+            throw new ExternalServiceException("Failed to create forum topic");
+        }
+
+        return $"/t/{postResponse.TopicSlug}/{postResponse.TopicId}";
     }
+
+    private static string Truncate(string value) =>
+        value.Length <= MaxLoggedResponseLength ? value : value[..MaxLoggedResponseLength] + "…(truncated)";
 
     public async Task<DiscourseWebhookResult> ProcessWebhook(string? signatureHeader, string? eventTypeHeader, ArraySegment<byte> body)
     {
@@ -238,6 +232,12 @@ public partial class DiscourseService(
             return null;
         }
     }
+
+    [LoggerMessage(LogLevel.Error, "Discourse rejected topic creation for {ObjectType} {ObjectId}: {StatusCode} {ReasonPhrase}. Title: {Title}, category: {CategoryId}. Response: {ResponseBody}")]
+    private partial void LogTopicCreationRejected(string objectType, int objectId, int statusCode, string? reasonPhrase, string? title, int categoryId, string responseBody);
+
+    [LoggerMessage(LogLevel.Error, "Unexpected Discourse response on topic creation for {ObjectType} {ObjectId}: {StatusCode}. Response: {ResponseBody}")]
+    private partial void LogTopicCreationUnexpectedResponse(Exception? e, string objectType, int objectId, int statusCode, string responseBody);
 
     [LoggerMessage(LogLevel.Error, "Failed to parse Discourse event payload")]
     private partial void LogFailedParseWebhook(Exception e);

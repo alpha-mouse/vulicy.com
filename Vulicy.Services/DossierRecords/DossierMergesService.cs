@@ -20,7 +20,7 @@ public class DossierMergesService(IDossierRecordMergeSuggestionRepository dossie
     {
         var suggestion = await dossierRecordMergeSuggestionRepository.GetByIdTracked(id);
         if (suggestion == null)
-            throw new InvalidOperationException("Suggestion not found");
+            throw new NotFoundException("Suggestion");
 
         dossierRecordMergeSuggestionRepository.Delete(suggestion);
         var now = DateTime.UtcNow;
@@ -38,7 +38,7 @@ public class DossierMergesService(IDossierRecordMergeSuggestionRepository dossie
     {
         var suggestion = await dossierRecordMergeSuggestionRepository.GetByIdTracked(id);
         if (suggestion == null)
-            throw new InvalidOperationException("Suggestion not found");
+            throw new NotFoundException("Suggestion");
 
         dossierRecordMergeSuggestionRepository.Delete(suggestion);
         await dossierRecordMergeSuggestionRepository.SaveChanges();

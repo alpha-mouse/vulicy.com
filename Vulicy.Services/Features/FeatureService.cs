@@ -44,7 +44,7 @@ public class FeatureService(
             ? await administrativeRepository.GetByCadastreAte(cadastreFeature.Ate)
             : await administrativeRepository.FindIntersecting(osmFeature.Geometry);
         if (featureCreateRequest.CadastreId != null && administrative == null)
-            throw new InvalidOperationException("Administrative not found");
+            throw new NotFoundException("Administrative");
 
         var feature = new FeatureEntity();
 
@@ -75,7 +75,7 @@ public class FeatureService(
         await using var transaction = await featureRepository.BeginTransaction();
         var feature = await featureRepository.GetByIdTracked(id);
         if (feature == null)
-            throw new InvalidOperationException("Feature not found");
+            throw new NotFoundException("Feature");
 
         var osmFeature = await osmFeatureRepository.GetByIdTracked(osmId.Type, osmId.Id);
         CheckForLinking(osmFeature);
@@ -98,7 +98,7 @@ public class FeatureService(
         await using var transaction = await featureRepository.BeginTransaction();
         var feature = await featureRepository.GetByIdTracked(id);
         if (feature == null)
-            throw new InvalidOperationException("Feature not found");
+            throw new NotFoundException("Feature");
 
         var osmFeatures = await osmFeatureRepository.GetByFeatureId(id);
 
@@ -176,17 +176,17 @@ public class FeatureService(
     private static void CheckForLinking(OsmFeatureEntity? osmFeature)
     {
         if (osmFeature == null)
-            throw new InvalidOperationException("OSM feature not found");
+            throw new NotFoundException("OSM feature");
         if (osmFeature.FeatureId != null)
-            throw new InvalidOperationException("OSM feature already linked");
+            throw new BadRequestException("OSM feature already linked");
     }
 
     private static void CheckForLinking(CadastreFeatureEntity? cadastreFeature)
     {
         if (cadastreFeature == null)
-            throw new InvalidOperationException("Cadastre feature not found");
+            throw new NotFoundException("Cadastre feature");
         if (cadastreFeature.FeatureId != null)
-            throw new InvalidOperationException("Cadastre feature already linked");
+            throw new BadRequestException("Cadastre feature already linked");
     }
 
     private static void MapFromRequest(FeatureEditRequest featureEditRequest, FeatureEntity feature)
